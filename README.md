@@ -1,4 +1,4 @@
-smc-abc-quantum-tomography
+Welcome to Qinfer
 ==========================
 
-Sequential Monte Carlo (SMC) approximate Bayesian computation (ABC) quantum tomography
+**Qinfer** is a library using Bayesian sequential Monte Carlo for quantum parameter estimation.
