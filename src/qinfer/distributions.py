@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##
-# SMC.py: Tomgraphic models module
+# distributions.py: module for probability distributions
 ##
 # © 2012 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
@@ -27,31 +27,7 @@
 
 import numpy as np
 
-class StateModel(object):
-    """
-    Represents an experimental system with unknown quantum state,
-    and known measurement operators.
-    """    
-    
-    def __init__(self, hs_dim):
-        self.hs_dim = hs_dim
-        
-    def likelihood(data,state):
-        """
-        Calculates the likelihood function at the point state.
-        This is given by the Born rule and is the probability of
-        data given state.
-        
-        Parameters
-        ----------
-        data = (TODO:some data structure)
-            data structure containing measurement data
-        state = ndarray
-            quantum state in the computational basis
-        """
-        
-        meas_ops,counts = method to extract effects of POVM and counts (data)
-        
-        prob = some function for multinomial PDF(counts,p)
-                
-        return prob
+
+
+class HaarUniform(object):
+class HilbertSchmidtUniform(object):
