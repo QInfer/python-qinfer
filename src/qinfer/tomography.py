@@ -55,8 +55,8 @@ class StateModel(object):
         
         # assumes Pauli X,Y,Z measurements for now (i.e. expparams does nothing)
         
-        ps = method to turn params to probabilities(expparams,modelparams)                
-        prob = some function for multinomial PDF(outcomes,ps)
+        ps = self.params2probs(expparams,modelparams)                
+        prob = self.finalprobs(outcomes,ps)
                 
         return prob
         
@@ -72,8 +72,33 @@ class StateModel(object):
         modelparams = 
             quantum state specs
         """
+        # assumes qubit state in Pauli basis
+        state = 0.5 * (PauliI + modelparams[1]*PauliX +
+            modelparams[2]*PauliY + modelparams[3]*PauliZ)        
+        
         
         # assumes Pauli X,Y,Z measurements for now (i.e. expparams does nothing)
-        ps = zeros((,3))
+        ps = np.zeros((3,))
+        
+        ps[1] = 0.5*(1+np.trace(np.dot(PauliX,state)))
+        ps[2] = 0.5*(1+np.trace(np.dot(PauliY,state)))
+        ps[3] = 0.5*(1+np.trace(np.dot(PauliZ,state)))
         
         return ps
+        
+    def finalprob(outcomes,ps):
+        """
+        Converts the probabilities of each measurement into the final 
+        
+        Parameters
+        ----------
+        outcomes = 
+            measurement outcome counts
+        ps = 
+            probabilities for each measurement outcome
+        """
+
+        # assumes each measurement is Bernoulli trial
+        prob = outcomes        
+                
+        return prob
