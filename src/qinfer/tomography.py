@@ -36,22 +36,44 @@ class StateModel(object):
     def __init__(self, hs_dim):
         self.hs_dim = hs_dim
         
-    def likelihood(data,state):
+    def likelihood(outcomes,expparams,modelparams):
         """
-        Calculates the likelihood function at the point state.
+        Calculates the likelihood function at the states specified 
+        by modelparams and measurement specified by expparams.
         This is given by the Born rule and is the probability of
-        data given state.
+        outcomes given the state and measurement operators.
         
         Parameters
         ----------
-        data = (TODO:some data structure)
-            data structure containing measurement data
-        state = ndarray
-            quantum state in the computational basis
+        outcomes = 
+            measurement outcome counts
+        expparams = 
+            measurement operator specs and other experimental specs
+        modelparams = 
+            quantum state specs
         """
         
-        meas_ops,counts = method to extract effects of POVM and counts (data)
+        # assumes Pauli X,Y,Z measurements for now (i.e. expparams does nothing)
         
-        prob = some function for multinomial PDF(counts,p)
+        ps = method to turn params to probabilities(expparams,modelparams)                
+        prob = some function for multinomial PDF(outcomes,ps)
                 
         return prob
+        
+    def params2probs(expparams,modelparams):
+        """
+        Converts (via the Born rule) a description of the states and
+        measurements to probabilities
+        
+        Parameters
+        ----------
+        expparams = 
+            measurement operator specs and other experimental specs
+        modelparams = 
+            quantum state specs
+        """
+        
+        # assumes Pauli X,Y,Z measurements for now (i.e. expparams does nothing)
+        ps = zeros((,3))
+        
+        return ps
