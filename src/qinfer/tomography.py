@@ -26,15 +26,16 @@
 ## IMPORTS ##
 
 import numpy as np
+from abstract_model import *
 
-class StateModel(object):
+class QubitStateModel(Model):
     """
     Represents an experimental system with unknown quantum state,
     and known measurement operators.
     """    
     
     def __init__(self, hs_dim):
-        self.hs_dim = hs_dim
+        Model.__init__(self,hs_dim=2)
         
     def likelihood(outcomes,expparams,modelparams):
         """
@@ -71,18 +72,14 @@ class StateModel(object):
             measurement operator specs and other experimental specs
         modelparams = 
             quantum state specs
-        """
-        # assumes qubit state in Pauli basis
-        state = 0.5 * (PauliI + modelparams[1]*PauliX +
-            modelparams[2]*PauliY + modelparams[3]*PauliZ)        
-        
+        """        
         
         # assumes Pauli X,Y,Z measurements for now (i.e. expparams does nothing)
         ps = np.zeros((3,))
         
-        ps[1] = 0.5*(1+np.trace(np.dot(PauliX,state)))
-        ps[2] = 0.5*(1+np.trace(np.dot(PauliY,state)))
-        ps[3] = 0.5*(1+np.trace(np.dot(PauliZ,state)))
+        ps[0] = 0.5*(1+modelparams[0])
+        ps[1] = 0.5*(1+modelparams[1])
+        ps[2] = 0.5*(1+modelparams[2])
         
         return ps
         
@@ -99,6 +96,9 @@ class StateModel(object):
         """
 
         # assumes each measurement is Bernoulli trial
-        prob = outcomes        
+        logprob = term with log of factorials + 
+                    outcomes[0]*log(ps[0]) +
+                    outcomes[1]*log(ps[1]) +
+                    outcomes[2]*log(ps[2])
                 
-        return prob
+        return exp(logprob)
