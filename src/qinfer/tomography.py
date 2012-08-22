@@ -94,11 +94,11 @@ class QubitStateModel(Model):
         ps = 
             probabilities for each measurement outcome
         """
-
+        num_meas = np.sum(outcomes,axis=1)
         # assumes each measurement is Bernoulli trial
         logprob = term with log of factorials + 
-                    outcomes[0]*log(ps[0]) +
-                    outcomes[1]*log(ps[1]) +
-                    outcomes[2]*log(ps[2])
+                    outcomes[0,0]*log(ps[0]) + outcomes[0,1]*log(1-ps[0]) 
+                    outcomes[1,0]*log(ps[1]) + outcomes[1,1]*log(1-ps[1])
+                    outcomes[2,0]*log(ps[2]) + outcomes[2,1]*log(1-ps[2])
                 
         return exp(logprob)
