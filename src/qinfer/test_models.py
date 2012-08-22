@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##
-# abstract_model.py: Abstract interfaces for models with different levels of
-#     functionality.
+# test_models.py: Simple models for testing inference engines.
 ##
 # © 2012 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
@@ -24,46 +23,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+## FEATURES ##
+
+from __future__ import division # Ensures that a/b is always a float.
+
 ## IMPORTS ##
 
-import abc
-    # Python standard library package for specifying abstract classes.
+import numpy as np
+
+from abstract_model import Model
     
 ## CLASSES ##
 
-class Model(object):
-    __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
+class SimplePrecessionModel(Model):
     
-    ## INITIALIZERS ##
-    def __init__(self):
-        self._call_count = 0
+    ## PROPERTIES ##
     
-    ## ABSTRACT PROPERTIES ##
-    
-    @abc.abstractproperty
     def n_modelparams(self):
-        """
-        Returns the number of real model parameters admitted by this model.
+        return 1
         
-        This property is assumed by inference engines to be constant for
-        the lifetime of a Model instance.
-        """
-        pass
-        
-    @abc.abstractproperty
     def expparams_dtype(self):
-        """
-        Returns the dtype of an experiment parameter array. For a
-        model with single-parameter control, this will likely be a scalar dtype,
-        such as ``"float64"``. More generally, this can be an example of a
-        record type, such as ``[('time', 'float64'), ('axis', 'uint8')]``.
-        
-        This property is assumed by inference engines to be constant for
-        the lifetime of a Model instance.
-        """
-        pass
-    
-    ## CONCRETE PROPERTIES ##
+        return 'float'
     
     @property
     def is_n_outcomes_constant(self):
@@ -74,16 +54,10 @@ class Model(object):
         This property is assumed by inference engines to be constant for
         the lifetime of a Model instance.
         """
-        return False       
+        return True
     
-    @property
-    def call_count(self):
-        # TODO: document
-        return self._call_count
+    ## METHODS ##
     
-    ## ABSTRACT METHODS ##
-    
-    @abc.abstractmethod
     def n_outcomes(self, expparams):
         """
         Returns an array of dtype ``uint`` describing the number of outcomes
@@ -93,12 +67,38 @@ class Model(object):
             array must be of dtype agreeing with the ``expparams_dtype``
             property.
         """
-        pass
+        return 2
     
-    @abc.abstractmethod
     def likelihood(self, outcomes, modelparams, expparams):
-        # TODO: document
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(SimplePrecessionModel, self).likelihood(outcomes, modelparams, expparams)
         
-        # Count the number of times the inner-most loop is called.
-        self._call_count += outcomes.shape[0] * modelparams.shape[0] * expparams.shape[0]
+        # Allocating first serves to make sure that a shape mismatch later
+        # will cause an error.
+        pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
         
+        arg = np.dot(modelparams, expparams[..., np.newaxis].T) / 2        
+        pr0 = np.cos(arg) ** 2
+        
+        # Now we concatenate over outcomes.
+        pr0 = pr0[np.newaxis, ...]
+        return np.concatenate([
+            pr0 if outcomes[idx] == 0 else 1 - pr0
+            for idx in xrange(outcomes.shape[0])
+            ]) 
+
+## TESTING CODE ################################################################
+
+if __name__ == "__main__":
+
+    m = SimplePrecessionModel()
+    L = m.likelihood(
+        np.array([1]),
+        np.array([[0.1], [0.2], [0.4]]),
+        np.array([1/2, 17/3]) * np.pi
+    )
+    print L
+    assert m.call_count == 6
+    assert L.shape == (1, 3, 2)
+    
