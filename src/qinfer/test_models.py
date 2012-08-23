@@ -39,9 +39,11 @@ class SimplePrecessionModel(Model):
     
     ## PROPERTIES ##
     
+    @property
     def n_modelparams(self):
         return 1
         
+    @property
     def expparams_dtype(self):
         return 'float'
     

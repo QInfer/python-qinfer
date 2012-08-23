@@ -23,9 +23,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## IMPORTS ##
+## ALL #########################################################################
 
-from numpy import *
+# We use __all__ to restrict what globals are visible to external modules.
+__all__ = [
+    'SMCUpdater'
+]
+
+## IMPORTS #####################################################################
+
+import numpy as np
+
+## CLASSES #####################################################################
 
 class SMCUpdater(object):
     """
@@ -55,7 +64,7 @@ class SMCUpdater(object):
         self.resample_a = resample_a
         self.resample_thresh = resample_thresh        
         
-        self.particle_locs = np.zeros((n_particles,))
+        self.particle_locations = np.zeros((n_particles, model.n_modelparams))
         self.particle_weights = np.ones((n_particles,)) / n_particles
         
         for idx_particle in xrange(n_particles):
@@ -86,20 +95,26 @@ class SMCUpdater(object):
        
         Returns
         -------
-        weights : ndarray, shape (n_particles, )
+        weights : ndarray, shape (n_outcomes, n_expparams, n_particles)
             Weights assigned to each particle in the posterior distribution
             :math:`\Pr(\omega | d)`.
         """
         
         # It's "hypothetical", don't want to overwrite old weights yet!
-        weights = copy(self.particle_weights)
+        weights = np.copy(self.particle_weights)
         locs = self.particle_locations
         
         # update the weights sans normalization
-        weights = weights * self.model.likelihood(outcome, locs, expparams)            
+        # Rearrange so that likelihoods have shape (outcomes, experiments, models).
+        # This makes the multiplication with weights (shape (models,)) make sense.
+        L = self.model.likelihood(np.array([outcome]), locs, expparams).transpose([0, 2, 1])
+        weights = weights * L
         
         # normalize
-        return weights / sum(weights)
+        return weights / np.sum(weights, axis=2)[..., np.newaxis]
+            # Note that newaxis is needed to align the two matrices.
+            # This introduces a length-1 axis for the particle number,
+            # so that the normalization is broadcast over all particles.
     
     def update(self, outcome, expparams):
         """

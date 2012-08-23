@@ -23,11 +23,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## IMPORTS ##
+## IMPORTS #####################################################################
 
 import numpy as np
+import abc
 
+## CLASSES #####################################################################
 
+class Distribution(object):
+    __metaclass__ = abc.ABCMeta
+    
+    @abc.abstractmethod
+    def sample(self):
+        pass
+
+class UniformDistribution(Distribution):
+    def __init__(self, ranges=np.array([[0, 1]])):
+        if not isinstance(ranges, np.ndarray):
+            ranges = np.array(ranges)
+            
+        if len(ranges.shape) == 1:
+            ranges = ranges[np.newaxis, ...]
+    
+        self._ranges = ranges
+        self._n_rvs = ranges.shape[0]
+        self._delta = ranges[:, 1] - ranges[:, 0]
+        
+    def sample(self):
+        z = np.random.random((self._n_rvs,))
+        return self._ranges[:, 0] + z * self._delta
+
+# TODO: make the following into Distributions.
 
 class HaarUniform(object):
     """
