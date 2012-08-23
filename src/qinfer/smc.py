@@ -37,26 +37,21 @@ import numpy as np
 ## CLASSES #####################################################################
 
 class SMCUpdater(object):
-    """
+    r"""
     Creates a new Sequential Monte carlo updater
 
-    Parameters
-    -----------
-    model : Model
-        Model whose parameters are to be inferred.
-    n_particles : int
-        The number of particles to be used in the particle approximation.
-    prior : Distribution
-        A representation of the prior distribution.
-    resample_a : float, Optional (default = 0.98)
-        Specifies the parameter :math:`a` to be used in when resampling.
-    resample_thresh : float, Optional (default = 0.5)
-        Specifies the threshold for :math:`n_ess` to decide when to resample.
+    :param Model model: Model whose parameters are to be inferred.
+    :param int n_particles: The number of particles to be used in the particle approximation.
+    :param Distribution prior: A representation of the prior distribution.
+    :param float resample_a: Specifies the parameter :math:`a` to be used in when resampling.
+    :param float resample_thresh: Specifies the threshold for :math:`N_{\text{ess}}` to decide when to resample.
     """
     def __init__(self,
             model, n_particles, prior,
             resample_a=0.98, resample_thresh=0.5
             ):
+
+        self._resample_count = 0
 
         self.model = model
         self.n_particles = n_particles
@@ -75,10 +70,7 @@ class SMCUpdater(object):
         Estimates the effective sample size (ESS) of the current distribution
         over model parameters.
         
-        Returns
-        -------
-        N : float
-            The effective sample size, given by :math:`1/\sum_i w_i^2`.
+        :return float: The effective sample size, given by :math:`1/\sum_i w_i^2`.
         """
         return 1 / (sum(self.particle_weights**2))
 
@@ -87,17 +79,13 @@ class SMCUpdater(object):
         Produces the particle weights for the posterior of a hypothetical
         experiment.
         
-        Parameters
-        ----------
-        outcome : int
-            Integer index of the outcome of the hypothetical experiment.
-        expparams : TODO
+        :param int outcome: Integer index of the outcome of the hypothetical experiment.
+            TODO: Fix this to take an array-like of ints as well.
+        :param expparams: TODO
        
-        Returns
-        -------
-        weights : ndarray, shape (n_outcomes, n_expparams, n_particles)
-            Weights assigned to each particle in the posterior distribution
-            :math:`\Pr(\omega | d)`.
+        :type weights: ndarray, shape (n_outcomes, n_expparams, n_particles)
+        :param weights: Weights assigned to each particle in the posterior
+            distribution :math:`\Pr(\omega | d)`.
         """
         
         # It's "hypothetical", don't want to overwrite old weights yet!
@@ -123,11 +111,8 @@ class SMCUpdater(object):
         
         After updating, resamples the posterior distribution if necessary.
         
-        Parameters
-        ----------
-        outcome : int
-            Index of the outcome of the experiment that was performed.
-        expparams : TODO
+        :param int outcome: Index of the outcome of the experiment that was performed.
+        :param expparams: TODO
         """
         self.particle_weights = self.hypothetical_update(outcome, expparams)
         
@@ -141,7 +126,7 @@ class SMCUpdater(object):
         Liu and West (2000)
         """
         
-        self.resample_count = self.resample_count + 1
+        self._resample_count += 1
         
         # parameters in the Liu and West algorithm
         mean, cov = self.est_mean(), self.est_covar()
