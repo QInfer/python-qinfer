@@ -25,7 +25,7 @@
 
 ## IMPORTS ##
 
-import numpy as np
+from numpy import *
 
 class SMCUpdater(object):
     """
@@ -72,3 +72,76 @@ class SMCUpdater(object):
             The effective sample size, given by :math:`1/\sum_i w_i^2`.
         """
         return 1 / (sum(self.particle_weights**2))
+
+    def hypothetical_update(self, outcome, expparams):
+        """
+        Produces the particle weights for the posterior of a hypothetical
+        experiment.
+        
+        Parameters
+        ----------
+        outcome : int
+            Integer index of the outcome of the hypothetical experiment.
+        expparams : TODO
+       
+        Returns
+        -------
+        weights : ndarray, shape (n_particles, )
+            Weights assigned to each particle in the posterior distribution
+            :math:`\Pr(\omega | d)`.
+        """
+        
+        # It's "hypothetical", don't want to overwrite old weights yet!
+        weights = copy(self.particle_weights)
+        locs = self.particle_locations
+        
+        # update the weights sans normalization
+        weights = weights * self.model.likelihood(outcome, locs, expparams)            
+        
+        # normalize
+        return weights / sum(weights)
+    
+    def update(self, outcome, expparams):
+        """
+        Given an experiment and an outcome of that experiment, updates the
+        posterior distribution to reflect knowledge of that experiment.
+        
+        After updating, resamples the posterior distribution if necessary.
+        
+        Parameters
+        ----------
+        outcome : int
+            Index of the outcome of the experiment that was performed.
+        expparams : TODO
+        """
+        self.particle_weights = self.hypothetical_update(outcome, expparams)
+        
+        if self.n_ess() < self.n_particles * self.resample_thresh:
+            self.resample()
+            pass
+            
+    def resample(self):
+        """
+        Resample the particles according to algorithm given in 
+        Liu and West (2000)
+        """
+        
+        self.resample_count = self.resample_count + 1
+        
+        # parameters in the Liu and West algorithm
+        mean, cov = self.est_mean(), self.est_covar()
+        a, h = self.resample_a, self.resample_h
+        S = h * sqrtm(cov)
+        Sd = diag(S)
+        
+        new_locs = copy(self.particle_locations)        
+        
+
+#TODO: do we want the same resampling algorithm?
+
+
+        # Now we reset the weights to be uniform, letting the density of
+        # particles represent the information that used to be stored in the
+        # weights.
+        self.particle_weights[:] = (1/self.n_particles)
+        self.particle_locations = new_locs

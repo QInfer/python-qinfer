@@ -28,10 +28,10 @@
 import numpy as np
 from abstract_model import *
 
-class QubitStateModel(Model):
+class QubitStatePauliModel(Model):
     """
     Represents an experimental system with unknown quantum state,
-    and known measurement operators.
+    and Pauli measurement operators.
     """    
     
     def __init__(self, hs_dim):
