@@ -33,6 +33,7 @@ __all__ = [
 ## IMPORTS #####################################################################
 
 import numpy as np
+import scipy.linalg as la
 
 ## CLASSES #####################################################################
 
@@ -147,15 +148,19 @@ class SMCUpdater(object):
         self._resample_count += 1
         
         # parameters in the Liu and West algorithm
-        mean, cov = self.est_mean(), self.est_covar()
+        mean, cov = self.est_mean(), self.est_covariance_mtx()
         a, h = self.resample_a, self.resample_h
-        S = h * sqrtm(cov)
+        S = h * la.sqrtm(cov)
         Sd = diag(S)
         
-        new_locs = copy(self.particle_locations)        
+        new_locs = np.empty(self.particle_locations.shape)        
+        cumsum_weights = np.cumsum(self.particle_weights)
         
-
-#TODO: do we want the same resampling algorithm?
+        for idx_particle in xrange(self.particle_locations.shape[0]):
+            # Draw j with probability self.particle_weights[j].
+            # Set mu_i to a x_j + (1 - a) mu.
+            # Draw x_i from N(mu_i, S).
+            # Set w_i to uniform (done below).
 
 
         # Now we reset the weights to be uniform, letting the density of
