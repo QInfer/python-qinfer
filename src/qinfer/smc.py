@@ -64,7 +64,17 @@ class SMCUpdater(object):
         
         for idx_particle in xrange(n_particles):
             self.particle_locations[idx_particle, :] = prior.sample()
+
+    ## PROPERTIES ##############################################################
             
+    @property
+    def resample_count(self):
+        # TODO: docstring
+        # We wrap this in a property to prevent external resetting and to enable
+        # a docstring.
+        return self._resample_count
+            
+    @property
     def n_ess(self):
         """
         Estimates the effective sample size (ESS) of the current distribution
@@ -92,10 +102,14 @@ class SMCUpdater(object):
         weights = np.copy(self.particle_weights)
         locs = self.particle_locations
         
+        # Check if we have a single outcome or an array.
+        if not isinstance(outcome, np.ndarray):
+            outcome = np.array([outcome])
+        
         # update the weights sans normalization
         # Rearrange so that likelihoods have shape (outcomes, experiments, models).
         # This makes the multiplication with weights (shape (models,)) make sense.
-        L = self.model.likelihood(np.array([outcome]), locs, expparams).transpose([0, 2, 1])
+        L = self.model.likelihood(outcome, locs, expparams).transpose([0, 2, 1])
         weights = weights * L
         
         # normalize
@@ -114,9 +128,13 @@ class SMCUpdater(object):
         :param int outcome: Index of the outcome of the experiment that was performed.
         :param expparams: TODO
         """
-        self.particle_weights = self.hypothetical_update(outcome, expparams)
         
-        if self.n_ess() < self.n_particles * self.resample_thresh:
+        # Since hypothetical_update returns an array indexed by
+        # [outcome, experiment, particle], we need to strip off those two
+        # indices first.
+        self.particle_weights = self.hypothetical_update(outcome, expparams)[0, 0, :]
+        
+        if self.n_ess < self.n_particles * self.resample_thresh:
             self.resample()
             pass
             
@@ -145,3 +163,18 @@ class SMCUpdater(object):
         # weights.
         self.particle_weights[:] = (1/self.n_particles)
         self.particle_locations = new_locs
+        
+    ## ESTIMATION METHODS ######################################################
+    
+    def est_mean(self):
+        return np.sum(
+            # We need the particle index to be the rightmost index, so that
+            # the two arrays align on the particle index as opposed to the
+            # modelparam index.
+            self.particle_weights * self.particle_locations.transpose([1, 0]),
+        axis=1)
+        
+    def est_covariance_mtx(self):
+        pass
+        
+    

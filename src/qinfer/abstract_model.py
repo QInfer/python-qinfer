@@ -28,6 +28,7 @@
 
 import abc
     # Python standard library package for specifying abstract classes.
+import numpy as np
     
 ## CLASSES ##
 
@@ -101,4 +102,26 @@ class Model(object):
         
         # Count the number of times the inner-most loop is called.
         self._call_count += outcomes.shape[0] * modelparams.shape[0] * expparams.shape[0]
+                
+    ## STATIC METHODS ##
+    # These methods are provided as a convienence to make it easier to write
+    # simple models.
+    
+    @staticmethod
+    def pr0_to_likelihood_array(outcomes, pr0):
+        """
+        Assuming a two-outcome measurement with probabilities given by the
+        array ``pr0``, returns an array of the form expected to be returned by
+        ``likelihood`` method.
+        
+        :param numpy.ndarray outcomes: Array of integers indexing outcomes.
+        :param numpy.ndarray pr0: Array of shape ``(n_models, n_experiments)``
+            describing the probability of obtaining outcome ``0`` from each
+            set of model parameters and experiment parameters.
+        """
+        pr0 = pr0[np.newaxis, ...]
+        return np.concatenate([
+            pr0 if outcomes[idx] == 0 else 1 - pr0
+            for idx in xrange(outcomes.shape[0])
+            ]) 
         

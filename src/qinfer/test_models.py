@@ -84,11 +84,7 @@ class SimplePrecessionModel(Model):
         pr0 = np.cos(arg) ** 2
         
         # Now we concatenate over outcomes.
-        pr0 = pr0[np.newaxis, ...]
-        return np.concatenate([
-            pr0 if outcomes[idx] == 0 else 1 - pr0
-            for idx in xrange(outcomes.shape[0])
-            ]) 
+        return Model.pr0_to_likelihood_array(outcomes, pr0)
 
 ## TESTING CODE ################################################################
 
