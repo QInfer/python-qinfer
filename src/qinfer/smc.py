@@ -152,14 +152,21 @@ class SMCUpdater(object):
         a, h = self.resample_a, self.resample_h
         S = h * la.sqrtm(cov)
         Sd = diag(S)
+        n_mp = self.model.n_modelparams
         
         new_locs = np.empty(self.particle_locations.shape)        
         cumsum_weights = np.cumsum(self.particle_weights)
         
         for idx_particle in xrange(self.particle_locations.shape[0]):
             # Draw j with probability self.particle_weights[j].
+            j = np.argmax(np.random.random() <= cumsum_weights)
+            
             # Set mu_i to a x_j + (1 - a) mu.
+            mu_i = a * self.particle_locations[j, :] * (1 - a) * mean
+            
             # Draw x_i from N(mu_i, S).
+            new_locs[idx_particle, :] = mu_i + np.dot(S, np.random.randn(n_mp))
+            
             # Set w_i to uniform (done below).
 
 
