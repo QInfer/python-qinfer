@@ -23,6 +23,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+## FEATURES ####################################################################
+
+from __future__ import division
+
 ## ALL #########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
@@ -58,6 +62,7 @@ class SMCUpdater(object):
         self.n_particles = n_particles
         self.prior = prior
         self.resample_a = resample_a
+        self.resample_h = np.sqrt(1 - resample_a**2)
         self.resample_thresh = resample_thresh        
         
         self.particle_locations = np.zeros((n_particles, model.n_modelparams))
@@ -150,8 +155,7 @@ class SMCUpdater(object):
         # parameters in the Liu and West algorithm
         mean, cov = self.est_mean(), self.est_covariance_mtx()
         a, h = self.resample_a, self.resample_h
-        S = h * la.sqrtm(cov)
-        Sd = diag(S)
+        S = np.real(h * la.sqrtm(cov))
         n_mp = self.model.n_modelparams
         
         new_locs = np.empty(self.particle_locations.shape)        
@@ -187,6 +191,16 @@ class SMCUpdater(object):
         axis=1)
         
     def est_covariance_mtx(self):
-        pass
+        mu = self.est_mean()
+        xs = self.particle_locations.transpose([1, 0])
+        ws = self.particle_weights
+        
+        return (
+            np.sum(
+                ws * xs[:, np.newaxis, :] * xs[np.newaxis, :, :],
+                axis=2
+                )
+            ) - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
+            
         
     
