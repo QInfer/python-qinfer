@@ -97,6 +97,14 @@ class Model(object):
         pass
     
     @abc.abstractmethod
+    def is_model_valid(self, modelparams):
+        """
+        Returns True if and only if the model parameters given are valid for
+        this model.
+        """
+        pass
+    
+    @abc.abstractmethod
     def likelihood(self, outcomes, modelparams, expparams):
         # TODO: document
         

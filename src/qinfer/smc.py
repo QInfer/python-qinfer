@@ -162,16 +162,21 @@ class SMCUpdater(object):
         cumsum_weights = np.cumsum(self.particle_weights)
         
         for idx_particle in xrange(self.particle_locations.shape[0]):
-            # Draw j with probability self.particle_weights[j].
-            j = np.argmax(np.random.random() <= cumsum_weights)
-            
-            # Set mu_i to a x_j + (1 - a) mu.
-            mu_i = a * self.particle_locations[j, :] + (1 - a) * mean
-            
-            # Draw x_i from N(mu_i, S).
-            new_locs[idx_particle, :] = mu_i + np.dot(S, np.random.randn(n_mp))
-            
-            # Set w_i to uniform (done below).
+            while True:
+                # Draw j with probability self.particle_weights[j].
+                j = np.argmax(np.random.random() <= cumsum_weights)
+                
+                # Set mu_i to a x_j + (1 - a) mu.
+                mu_i = a * self.particle_locations[j, :] + (1 - a) * mean
+                
+                # Draw x_i from N(mu_i, S).
+                new_locs[idx_particle, :] = mu_i + np.dot(S, np.random.randn(n_mp))
+                
+                # Set w_i to uniform (done below).
+                
+                # Check that we're valid, and if so, break out of the inner loop.
+                if self.model.is_model_valid(new_locs[idx_particle, :]):
+                    break
 
 
         # Now we reset the weights to be uniform, letting the density of
