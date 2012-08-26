@@ -60,6 +60,10 @@ class SimplePrecessionModel(Model):
     
     ## METHODS ##
     
+    @staticmethod
+    def is_model_valid(self, modelparams):
+        return modelparams[0] > 0
+    
     def n_outcomes(self, expparams):
         """
         Returns an array of dtype ``uint`` describing the number of outcomes
