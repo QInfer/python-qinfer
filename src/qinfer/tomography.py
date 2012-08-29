@@ -129,13 +129,58 @@ class QubitStatePauliModel(Model):
 
 if __name__ == "__main__":
 
-    m = QubitStatePauliModel()
-    L = m.likelihood(
-        np.array([5,5,5]),
-        np.array([0,0,0]),
-        np.array([10])
-    )
-    print L
     
-    prior = HaarUniform()
-    print prior.sample()
+    # commented out stuff below is for 3D
+#    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib.pyplot as plt
+    
+    
+    m = QubitStatePauliModel()
+    
+    fig = plt.figure()
+#    ax = fig.add_subplot(111, projection='3d')
+    x = y = np.arange(-1, 1, 0.01)
+    X, Y = np.meshgrid(x, y)
+    zs = np.array([m.likelihood(
+    np.array([25,1,25]),
+    np.array([x,y,0]),
+    np.array([50]))
+    for x,y in zip(np.ravel(X), np.ravel(Y))])
+    Z = zs.reshape(X.shape)
+  
+    zs2 = np.array([m.likelihood(
+    np.array([25,25,25]),
+    np.array([x,y,0]),
+    np.array([50]))
+    for x,y in zip(np.ravel(X), np.ravel(Y))])
+    Z2 = zs2.reshape(X.shape)
+    
+    zs3 = np.array([m.likelihood(
+    np.array([8,8,25]),
+    np.array([x,y,0]),
+    np.array([50]))
+    for x,y in zip(np.ravel(X), np.ravel(Y))])
+    Z3 = zs3.reshape(X.shape)
+    
+  #  ax.plot_surface(X, Y, Z)
+  #  ax.set_xlabel('X')
+  #  ax.set_ylabel('Y')
+  #  ax.set_zlabel('Pr(data|X,Y,0)')
+
+    t = np.arange(0, 2*np.pi, 0.01)
+    xx = np.cos(t)
+    yy = np.sin(t)    
+    
+    plt.plot(xx,yy,'k')
+
+    plt.contour(X,Y,Z)
+    plt.contour(X,Y,Z2)
+    plt.contour(X,Y,Z3)
+    
+    
+    plt.show()    
+
+
+#### TEST PRIORS #############################################################        
+#    prior = HaarUniform()
+#    print prior.sample()
