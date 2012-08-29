@@ -31,6 +31,8 @@ from __future__ import division # Ensures that a/b is always a float.
 
 import numpy as np
 
+from utils import binomial_pdf
+
 from abstract_model import Model
     
 ## CLASSES ##
@@ -90,17 +92,88 @@ class SimplePrecessionModel(Model):
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)
 
+
+class SimplePrecessionBinomialModel(Model):
+
+    def __init__(self,num_meas=1):
+        super(SimplePrecessionBinomialModel, self).__init__()        
+        self.num_meas=num_meas
+    
+    ## PROPERTIES ##
+    
+    @property
+    def n_modelparams(self):
+        return 1
+        
+    @property
+    def expparams_dtype(self):
+        return 'float'
+    
+    @property
+    def is_n_outcomes_constant(self):
+        """
+        Returns ``True`` if and only if the number of outcomes for each
+        experiment is independent of the experiment being performed.
+        
+        This property is assumed by inference engines to be constant for
+        the lifetime of a Model instance.
+        """
+        return True
+    
+    ## METHODS ##
+    
+    @staticmethod
+    def is_model_valid(self, modelparams):
+        return modelparams[0] > 0
+    
+    def n_outcomes(self, expparams):
+        """
+        Returns an array of dtype ``uint`` describing the number of outcomes
+        for each experiment specified by ``expparams``.
+        
+        :param numpy.ndarray expparams: Array of experimental parameters. This
+            array must be of dtype agreeing with the ``expparams_dtype``
+            property.
+        """
+        return self.num_meas
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(SimplePrecessionBinomialModel, self).likelihood(outcomes, modelparams, expparams)
+        
+        # Allocating first serves to make sure that a shape mismatch later
+        # will cause an error.
+        pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
+        
+        arg = np.dot(modelparams, expparams[..., np.newaxis].T) / 2        
+        pr0 = np.cos(arg) ** 2
+        
+        # Now we concatenate over outcomes.
+        pr0 = pr0[np.newaxis, ...]
+        return np.concatenate([
+            binomial_pdf(self.num_meas,outcomes[idx],pr0)
+            for idx in xrange(outcomes.shape[0])
+            ]) 
+
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":
 
-    m = SimplePrecessionModel()
+#    m = SimplePrecessionModel()
+#    L = m.likelihood(
+#        np.array([1]),
+#        np.array([[0.1], [0.2], [0.4]]),
+#        np.array([1/2, 17/3]) * np.pi
+#    )
+#    print L
+#    assert m.call_count == 6
+#    assert L.shape == (1, 3, 2)
+    
+    m = SimplePrecessionBinomialModel(num_meas=10)
     L = m.likelihood(
-        np.array([1]),
-        np.array([[0.1], [0.2], [0.4]]),
-        np.array([1/2, 17/3]) * np.pi
+        np.array([10,9]),
+        np.array([[0.1]]),# [0.2], [0.4]]),
+        np.array([0.5,0.51]) * np.pi
     )
     print L
-    assert m.call_count == 6
-    assert L.shape == (1, 3, 2)
-    

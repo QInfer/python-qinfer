@@ -32,19 +32,23 @@ import numpy as np
 
 #TODO: not sure the best place to put this (The code seems to be floating
 # around the internet with varying levels of copyrights <= MIT license)
-def gammaln(xx):
-    cof =[76.18009172947146,  -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5]
-    xx = float(xx)
-    y = xx
-    x = xx
-    tmp = x + 5.5
-    tmp -= (x + 0.5) * np.log(tmp)
-    ser = 1.000000000190015
-    for j in xrange(6):
-        y += 1
-        ser += cof[j] / y
-    return -tmp + np.log(2.5066282746310005 * ser / x)
-
+def gammaln(n):
+    if n < 1:
+        return float('inf')
+    if n < 3:
+        return 0.0
+    c = [76.18009172947146, -86.50532032941677, \
+         24.01409824083091, -1.231739572450155, \
+         0.001208650973866179, -0.5395239384953 * 0.00001]
+    x, y = float(n), float(n)
+    tm = x + 5.5
+    tm -= (x + 0.5) * np.log(tm)
+    se = 1.0000000000000190015
+    for j in range(6):
+        y += 1.0
+        se += c[j] / y
+    return -tm + np.log(2.5066282746310005 * se / x)
+    
 #TODO: cases for p=0 or p=1
 def binomial_pdf(N,n,p):
     logprob = gammaln(N+1)-gammaln(n+1)- gammaln(N-n+1)  \
