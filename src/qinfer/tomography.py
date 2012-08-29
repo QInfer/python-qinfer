@@ -25,8 +25,11 @@
 
 ## IMPORTS ##
 
+
+from __future__ import division
 import numpy as np
-from abstract_model import *
+from utils import gammaln
+from abstract_model import Model
 
 class QubitStatePauliModel(Model):
     """
@@ -34,10 +37,22 @@ class QubitStatePauliModel(Model):
     and Pauli measurement operators.
     """    
     
-    def __init__(self, hs_dim):
-        Model.__init__(self,hs_dim=2)
+    @property
+    def n_modelparams(self):
+        return 3
         
-    def likelihood(outcomes,expparams,modelparams):
+    @property
+    def expparams_dtype(self):
+        return 'int'
+
+    @staticmethod
+    def is_model_valid(self, modelparams):
+        return modelparams[0]**2 + modelparams[1]**2 + modelparams[2]**2 <= 1
+    
+    def n_outcomes(self, expparams):
+        return expparams[0]
+        
+    def likelihood(self, outcomes, modelparams, expparams):
         """
         Calculates the likelihood function at the states specified 
         by modelparams and measurement specified by expparams.
@@ -49,56 +64,39 @@ class QubitStatePauliModel(Model):
         outcomes = 
             measurement outcome counts
         expparams = 
-            measurement operator specs and other experimental specs
+            number of measurements
         modelparams = 
-            quantum state specs
+            quantum state Bloch vector
         """
         
-        # assumes Pauli X,Y,Z measurements for now (i.e. expparams does nothing)
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(QubitStatePauliModel, self).likelihood(outcomes, modelparams, expparams)
         
-        ps = self.params2probs(expparams,modelparams)                
-        prob = self.finalprobs(outcomes,ps)
-                
-        return prob
-        
-    def params2probs(expparams,modelparams):
-        """
-        Converts (via the Born rule) a description of the states and
-        measurements to probabilities
-        
-        Parameters
-        ----------
-        expparams = 
-            measurement operator specs and other experimental specs
-        modelparams = 
-            quantum state specs
-        """        
-        
-        # assumes Pauli X,Y,Z measurements for now (i.e. expparams does nothing)
         ps = np.zeros((3,))
         
         ps[0] = 0.5*(1+modelparams[0])
         ps[1] = 0.5*(1+modelparams[1])
         ps[2] = 0.5*(1+modelparams[2])
-        
-        return ps
-        
-    def finalprob(outcomes,ps):
-        """
-        Converts the probabilities of each measurement into the final 
-        
-        Parameters
-        ----------
-        outcomes = 
-            measurement outcome counts
-        ps = 
-            probabilities for each measurement outcome
-        """
-        num_meas = np.sum(outcomes,axis=1)
-        # assumes each measurement is Bernoulli trial
-        logprob = term with log of factorials + 
-                    outcomes[0,0]*log(ps[0]) + outcomes[0,1]*log(1-ps[0]) 
-                    outcomes[1,0]*log(ps[1]) + outcomes[1,1]*log(1-ps[1])
-                    outcomes[2,0]*log(ps[2]) + outcomes[2,1]*log(1-ps[2])
+
+        logprob = 3*gammaln(expparams[0]+1) \
+        -gammaln(outcomes[0]+1) - gammaln(expparams[0] - outcomes[0]+1) \
+        -gammaln(outcomes[1]+1) - gammaln(expparams[0] - outcomes[1]+1) \
+        -gammaln(outcomes[2]+1) - gammaln(expparams[0] - outcomes[2]+1) \
+        +outcomes[0]*np.log(ps[0]) + (expparams[0] - outcomes[0])*np.log(1-ps[0]) \
+        +outcomes[1]*np.log(ps[1]) + (expparams[0] - outcomes[1])*np.log(1-ps[1]) \
+        +outcomes[2]*np.log(ps[2]) + (expparams[0] - outcomes[2])*np.log(1-ps[2]) \
                 
-        return exp(logprob)
+        return np.exp(logprob)
+        
+## TESTING CODE ################################################################
+
+if __name__ == "__main__":
+
+    m = QubitStatePauliModel()
+    L = m.likelihood(
+        np.array([5,5,5]),
+        np.array([0,0,0]),
+        np.array([10])
+    )
+    print L
