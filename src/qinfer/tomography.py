@@ -46,11 +46,14 @@ class HaarUniform(object):
     
     def sample(self):
         #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)        
-        z = (np.random.randn((self.dim,self.dim)) + 1j*np.random.randn((self.dim,self.dim)))/np.sqrt(2.0)
+        z = (np.random.randn(self.dim,self.dim) + 1j*np.random.randn(self.dim,self.dim))/np.sqrt(2.0)
         q,r = la.qr(z)
         d = np.diag(r)
+        
         ph = d/np.abs(d)
-        return q*ph*q
+        ph = np.diag(ph)
+        
+        return np.dot(q,ph)
         
                 
 # TODO: make the following into Distributions.        
@@ -128,59 +131,80 @@ class QubitStatePauliModel(Model):
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":
-
-    
-    # commented out stuff below is for 3D
-#    from mpl_toolkits.mplot3d import Axes3D
-    import matplotlib.pyplot as plt
-    
-    
-    m = QubitStatePauliModel()
-    
-    fig = plt.figure()
-#    ax = fig.add_subplot(111, projection='3d')
-    x = y = np.arange(-1, 1, 0.01)
-    X, Y = np.meshgrid(x, y)
-    zs = np.array([m.likelihood(
-    np.array([25,1,25]),
-    np.array([x,y,0]),
-    np.array([50]))
-    for x,y in zip(np.ravel(X), np.ravel(Y))])
-    Z = zs.reshape(X.shape)
-  
-    zs2 = np.array([m.likelihood(
-    np.array([25,25,25]),
-    np.array([x,y,0]),
-    np.array([50]))
-    for x,y in zip(np.ravel(X), np.ravel(Y))])
-    Z2 = zs2.reshape(X.shape)
-    
-    zs3 = np.array([m.likelihood(
-    np.array([8,8,25]),
-    np.array([x,y,0]),
-    np.array([50]))
-    for x,y in zip(np.ravel(X), np.ravel(Y))])
-    Z3 = zs3.reshape(X.shape)
-    
-  #  ax.plot_surface(X, Y, Z)
-  #  ax.set_xlabel('X')
-  #  ax.set_ylabel('Y')
-  #  ax.set_zlabel('Pr(data|X,Y,0)')
-
-    t = np.arange(0, 2*np.pi, 0.01)
-    xx = np.cos(t)
-    yy = np.sin(t)    
-    
-    plt.plot(xx,yy,'k')
-
-    plt.contour(X,Y,Z)
-    plt.contour(X,Y,Z2)
-    plt.contour(X,Y,Z3)
-    
-    
-    plt.show()    
+#
+#    
+#    # commented out stuff below is for 3D
+##    from mpl_toolkits.mplot3d import Axes3D
+#    import matplotlib.pyplot as plt
+#    
+#    
+#    m = QubitStatePauliModel()
+#    
+#    fig = plt.figure()
+##    ax = fig.add_subplot(111, projection='3d')
+#    x = y = np.arange(-1, 1, 0.01)
+#    X, Y = np.meshgrid(x, y)
+#    zs = np.array([m.likelihood(
+#    np.array([25,1,25]),
+#    np.array([x,y,0]),
+#    np.array([50]))
+#    for x,y in zip(np.ravel(X), np.ravel(Y))])
+#    Z = zs.reshape(X.shape)
+#  
+#    zs2 = np.array([m.likelihood(
+#    np.array([25,25,25]),
+#    np.array([x,y,0]),
+#    np.array([50]))
+#    for x,y in zip(np.ravel(X), np.ravel(Y))])
+#    Z2 = zs2.reshape(X.shape)
+#    
+#    zs3 = np.array([m.likelihood(
+#    np.array([8,8,25]),
+#    np.array([x,y,0]),
+#    np.array([50]))
+#    for x,y in zip(np.ravel(X), np.ravel(Y))])
+#    Z3 = zs3.reshape(X.shape)
+#    
+#  #  ax.plot_surface(X, Y, Z)
+#  #  ax.set_xlabel('X')
+#  #  ax.set_ylabel('Y')
+#  #  ax.set_zlabel('Pr(data|X,Y,0)')
+#
+#    t = np.arange(0, 2*np.pi, 0.01)
+#    xx = np.cos(t)
+#    yy = np.sin(t)    
+#    
+#    plt.plot(xx,yy,'k')
+#
+#    plt.contour(X,Y,Z)
+#    plt.contour(X,Y,Z2)
+#    plt.contour(X,Y,Z3)
+#    
+#    
+#    plt.show()    
 
 
 #### TEST PRIORS #############################################################        
-#    prior = HaarUniform()
-#    print prior.sample()
+    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib.pyplot as plt 
+
+    prior = HaarUniform()
+    
+    n = 1000
+    x = np.zeros((n,))   
+    y = np.zeros((n,))    
+    z = np.zeros((n,))
+    
+    for idx in xrange(n):
+        U = prior.sample()
+        psi = np.dot(U,np.array([1,0]))
+        z[idx] = np.real(np.dot(psi.conj(),np.dot(np.array([[1,0],[0,-1]]),psi)))
+        y[idx] = np.real(np.dot(psi.conj(),np.dot(np.array([[0,-1j],[1j,0]]),psi)))
+        x[idx] = np.real(np.dot(psi.conj(),np.dot(np.array([[0,1],[1,0]]),psi)))
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    
+    ax.scatter(x,y,z)
+    plt.show()
