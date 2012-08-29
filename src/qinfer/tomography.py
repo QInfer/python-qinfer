@@ -30,6 +30,42 @@ from __future__ import division
 import numpy as np
 from utils import gammaln
 from abstract_model import Model
+import scipy.linalg as la
+
+class HaarUniform(object):
+    """
+    Creates a new Haar uniform prior on state space of dimension dim
+
+    Parameters
+    -----------
+    dim : int
+        dimension of the state space
+    """
+    def __init__(self,dim = 2):
+        self.dim = dim
+    
+    def sample(self):
+        #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)        
+        z = (np.random.randn((self.dim,self.dim)) + 1j*np.random.randn((self.dim,self.dim)))/np.sqrt(2.0)
+        q,r = la.qr(z)
+        d = np.diag(r)
+        ph = d/np.abs(d)
+        return q*ph*q
+        
+                
+# TODO: make the following into Distributions.        
+class HilbertSchmidtUniform(object):
+    """
+    Creates a new Hilber-Schmidt uniform prior on state space of dimension dim
+
+    Parameters
+    -----------
+    dim : int
+        dimension of the state space
+    """
+    def __init__(self,dim = 2):
+        self.dim = dim
+
 
 class QubitStatePauliModel(Model):
     """
@@ -100,3 +136,6 @@ if __name__ == "__main__":
         np.array([10])
     )
     print L
+    
+    prior = HaarUniform()
+    print prior.sample()

@@ -53,29 +53,3 @@ class UniformDistribution(Distribution):
         z = np.random.random((self._n_rvs,))
         return self._ranges[:, 0] + z * self._delta
 
-# TODO: make the following into Distributions.
-
-class HaarUniform(object):
-    """
-    Creates a new Haar uniform prior on state space of dimension dim
-
-    Parameters
-    -----------
-    dim : int
-        dimension of the state space
-    """
-    def __init__(self,dim = 2):
-        self.dim = dim
-    
-    
-class HilbertSchmidtUniform(object):
-    """
-    Creates a new Hilber-Schmidt uniform prior on state space of dimension dim
-
-    Parameters
-    -----------
-    dim : int
-        dimension of the state space
-    """
-    def __init__(self,dim = 2):
-        self.dim = dim
