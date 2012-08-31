@@ -53,8 +53,15 @@ class HaarUniform(object):
         ph = d/np.abs(d)
         ph = np.diag(ph)
         
-        return np.dot(q,ph)
+        U = np.dot(q,ph)
         
+        #Apply Haar random unitary to |0> state to get random pure state
+        psi = np.dot(U,np.array([1,0]))
+        z = np.real(np.dot(psi.conj(),np.dot(np.array([[1,0],[0,-1]]),psi)))
+        y = np.real(np.dot(psi.conj(),np.dot(np.array([[0,-1j],[1j,0]]),psi)))
+        x = np.real(np.dot(psi.conj(),np.dot(np.array([[0,1],[1,0]]),psi)))
+        
+        return np.array([x,y,z])
                 
 # TODO: make the following into Distributions.        
 class HilbertSchmidtUniform(object):
@@ -85,7 +92,7 @@ class QubitStatePauliModel(Model):
         return 'int'
 
     @staticmethod
-    def is_model_valid(self, modelparams):
+    def is_model_valid(modelparams):
         return modelparams[0]**2 + modelparams[1]**2 + modelparams[2]**2 <= 1
     
     def n_outcomes(self, expparams):
@@ -111,100 +118,113 @@ class QubitStatePauliModel(Model):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
         super(QubitStatePauliModel, self).likelihood(outcomes, modelparams, expparams)
-        
-        ps = np.zeros((3,))
-        
-        ps[0] = 0.5*(1+modelparams[0])
-        ps[1] = 0.5*(1+modelparams[1])
-        ps[2] = 0.5*(1+modelparams[2])
 
-        logprob = 3*gammaln(expparams[0]+1) \
+        ps = 0.5*(1+modelparams)
+        
+        logprob = np.zeros(ps.shape)
+        for idx in xrange(ps.shape[0]):
+            logprob[idx,:] = \
+            outcomes[0]*np.log(ps[idx,0]) + (expparams[0] - outcomes[0])*np.log(1-ps[idx,0]) \
+            +outcomes[1]*np.log(ps[idx,1]) + (expparams[0] - outcomes[1])*np.log(1-ps[idx,1]) \
+            +outcomes[2]*np.log(ps[idx,2]) + (expparams[0] - outcomes[2])*np.log(1-ps[idx,2]) 
+        
+        logprob += 3*gammaln(expparams[0]+1) \
         -gammaln(outcomes[0]+1) - gammaln(expparams[0] - outcomes[0]+1) \
         -gammaln(outcomes[1]+1) - gammaln(expparams[0] - outcomes[1]+1) \
-        -gammaln(outcomes[2]+1) - gammaln(expparams[0] - outcomes[2]+1) \
-        +outcomes[0]*np.log(ps[0]) + (expparams[0] - outcomes[0])*np.log(1-ps[0]) \
-        +outcomes[1]*np.log(ps[1]) + (expparams[0] - outcomes[1])*np.log(1-ps[1]) \
-        +outcomes[2]*np.log(ps[2]) + (expparams[0] - outcomes[2])*np.log(1-ps[2]) \
-                
-        return np.exp(logprob)
+        -gammaln(outcomes[2]+1) - gammaln(expparams[0] - outcomes[2]+1)
+            
+            
+        return np.array([np.real(np.exp(logprob))])
         
+    def simulate_experiment(self, modelparams, expparams):
+        # simulate three independent experiments
+        outcomes = np.zeros((3,))
+        for idx in xrange(expparams[0]):
+            randy = np.random.rand(3)
+            if randy[0] < 0.5*(1+modelparams[0][0]):
+                outcomes[0] += 1
+            if randy[1] < 0.5*(1+modelparams[0][1]):
+                outcomes[1] += 1
+            if randy[2] < 0.5*(1+modelparams[0][2]):
+                outcomes[2] += 1
+                
+        
+        return outcomes
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":
 #
 #    
 #    # commented out stuff below is for 3D
-##    from mpl_toolkits.mplot3d import Axes3D
-#    import matplotlib.pyplot as plt
-#    
-#    
-#    m = QubitStatePauliModel()
-#    
-#    fig = plt.figure()
-##    ax = fig.add_subplot(111, projection='3d')
-#    x = y = np.arange(-1, 1, 0.01)
-#    X, Y = np.meshgrid(x, y)
-#    zs = np.array([m.likelihood(
-#    np.array([25,1,25]),
-#    np.array([x,y,0]),
-#    np.array([50]))
-#    for x,y in zip(np.ravel(X), np.ravel(Y))])
-#    Z = zs.reshape(X.shape)
-#  
-#    zs2 = np.array([m.likelihood(
-#    np.array([25,25,25]),
-#    np.array([x,y,0]),
-#    np.array([50]))
-#    for x,y in zip(np.ravel(X), np.ravel(Y))])
-#    Z2 = zs2.reshape(X.shape)
-#    
-#    zs3 = np.array([m.likelihood(
-#    np.array([8,8,25]),
-#    np.array([x,y,0]),
-#    np.array([50]))
-#    for x,y in zip(np.ravel(X), np.ravel(Y))])
-#    Z3 = zs3.reshape(X.shape)
-#    
-#  #  ax.plot_surface(X, Y, Z)
-#  #  ax.set_xlabel('X')
-#  #  ax.set_ylabel('Y')
-#  #  ax.set_zlabel('Pr(data|X,Y,0)')
-#
-#    t = np.arange(0, 2*np.pi, 0.01)
-#    xx = np.cos(t)
-#    yy = np.sin(t)    
-#    
-#    plt.plot(xx,yy,'k')
-#
-#    plt.contour(X,Y,Z)
-#    plt.contour(X,Y,Z2)
-#    plt.contour(X,Y,Z3)
-#    
-#    
-#    plt.show()    
+    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib.pyplot as plt
+    
+    
+    m = QubitStatePauliModel()
+    
+    fig = plt.figure()
+#    ax = fig.add_subplot(111, projection='3d')
+    x = y = np.arange(-1, 1, 0.01)
+    X, Y = np.meshgrid(x, y)
+    zs = np.array([m.likelihood(
+    np.array([25,25,25]),
+    np.array([[x,y,0]]),
+    np.array([50]))
+    for x,y in zip(np.ravel(X), np.ravel(Y))])  
+    Z = zs[:,0,0,0].reshape(X.shape)
+  
+    zs2 = np.array([m.likelihood(
+    np.array([25,1,25]),
+    np.array([[x,y,0]]),
+    np.array([50]))
+    for x,y in zip(np.ravel(X), np.ravel(Y))])
+    Z2 = zs2[:,0,0,0].reshape(X.shape)
+    
+    zs3 = np.array([m.likelihood(
+    np.array([8,8,25]),
+    np.array([[x,y,0]]),
+    np.array([50]))
+    for x,y in zip(np.ravel(X), np.ravel(Y))])
+    Z3 = zs3[:,0,0,0].reshape(X.shape)
+    
+  #  ax.plot_surface(X, Y, Z)
+  #  ax.set_xlabel('X')
+  #  ax.set_ylabel('Y')
+  #  ax.set_zlabel('Pr(data|X,Y,0)')
+
+    t = np.arange(0, 2*np.pi, 0.01)
+    xx = np.cos(t)
+    yy = np.sin(t)    
+    
+    plt.plot(xx,yy,'k')
+
+    plt.contour(X,Y,Z)
+    plt.contour(X,Y,Z2)
+    plt.contour(X,Y,Z3)
+    
+    
+    plt.show()    
 
 
 #### TEST PRIORS #############################################################        
-    from mpl_toolkits.mplot3d import Axes3D
-    import matplotlib.pyplot as plt 
-
-    prior = HaarUniform()
-    
-    n = 1000
-    x = np.zeros((n,))   
-    y = np.zeros((n,))    
-    z = np.zeros((n,))
-    
-    for idx in xrange(n):
-        U = prior.sample()
-        psi = np.dot(U,np.array([1,0]))
-        z[idx] = np.real(np.dot(psi.conj(),np.dot(np.array([[1,0],[0,-1]]),psi)))
-        y[idx] = np.real(np.dot(psi.conj(),np.dot(np.array([[0,-1j],[1j,0]]),psi)))
-        x[idx] = np.real(np.dot(psi.conj(),np.dot(np.array([[0,1],[1,0]]),psi)))
-
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    
-    ax.scatter(x,y,z)
-    plt.show()
+#    from mpl_toolkits.mplot3d import Axes3D
+#    import matplotlib.pyplot as plt 
+#
+#    prior = HaarUniform()
+#    
+#    n = 1000
+#    x = np.zeros((n,))   
+#    y = np.zeros((n,))    
+#    z = np.zeros((n,))
+#    
+#    for idx in xrange(n):
+#        temp = prior.sample()
+#        x[idx] = temp[0]        
+#        y[idx] = temp[1]        
+#        z[idx] = temp[2]        
+#        
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111, projection='3d')
+#    
+#    ax.scatter(x,y,z)
+#    plt.show()
