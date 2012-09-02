@@ -35,13 +35,23 @@ if __name__ == "__main__":
     expparams = np.array([1])
     
     # SMC initialization
-    updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=0.98, resample_thresh=0)
+    updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.99, resample_thresh=0)
     
     
     tic = toc = None
     
     # Sample true set of modelparams
     truemp = np.array([prior.sample()])
+    
+
+    #Plot true state and prior
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    particles = updater.particle_locations
+    
+    ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10)
+    ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red',s = 25)
+ 
     
     # Get all Bayesian up in here
     n_exp = 2
@@ -50,7 +60,19 @@ if __name__ == "__main__":
         
         outcome = model.simulate_experiment(truemp, expparams)
         updater.update(outcome, expparams)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
         
+        particles = updater.particle_locations
+        weights = updater.particle_weights
+        maxweight = np.max(weights)
+   
+        ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
+        ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red', s= 25)
+        ax.scatter(2*outcome[0]/expparams[0]-1,2*outcome[1]/expparams[0]-1,2*outcome[2]/expparams[0]-1,s = 50, c = 'black')
+
+    est_mean = updater.est_mean()
+    ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    
     toc = time.time() - tic
         
     print "True param: {}".format(truemp)    
@@ -62,15 +84,5 @@ if __name__ == "__main__":
     print "Elapsed time: {}".format(toc)
  
         
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-        
-    particles = updater.particle_locations
-    weights = updater.particle_weights
-    minweight = min(weights)
-    maxweight = max(weights)
-   
-    ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 100*weights/maxweight)
-    ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red')
     
     plt.show()  
