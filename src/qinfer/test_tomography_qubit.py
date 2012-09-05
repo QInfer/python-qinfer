@@ -27,12 +27,12 @@ import time
 
 if __name__ == "__main__":
 
-    N_PARTICLES = 250
+    N_PARTICLES = 100
             
     # Model and prior initialization
-    prior = tomography.HaarUniform()
+    prior = tomography.HilbertSchmidtUniform()
     model = tomography.QubitStatePauliModel()
-    expparams = np.array([1])
+    expparams = np.array([[1,0,0,1]])
     
     # SMC initialization
     updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.99, resample_thresh=0)
@@ -58,18 +58,19 @@ if __name__ == "__main__":
     tic = time.time()
     for idx_exp in xrange(n_exp):
         
-        outcome = model.simulate_experiment(truemp, expparams)
+        outcome = np.array([model.simulate_experiment(truemp, expparams)])
+       
         updater.update(outcome, expparams)
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         
         particles = updater.particle_locations
-        weights = updater.particle_weights
+        weights = updater.particle_weights      
         maxweight = np.max(weights)
    
         ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
         ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red', s= 25)
-        ax.scatter(2*outcome[0]/expparams[0]-1,2*outcome[1]/expparams[0]-1,2*outcome[2]/expparams[0]-1,s = 50, c = 'black')
+#        ax.scatter(2*outcome[0]/expparams[0]-1,2*outcome[1]/expparams[0]-1,2*outcome[2]/expparams[0]-1,s = 50, c = 'black')
 
     est_mean = updater.est_mean()
     ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    

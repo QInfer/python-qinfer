@@ -55,6 +55,7 @@ class HaarUniform(object):
         
         U = np.dot(q,ph)
         
+        #TODO: generalize this to general dimensions
         #Apply Haar random unitary to |0> state to get random pure state
         psi = np.dot(U,np.array([1,0]))
         z = np.real(np.dot(psi.conj(),np.dot(np.array([[1,0],[0,-1]]),psi)))
@@ -62,11 +63,40 @@ class HaarUniform(object):
         x = np.real(np.dot(psi.conj(),np.dot(np.array([[0,1],[1,0]]),psi)))
         
         return np.array([x,y,z])
+
+class GinibreUniform(object):
+    """
+    Creates a prior on state space of dimension dim according to the Ginibre
+    ensemble with parameter k
+    see e.g. http://www.iitis.pl/~miszczak/files/papers/miszczak12generating
+    
+    Parameters
+    -----------
+    dim : int
+        dimension of the state space
+    """
+    def __init__(self,dim = 2, k = 2):
+        self.dim = dim
+        self.k = k
+        
+    def sample(self):
+        #Generate random matrix        
+        z = np.random.randn(self.dim,self.k) + 1j*np.random.randn(self.dim,self.k)
+        
+        rho = np.dot(z,z.conj().transpose())
+        rho = rho/np.trace(rho)
+        
+        z = np.real(np.trace(np.dot(rho,np.array([[1,0],[0,-1]]))))
+        y = np.real(np.trace(np.dot(rho,np.array([[0,-1j],[1j,0]]))))
+        x = np.real(np.trace(np.dot(rho,np.array([[0,1],[1,0]]))))
+        
+        return np.array([x,y,z])
                 
 # TODO: make the following into Distributions.        
 class HilbertSchmidtUniform(object):
     """
     Creates a new Hilber-Schmidt uniform prior on state space of dimension dim
+    see e.g. http://www.iitis.pl/~miszczak/files/papers/miszczak12generating
 
     Parameters
     -----------
@@ -76,11 +106,35 @@ class HilbertSchmidtUniform(object):
     def __init__(self,dim = 2):
         self.dim = dim
 
+    def sample(self):
+        #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)        
+        g = (np.random.randn(self.dim,self.dim) + 1j*np.random.randn(self.dim,self.dim))/np.sqrt(2.0)
+        q,r = la.qr(g)
+        d = np.diag(r)
+        
+        ph = d/np.abs(d)
+        ph = np.diag(ph)
+        
+        U = np.dot(q,ph)
+
+        #Generate random matrix        
+        z = np.random.randn(self.dim,self.dim) + 1j*np.random.randn(self.dim,self.dim)
+        
+        rho = np.dot(np.dot(np.identity(self.dim)+U,np.dot(z,z.conj().transpose())),np.identity(self.dim)+U.conj().transpose())
+        rho = rho/np.trace(rho)
+        
+        z = np.real(np.trace(np.dot(rho,np.array([[1,0],[0,-1]]))))
+        y = np.real(np.trace(np.dot(rho,np.array([[0,-1j],[1j,0]]))))
+        x = np.real(np.trace(np.dot(rho,np.array([[0,1],[1,0]]))))
+        
+        return np.array([x,y,z])
 
 class QubitStatePauliModel(Model):
     """
     Represents an experimental system with unknown quantum state,
-    and Pauli measurement operators.
+    and a limited visibility projective measurement.
+    
+    States are represented in the Pauli representation.
     """    
     
     @property
@@ -89,28 +143,28 @@ class QubitStatePauliModel(Model):
         
     @property
     def expparams_dtype(self):
-        return 'int'
+        return 'float'
 
     @staticmethod
     def is_model_valid(modelparams):
         return modelparams[0]**2 + modelparams[1]**2 + modelparams[2]**2 <= 1
     
-    def n_outcomes(self, expparams):
-        return expparams[0]
+    def n_outcomes(self):
+        return 2
         
     def likelihood(self, outcomes, modelparams, expparams):
         """
         Calculates the likelihood function at the states specified 
         by modelparams and measurement specified by expparams.
         This is given by the Born rule and is the probability of
-        outcomes given the state and measurement operators.
+        outcomes given the state and measurement operator.
         
         Parameters
         ----------
         outcomes = 
-            measurement outcome counts
+            measurement outcome
         expparams = 
-            number of measurements
+            Bloch vector of measurement axis and visibility
         modelparams = 
             quantum state Bloch vector
         """
@@ -118,99 +172,40 @@ class QubitStatePauliModel(Model):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
         super(QubitStatePauliModel, self).likelihood(outcomes, modelparams, expparams)
-
-        ps = 0.5*(1+modelparams)
         
-        logprob = np.zeros(ps.shape)
-        for idx in xrange(ps.shape[0]):
-            logprob[idx,:] = \
-            outcomes[0]*np.log(ps[idx,0]) + (expparams[0] - outcomes[0])*np.log(1-ps[idx,0]) \
-            +outcomes[1]*np.log(ps[idx,1]) + (expparams[0] - outcomes[1])*np.log(1-ps[idx,1]) \
-            +outcomes[2]*np.log(ps[idx,2]) + (expparams[0] - outcomes[2])*np.log(1-ps[idx,2]) 
+        pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
         
-        logprob += 3*gammaln(expparams[0]+1) \
-        -gammaln(outcomes[0]+1) - gammaln(expparams[0] - outcomes[0]+1) \
-        -gammaln(outcomes[1]+1) - gammaln(expparams[0] - outcomes[1]+1) \
-        -gammaln(outcomes[2]+1) - gammaln(expparams[0] - outcomes[2]+1)
-            
-            
-        return np.array([np.real(np.exp(logprob))])
+        pr0 = 0.5*(1 + np.sum(modelparams*expparams[:,0:3],1))
         
-    def simulate_experiment(self, modelparams, expparams):
-        # simulate three independent experiments
-        outcomes = np.zeros((3,))
-        for idx in xrange(expparams[0]):
-            randy = np.random.rand(3)
-            if randy[0] < 0.5*(1+modelparams[0][0]):
-                outcomes[0] += 1
-            if randy[1] < 0.5*(1+modelparams[0][1]):
-                outcomes[1] += 1
-            if randy[2] < 0.5*(1+modelparams[0][2]):
-                outcomes[2] += 1
+        pr0 = np.array([expparams[:,3]*pr0])
                 
+        # Now we concatenate over outcomes.
+        return Model.pr0_to_likelihood_array(outcomes, pr0)        
+
+
+    def simulate_experiment(self, modelparams, expparams):                
+        probabilities = map(lambda outcome: self.likelihood(np.array([outcome]), modelparams, expparams), range(self.n_outcomes()))
+        cdf = np.cumsum(probabilities)
+        randnum = np.random.random((1,))
         
-        return outcomes
+        return np.argmax(cdf > randnum)
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":
 #
-#    
-#    # commented out stuff below is for 3D
-    from mpl_toolkits.mplot3d import Axes3D
-    import matplotlib.pyplot as plt
-    
-    
     m = QubitStatePauliModel()
-    
-    fig = plt.figure()
-#    ax = fig.add_subplot(111, projection='3d')
-    x = y = np.arange(-1, 1, 0.01)
-    X, Y = np.meshgrid(x, y)
-    zs = np.array([m.likelihood(
-    np.array([25,25,25]),
-    np.array([[x,y,0]]),
-    np.array([50]))
-    for x,y in zip(np.ravel(X), np.ravel(Y))])  
-    Z = zs[:,0,0,0].reshape(X.shape)
-  
-    zs2 = np.array([m.likelihood(
-    np.array([25,1,25]),
-    np.array([[x,y,0]]),
-    np.array([50]))
-    for x,y in zip(np.ravel(X), np.ravel(Y))])
-    Z2 = zs2[:,0,0,0].reshape(X.shape)
-    
-    zs3 = np.array([m.likelihood(
-    np.array([8,8,25]),
-    np.array([[x,y,0]]),
-    np.array([50]))
-    for x,y in zip(np.ravel(X), np.ravel(Y))])
-    Z3 = zs3[:,0,0,0].reshape(X.shape)
-    
-  #  ax.plot_surface(X, Y, Z)
-  #  ax.set_xlabel('X')
-  #  ax.set_ylabel('Y')
-  #  ax.set_zlabel('Pr(data|X,Y,0)')
-
-    t = np.arange(0, 2*np.pi, 0.01)
-    xx = np.cos(t)
-    yy = np.sin(t)    
-    
-    plt.plot(xx,yy,'k')
-
-    plt.contour(X,Y,Z)
-    plt.contour(X,Y,Z2)
-    plt.contour(X,Y,Z3)
-    
-    
-    plt.show()    
-
+    L = m.likelihood(
+        np.array([1]),
+        np.array([[0,0,0], [0.9,0,0], [0.1,0,0]]),
+        np.array([[1,0,0,1]])
+    )
+    print L
 
 #### TEST PRIORS #############################################################        
 #    from mpl_toolkits.mplot3d import Axes3D
 #    import matplotlib.pyplot as plt 
 #
-#    prior = HaarUniform()
+#    prior = HilbertSchmidtUniform()
 #    
 #    n = 1000
 #    x = np.zeros((n,))   
