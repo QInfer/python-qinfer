@@ -163,7 +163,7 @@ class BinomialModel(Model):
         #        helpful if binomial_pdf could take a vector for its `N`
         #        argument, if it can't already.
         return np.concatenate([
-            binomial_pdf(expparams['n_meas'][idx], outcomes[idx], pr0)
+            binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr0)
             for idx in xrange(outcomes.shape[0])
             ]) 
 
@@ -189,3 +189,4 @@ if __name__ == "__main__":
         ep
     )
     print L
+    print L.shape

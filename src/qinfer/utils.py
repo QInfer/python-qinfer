@@ -27,11 +27,13 @@
 
 from __future__ import division
 import numpy as np
+from scipy.special import gammaln
 
 ###############################################################################
 
 #TODO: not sure the best place to put this (The code seems to be floating
 # around the internet with varying levels of copyrights <= MIT license)
+"""
 def gammaln(n):
     
     # Check if we have a single outcome or an array.
@@ -56,7 +58,8 @@ def gammaln(n):
             se += c[j] / y
         gln[ndx] = -tm + np.log(2.5066282746310005 * se / x)
     return gln
-    
+"""
+
 #TODO: cases for p=0 or p=1
 def binomial_pdf(N,n,p):
     logprob = gammaln(N+1)-gammaln(n+1)- gammaln(N-n+1)  \
