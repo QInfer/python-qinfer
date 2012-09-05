@@ -158,10 +158,6 @@ class BinomialModel(Model):
             expparams['x'] if self._expparams_scalar else expparams)
         
         # Now we concatenate over outcomes.
-        # FIXME: The following line doesn't work right, as it assumes that
-        #        n_meas is constant for all experiments. To fix that, it'd be
-        #        helpful if binomial_pdf could take a vector for its `N`
-        #        argument, if it can't already.
         return np.concatenate([
             binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr0)
             for idx in xrange(outcomes.shape[0])

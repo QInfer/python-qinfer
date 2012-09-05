@@ -31,36 +31,8 @@ from scipy.special import gammaln
 
 ###############################################################################
 
-#TODO: not sure the best place to put this (The code seems to be floating
-# around the internet with varying levels of copyrights <= MIT license)
-"""
-def gammaln(n):
-    
-    # Check if we have a single outcome or an array.
-    if not isinstance(n, np.ndarray):
-        n = np.array([n])
-
-    gln = np.zeros(n.shape[0])
-    for ndx in xrange(n.shape[0]):    
-        if n[ndx] < 1:
-            return float('inf')
-        if n[ndx] < 3:
-            return 0.0
-        c = [76.18009172947146, -86.50532032941677, \
-             24.01409824083091, -1.231739572450155, \
-             0.001208650973866179, -0.5395239384953 * 0.00001]
-        x, y = float(n[ndx]), float(n[ndx])
-        tm = x + 5.5
-        tm -= (x + 0.5) * np.log(tm)
-        se = 1.0000000000000190015
-        for j in range(6):
-            y += 1.0
-            se += c[j] / y
-        gln[ndx] = -tm + np.log(2.5066282746310005 * se / x)
-    return gln
-"""
-
 #TODO: cases for p=0 or p=1
+@np.vectorize
 def binomial_pdf(N,n,p):
     logprob = gammaln(N+1)-gammaln(n+1)- gammaln(N-n+1)  \
         + n*np.log(p)+(N-n)*np.log(1-p)
