@@ -177,8 +177,10 @@ class QubitStatePauliModel(Model):
         
         pr0 = 0.5*(1 + np.sum(modelparams*expparams[:,0:3],1))
         
-        pr0 = np.array([expparams[:,3]*pr0])
-                
+        pr0 = expparams[:,3]*pr0
+
+        pr0 = pr0[:,np.newaxis]
+        
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)        
 
