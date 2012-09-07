@@ -154,7 +154,7 @@ class QubitStatePauliModel(Model):
     def is_model_valid(modelparams):
         return modelparams[0]**2 + modelparams[1]**2 + modelparams[2]**2 <= 1
     
-    def n_outcomes(self):
+    def n_outcomes(self, expparams):
         return 2
         
     def likelihood(self, outcomes, modelparams, expparams):
@@ -191,13 +191,7 @@ class QubitStatePauliModel(Model):
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)        
 
-
-    def simulate_experiment(self, modelparams, expparams):                
-        probabilities = map(lambda outcome: self.likelihood(np.array([outcome]), modelparams, expparams), range(self.n_outcomes()))
-        cdf = np.cumsum(probabilities)
-        randnum = np.random.random((1,))
         
-        return np.argmax(cdf > randnum)
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":

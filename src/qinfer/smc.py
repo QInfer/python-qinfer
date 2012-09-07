@@ -146,7 +146,7 @@ class SMCUpdater(object):
         if check_for_resample:
             self._maybe_resample()
         
-    def _maybe_resample():
+    def _maybe_resample(self):
         """
         Checks the resample threshold and conditionally resamples.
         """

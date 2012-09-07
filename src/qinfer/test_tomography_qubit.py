@@ -59,7 +59,7 @@ if __name__ == "__main__":
     truemp = np.array([prior.sample()])
     
 
-    #Plot true state and prior
+    # Plot true state and prior
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     particles = updater.particle_locations
@@ -72,10 +72,12 @@ if __name__ == "__main__":
     n_exp = 100
     tic = time.time()
     for idx_exp in xrange(n_exp):
-        # FIXME: the following line is broken, since the move to record arrays.
-        thisexp = expparams[:, np.random.randint(0,3),:]
+        # Randomly choose one of the three experiments from expparams and make
+        # an array containing just that experiment.
+        thisexp = expparams[np.newaxis, np.random.randint(0,3)]
+        assert thisexp.shape == (1,), "Shape of thisexp is wrong--- that should never happen."
         
-        outcome = np.array([model.simulate_experiment(truemp, thisexp)])
+        outcome = model.simulate_experiment(truemp, thisexp)
        
         updater.update(outcome, thisexp)
         

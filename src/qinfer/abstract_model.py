@@ -111,6 +111,19 @@ class Model(object):
         # Count the number of times the inner-most loop is called.
         self._call_count += outcomes.shape[0] * modelparams.shape[0] * expparams.shape[0]
                 
+    ## CONCRETE METHODS ##
+    # These methods depend on the abstract methods, and thus their behaviors
+    # change in each inheriting class.
+    
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        # TODO: document
+        probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
+        cdf = np.cumsum(probabilities)
+        randnum = np.random.random((repeat, 1))
+        
+        outcomes = np.argmax(cdf > randnum, axis=1)
+        return outcomes[0] if repeat==1 else outcomes
+                
     ## STATIC METHODS ##
     # These methods are provided as a convienence to make it easier to write
     # simple models.
