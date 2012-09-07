@@ -90,13 +90,14 @@ class SMCUpdater(object):
         """
         return 1 / (sum(self.particle_weights**2))
 
-    def hypothetical_update(self, outcome, expparams):
+    def hypothetical_update(self, outcomes, expparams):
         """
         Produces the particle weights for the posterior of a hypothetical
         experiment.
         
-        :param int outcome: Integer index of the outcome of the hypothetical experiment.
+        :param outcomes: Integer index of the outcome of the hypothetical experiment.
             TODO: Fix this to take an array-like of ints as well.
+        :type outcomes: int or an ndarray of dtype int.
         :param expparams: TODO
        
         :type weights: ndarray, shape (n_outcomes, n_expparams, n_particles)
@@ -108,14 +109,16 @@ class SMCUpdater(object):
         weights = np.copy(self.particle_weights)
         locs = self.particle_locations
         
-        # Check if we have a single outcome or an array.
-        if not isinstance(outcome, np.ndarray):
-            outcome = np.array([outcome])
+        # Check if we have a single outcome or an array. If we only have one
+        # outcome, wrap it in a one-index array.
+        if not isinstance(outcomes, np.ndarray):
+            outcomes = np.array([outcomes])
         
         # update the weights sans normalization
         # Rearrange so that likelihoods have shape (outcomes, experiments, models).
-        # This makes the multiplication with weights (shape (models,)) make sense.
-        L = self.model.likelihood(outcome, locs, expparams).transpose([0, 2, 1])
+        # This makes the multiplication with weights (shape (models,)) make sense,
+        # since NumPy broadcasting rules align on the right-most index.
+        L = self.model.likelihood(outcomes, locs, expparams).transpose([0, 2, 1])
         weights = weights * L
         
         # normalize
@@ -124,7 +127,7 @@ class SMCUpdater(object):
             # This introduces a length-1 axis for the particle number,
             # so that the normalization is broadcast over all particles.
     
-    def update(self, outcome, expparams):
+    def update(self, outcome, expparams, check_for_resample=True):
         """
         Given an experiment and an outcome of that experiment, updates the
         posterior distribution to reflect knowledge of that experiment.
@@ -140,9 +143,43 @@ class SMCUpdater(object):
         # indices first.
         self.particle_weights = self.hypothetical_update(outcome, expparams)[0, 0, :]
         
+        if check_for_resample:
+            self._maybe_resample()
+        
+    def _maybe_resample():
+        """
+        Checks the resample threshold and conditionally resamples.
+        """
         if self.n_ess < self.n_particles * self.resample_thresh:
             self.resample()
             pass
+            
+    def batch_update(self, outcomes, expparams, resample_interval=5):
+        r"""
+        Updates based on a batch of outcomes and experiments, rather than just
+        one.
+        
+        :param np.ndarray outcomes: An array of outcomes of the experiments that
+            were performed.
+        :param np.ndarray expparams: Either a scalar or record single-index
+            array of experiments that were performed.
+        :param int resample_interval: Controls how often to check whether
+            :math:`N_{\text{ess}}` falls below the resample threshold.
+        """
+        
+        # TODO: write a faster implementation here using vectorized calls to
+        #       likelihood.
+        
+        # Check that the number of outcomes and experiments is the same.
+        n_exps = outcomes.shape[0]
+        if expparams.shape[0] != n_exps:
+            raise ValueError("The number of outcomes and experiments must match.")
+            
+        # Loop over experiments and update one at a time.
+        for idx_exp, (outcome, experiment) in enumerate(izip(iter(outcomes), iter(expparams))):
+            self.update(outcome, experiment, check_for_resample=False)
+            if (idx_exp + 1) % resample_interval == 0:
+                self._maybe_resample()
             
     def resample(self):
         """

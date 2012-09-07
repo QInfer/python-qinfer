@@ -143,7 +143,12 @@ class QubitStatePauliModel(Model):
         
     @property
     def expparams_dtype(self):
-        return 'float'
+        # return 'float' <---- This implies a two-index array of scalars,
+        #                      but we need a one-index array of records.
+        return [('axis', '3f4'), ('vis', 'float')]
+        #                 ^
+        #                 |
+        #                 3 floats, each four bytes wide
 
     @staticmethod
     def is_model_valid(modelparams):
@@ -175,9 +180,11 @@ class QubitStatePauliModel(Model):
         
         pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
         
-        pr0 = 0.5*(1 + np.sum(modelparams*expparams[:,0:3],1))
+        # Note that expparams['axis'] has shape (n_exp, 3).
+        pr0 = 0.5*(1 + np.sum(modelparams*expparams['axis'],1))
         
-        pr0 = expparams[:,3]*pr0
+        # Note that expparams['vis'] has shape (n_exp, ).
+        pr0 = expparams['vis'] * pr0 + (1 - expparams['vis']) * 0.5
 
         pr0 = pr0[:,np.newaxis]
         

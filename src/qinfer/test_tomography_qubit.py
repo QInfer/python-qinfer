@@ -43,7 +43,11 @@ if __name__ == "__main__":
     # Model and prior initialization
     prior = tomography.HilbertSchmidtUniform()
     model = tomography.QubitStatePauliModel()
-    expparams = np.array([[[1,0,0,1],[0,1,0,1],[0,0,1,1]]])
+    expparams = np.array([
+        ([1, 0, 0], 1), # Records are indicated by tuples.
+        ([0, 1, 0], 1),
+        ([0, 0, 1], 1)
+    ], dtype=model.expparams_dtype)
     
     # SMC initialization
     updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=0.5)
@@ -68,7 +72,8 @@ if __name__ == "__main__":
     n_exp = 100
     tic = time.time()
     for idx_exp in xrange(n_exp):
-        thisexp = expparams[:,np.random.randint(0,3),:]
+        # FIXME: the following line is broken, since the move to record arrays.
+        thisexp = expparams[:, np.random.randint(0,3),:]
         
         outcome = np.array([model.simulate_experiment(truemp, thisexp)])
        
