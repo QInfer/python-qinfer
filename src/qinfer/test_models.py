@@ -63,7 +63,7 @@ class SimplePrecessionModel(Model):
     ## METHODS ##
     
     @staticmethod
-    def is_model_valid(self, modelparams):
+    def is_model_valid(modelparams):
         return modelparams[0] > 0
     
     def n_outcomes(self, expparams):
@@ -93,96 +93,17 @@ class SimplePrecessionModel(Model):
         return Model.pr0_to_likelihood_array(outcomes, pr0)
 
 
-class BinomialModel(Model):
-
-    def __init__(self, decorated_model):
-        super(BinomialModel, self).__init__()
-        self.decorated_model = decorated_model
-        
-        # TODO: Assert that the decorated model has two outcomes.
-        
-        if isinstance(decorated_model.expparams_dtype, str):
-            # We default to calling the original experiment parameters "x".
-            self._expparams_scalar = True
-            self._expparams_dtype = [('x', decorated_model.expparams_dtype), ('n_meas', 'uint')]
-        else:
-            self._expparams_scalar = False
-            self._expparams_dtype = decorated_model.expparams_dtype + [('n_meas', 'uint')]
-    
-    ## PROPERTIES ##
-    
-    @property
-    def n_modelparams(self):
-        # We have as many modelparameters as the underlying model.
-        return self.decorated_model.n_modelparams
-        
-    @property
-    def expparams_dtype(self):
-        return self._expparams_dtype
-    
-    @property
-    def is_n_outcomes_constant(self):
-        """
-        Returns ``True`` if and only if the number of outcomes for each
-        experiment is independent of the experiment being performed.
-        
-        This property is assumed by inference engines to be constant for
-        the lifetime of a Model instance.
-        """
-        return False
-    
-    ## METHODS ##
-    
-    @staticmethod
-    def is_model_valid(self, modelparams):
-        return self.decorated_model.is_model_valid(modelparams)
-    
-    def n_outcomes(self, expparams):
-        """
-        Returns an array of dtype ``uint`` describing the number of outcomes
-        for each experiment specified by ``expparams``.
-        
-        :param numpy.ndarray expparams: Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property.
-        """
-        return expparams['n_meas'] + 1
-    
-    def likelihood(self, outcomes, modelparams, expparams):
-        # By calling the superclass implementation, we can consolidate
-        # call counting there.
-        super(BinomialModel, self).likelihood(outcomes, modelparams, expparams)
-        pr0 = self.decorated_model.likelihood(
-            np.array([0], dtype='uint'),
-            modelparams,
-            expparams['x'] if self._expparams_scalar else expparams)
-        
-        # Now we concatenate over outcomes.
-        return np.concatenate([
-            binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr0)
-            for idx in xrange(outcomes.shape[0])
-            ]) 
-
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":
 
-#    m = SimplePrecessionModel()
-#    L = m.likelihood(
-#        np.array([1]),
-#        np.array([[0.1], [0.2], [0.4]]),
-#        np.array([1/2, 17/3]) * np.pi
-#    )
-#    print L
-#    assert m.call_count == 6
-#    assert L.shape == (1, 3, 2)
-    
-    m = BinomialModel(SimplePrecessionModel())
-    ep = np.array([(0.5 * np.pi, 10), (0.51 * np.pi, 10)], dtype=m.expparams_dtype)
+    m = SimplePrecessionModel()
     L = m.likelihood(
-        np.array([6, 7, 8, 9, 10]),
-        np.array([[0.1]]),# [0.2], [0.4]]),
-        ep
+        np.array([1]),
+        np.array([[0.1], [0.2], [0.4]]),
+        np.array([1/2, 17/3]) * np.pi
     )
     print L
-    print L.shape
+    assert m.call_count == 6
+    assert L.shape == (1, 3, 2)
+
