@@ -244,5 +244,14 @@ class SMCUpdater(object):
                 )
             ) - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
             
+    def est_credible_region(self, level = 0.95):
+        # sort the particles by weight
+        idsort = np.argsort(self.particle_weights)[::-1]
+        # cummulative sum of the sorted weights
+        cumsum_weights = np.cumsum(self.particle_weights[idsort])
+        # find all the indices where the sum is less than level
+        idcred = cumsum_weights <= level
+        # particle locations inside the region
+        return self.particle_locations[idsort][idcred]
         
-    
+                

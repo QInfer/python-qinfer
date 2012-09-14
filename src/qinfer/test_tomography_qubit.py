@@ -33,8 +33,10 @@ from __future__ import division
 import numpy as np
 import tomography, smc
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import time
+from scipy.spatial import Delaunay
 
 if __name__ == "__main__":
 
@@ -91,10 +93,20 @@ if __name__ == "__main__":
        
             ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
             ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red', s= 25)
-            ax.scatter(thisexp[0,0]*(-1)**(outcome[0]),thisexp[0,1]*(-1)**(outcome[0]),thisexp[0,2]*(-1)**(outcome[0]),s = 50, c = 'black')
+#            ax.scatter(thisexp[0,0]*(-1)**(outcome[0]),thisexp[0,1]*(-1)**(outcome[0]),thisexp[0,2]*(-1)**(outcome[0]),s = 50, c = 'black')
 
     est_mean = updater.est_mean()
     ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    
+    
+    points = updater.est_credible_region(level = .95)
+    tri = Delaunay(points)
+    faces = []
+    for ia, ib, ic in tri.convex_hull:
+        faces.append(points[[ia, ib, ic]])    
+    
+    items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
+    ax.add_collection(items)
+
     toc = time.time() - tic
         
     print "True param: {}".format(truemp)    
