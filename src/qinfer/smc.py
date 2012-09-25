@@ -88,7 +88,7 @@ class SMCUpdater(object):
         
         :return float: The effective sample size, given by :math:`1/\sum_i w_i^2`.
         """
-        return 1 / (sum(self.particle_weights**2))
+        return 1 / (np.sum(self.particle_weights**2))
 
     def hypothetical_update(self, outcomes, expparams):
         """
