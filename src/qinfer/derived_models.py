@@ -91,8 +91,8 @@ class BinomialModel(Model):
     
     ## METHODS ##
     
-    def is_model_valid(self, modelparams):
-        return self.decorated_model.is_model_valid(modelparams)
+    def are_models_valid(self, modelparams):
+        return self.decorated_model.are_models_valid(modelparams)
     
     def n_outcomes(self, expparams):
         """

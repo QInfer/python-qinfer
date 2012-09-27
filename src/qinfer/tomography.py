@@ -151,8 +151,8 @@ class QubitStatePauliModel(Model):
         #                 3 floats, each four bytes wide
 
     @staticmethod
-    def is_model_valid(modelparams):
-        return modelparams[0]**2 + modelparams[1]**2 + modelparams[2]**2 <= 1
+    def are_models_valid(modelparams):
+        return modelparams[:, 0]**2 + modelparams[:, 1]**2 + modelparams[:, 2]**2 <= 1
     
     def n_outcomes(self, expparams):
         return 2

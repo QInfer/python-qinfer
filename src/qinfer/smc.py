@@ -196,25 +196,26 @@ class SMCUpdater(object):
         n_mp = self.model.n_modelparams
         
         new_locs = np.empty(self.particle_locations.shape)        
-        cumsum_weights = np.cumsum(self.particle_weights)
+        cumsum_weights = np.cumsum(self.particle_weights)[:, np.newaxis]
         
-        for idx_particle in xrange(self.particle_locations.shape[0]):
-            while True:
-                # Draw j with probability self.particle_weights[j].
-                j = np.argmax(np.random.random() <= cumsum_weights)
-                
-                # Set mu_i to a x_j + (1 - a) mu.
-                mu_i = a * self.particle_locations[j, :] + (1 - a) * mean
-                
-                # Draw x_i from N(mu_i, S).
-                new_locs[idx_particle, :] = mu_i + np.dot(S, np.random.randn(n_mp))
-                
-                # Set w_i to uniform (done below).
-                
-                # Check that we're valid, and if so, break out of the inner loop.
-                if self.model.is_model_valid(new_locs[idx_particle, :]):
-                    break
-
+        n_ms = self.particle_locations.shape[0]
+        idxs_to_resample = np.arange(n_ms)
+        
+        # Loop as long as there are any particles left to resample.
+        while idxs_to_resample.size:
+            # Draw j with probability self.particle_weights[j].
+            js = np.argmax(np.random.random(size=(1, n_ms)), axis=0)
+            
+            # Set mu_i to a x_j + (1 - a) mu.
+            mus = a * self.particle_locations[idxs_to_resample, :] + (1 - a) * mean
+            
+            # Draw x_i from N(mu_i, S).
+            new_locs[idxs_to_resample, :] = mus + np.dot(S, np.random.randn(n_mp, idxs_to_resample.shape[0])).T
+            
+            # Now we remove from the list any valid models.
+            idxs_to_resample = idxs_to_resample[np.nonzero(np.logical_not(
+                self.model.are_models_valid(new_locs[idxs_to_resample, :])
+            ))[0]]
 
         # Now we reset the weights to be uniform, letting the density of
         # particles represent the information that used to be stored in the

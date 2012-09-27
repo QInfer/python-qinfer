@@ -63,8 +63,8 @@ class SimplePrecessionModel(Model):
     ## METHODS ##
     
     @staticmethod
-    def is_model_valid(modelparams):
-        return modelparams[0] > 0
+    def are_models_valid(modelparams):
+        return modelparams[:, 0] > 0
     
     def n_outcomes(self, expparams):
         """

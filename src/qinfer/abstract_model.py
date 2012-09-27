@@ -97,10 +97,11 @@ class Model(object):
         pass
     
     @abc.abstractmethod
-    def is_model_valid(self, modelparams):
+    def are_models_valid(self, modelparams):
         """
-        Returns True if and only if the model parameters given are valid for
-        this model.
+        Given a shape ``(n_models, n_modelparams)`` array of model parameters,
+        returns a boolean array of shape ``(n_models)`` specifying whether
+        each set of model parameters represents is valid under this model.
         """
         pass
     
@@ -114,6 +115,13 @@ class Model(object):
     ## CONCRETE METHODS ##
     # These methods depend on the abstract methods, and thus their behaviors
     # change in each inheriting class.
+    
+    def is_model_valid(self, modelparams):
+        """
+        Returns True if and only if the model parameters given are valid for
+        this model.
+        """
+        return self.are_models_valid(modelparams[np.newaxis, :])[0]
     
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         # TODO: document
