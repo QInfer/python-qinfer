@@ -34,7 +34,7 @@ class Distribution(object):
     __metaclass__ = abc.ABCMeta
     
     @abc.abstractmethod
-    def sample(self):
+    def sample(self, n=1):
         pass
 
 class UniformDistribution(Distribution):
@@ -49,7 +49,8 @@ class UniformDistribution(Distribution):
         self._n_rvs = ranges.shape[0]
         self._delta = ranges[:, 1] - ranges[:, 0]
         
-    def sample(self):
-        z = np.random.random((self._n_rvs,))
+    def sample(self, n=1):
+        shape = (self._n_rvs,) if n == 1 else (self._n_rvs, n)
+        z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
 
