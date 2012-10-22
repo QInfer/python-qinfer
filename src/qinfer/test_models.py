@@ -105,12 +105,12 @@ if __name__ == "__main__":
     import smc
     import matplotlib.pyplot as plt
 
-    N_PARTICLES = 10
+    N_PARTICLES = 10000
     
     prior = UniformDistribution([0,1])
     model = SimplePrecessionModel()
     
-    updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=1)
+    updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=0.5)
         
     # Sample true set of modelparams
     truemp = np.array([prior.sample()])
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 #    plt.plot(particles[:,0],weights)
     
     # Get all Bayesian up in here
-    n_exp = 2
+    n_exp = 200
     for idx_exp in xrange(n_exp):
         thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
    

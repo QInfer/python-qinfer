@@ -205,17 +205,19 @@ class SMCUpdater(object):
         # Loop as long as there are any particles left to resample.
         while idxs_to_resample.size:
             # Draw j with probability self.particle_weights[j].
-            js = np.random.random(size = (idxs_to_resample.size,1)) > cumsum_weights[idxs_to_resample]
+            js = np.argmax(np.random.random(size = (1, idxs_to_resample.size)) < cumsum_weights[idxs_to_resample], axis=0)
             
             # Set mu_i to a x_j + (1 - a) mu.
             mus = a * self.particle_locations[js,:] + (1 - a) * mean
             
             # Draw x_i from N(mu_i, S).
-            new_locs[js, :] = mus + np.dot(S, np.random.randn(n_mp, mus.shape[0]))[0]
+            new_locs[idxs_to_resample, :] = mus + np.dot(S, np.random.randn(n_mp, mus.shape[0])).T
             
             # Now we remove from the list any valid models.
-            to_keep = np.logical_or(np.logical_not(self.model.are_models_valid(new_locs[idxs_to_resample])),js)[:,0]
-            idxs_to_resample = idxs_to_resample[to_keep]
+            idxs_to_resample = idxs_to_resample[np.nonzero(np.logical_not(
+                self.model.are_models_valid(new_locs[idxs_to_resample, :])
+            ))[0]]
+
 
         # Now we reset the weights to be uniform, letting the density of
         # particles represent the information that used to be stored in the
