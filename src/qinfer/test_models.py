@@ -64,7 +64,7 @@ class SimplePrecessionModel(Model):
     
     @staticmethod
     def are_models_valid(modelparams):
-        return modelparams[:, 0] > 0
+        return modelparams > 0
     
     def n_outcomes(self, expparams):
         """
@@ -92,18 +92,61 @@ class SimplePrecessionModel(Model):
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)
 
-
+    def grad_log_likelihood(self, outcome, modelparams, expparams):
+        #TODO: vectorize this        
+        return (
+            ( expparams / np.tan(expparams * modelparams / 2)) ** (outcome) *
+            (-expparams * np.tan(expparams * modelparams / 2)) ** (1-outcome)
+        )
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":
+    from distributions import UniformDistribution
+    import smc
+    import matplotlib.pyplot as plt
 
-    m = SimplePrecessionModel()
-    L = m.likelihood(
-        np.array([1]),
-        np.array([[0.1], [0.2], [0.4]]),
-        np.array([1/2, 17/3]) * np.pi
-    )
-    print L
-    assert m.call_count == 6
-    assert L.shape == (1, 3, 2)
+    N_PARTICLES = 10
+    
+    prior = UniformDistribution([0,1])
+    model = SimplePrecessionModel()
+    
+    updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=1)
+        
+    # Sample true set of modelparams
+    truemp = np.array([prior.sample()])
+    
+    # Plot true state and prior
+#    fig = plt.figure()
+#    particles = updater.particle_locations
+#    weights = updater.particle_weights      
+#    
+#    plt.plot(particles[:,0],weights)
+    
+    # Get all Bayesian up in here
+    n_exp = 2
+    for idx_exp in xrange(n_exp):
+        thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
+   
+        outcome = model.simulate_experiment(truemp, thisexp)
+       
+        updater.update(outcome, thisexp)
+        
+#        if np.mod(3*idx_exp,n_exp)==0:
+#            fig = plt.figure()
+#            
+#            particles = updater.particle_locations
+#            weights = updater.particle_weights      
+#            plt.plot(particles[:,0],weights)
 
+    est_mean = updater.est_mean()
+    
+    print "True param: {}".format(truemp)    
+    print "Est. mean: {}".format(updater.est_mean())
+#    print "Est. cov: {}".format(updater.est_covariance_mtx())
+    print "Error: {}".format(np.sum(np.abs(truemp[0]-updater.est_mean())**2))
+    print "Trace Cov: {}".format(np.trace(updater.est_covariance_mtx()))
+    print "Resample count: {}".format(updater.resample_count)
+ 
+        
+    
+    plt.show()  

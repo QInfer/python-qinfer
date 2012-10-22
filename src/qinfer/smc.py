@@ -38,6 +38,7 @@ __all__ = [
 
 import numpy as np
 import scipy.linalg as la
+from utils import outer_product
 
 ## CLASSES #####################################################################
 
@@ -204,18 +205,17 @@ class SMCUpdater(object):
         # Loop as long as there are any particles left to resample.
         while idxs_to_resample.size:
             # Draw j with probability self.particle_weights[j].
-            js = np.argmax(np.random.random(size=(1, n_ms)), axis=0)
+            js = np.random.random(size = (idxs_to_resample.size,1)) > cumsum_weights[idxs_to_resample]
             
             # Set mu_i to a x_j + (1 - a) mu.
-            mus = a * self.particle_locations[idxs_to_resample, :] + (1 - a) * mean
+            mus = a * self.particle_locations[js,:] + (1 - a) * mean
             
             # Draw x_i from N(mu_i, S).
-            new_locs[idxs_to_resample, :] = mus + np.dot(S, np.random.randn(n_mp, idxs_to_resample.shape[0])).T
+            new_locs[js, :] = mus + np.dot(S, np.random.randn(n_mp, mus.shape[0]))[0]
             
             # Now we remove from the list any valid models.
-            idxs_to_resample = idxs_to_resample[np.nonzero(np.logical_not(
-                self.model.are_models_valid(new_locs[idxs_to_resample, :])
-            ))[0]]
+            to_keep = np.logical_or(np.logical_not(self.model.are_models_valid(new_locs[idxs_to_resample])),js)[:,0]
+            idxs_to_resample = idxs_to_resample[to_keep]
 
         # Now we reset the weights to be uniform, letting the density of
         # particles represent the information that used to be stored in the
@@ -256,3 +256,53 @@ class SMCUpdater(object):
         return self.particle_locations[idsort][idcred]
         
                 
+class SMCUpdaterBCRB(SMCUpdater):
+    """
+    Subclass of :class:`SMCUpdater`, adding Bayesian Cramer-Rao bound
+    functionality.
+    
+    Models considered by this class must be differentiable.
+    
+    Parameters
+    ----------
+    *args, **kwargs:
+        See :class:`SMCUpdater`.
+    """
+
+
+    def __init__(self, *args, **kwargs):
+        SMCUpdater.__init__(self, *args, **kwargs)
+        
+        #if not isinstance(self.model, DifferentiableModel):
+        #    raise ValueError("Model must be differentiable.")
+        
+        self.current_bim = np.sum(np.array([
+            outer_product(self.prior.grad_log_pdf(particle))
+            for particle in self.particle_locations
+            ]), axis=0) / self.n_particles
+        
+    def hypothetical_bim(self, expparams):
+        # E_{prior} E_{data | model, exp} [outer-product of grad-log-like]
+        like_bim = np.zeros(self.current_bim.shape)
+        
+        for idx_particle in xrange(self.n_particles):
+            # modelparams = self.particle_locations[idx_particle, :]
+            modelparams = self.prior.sample()
+            # weight = self.particle_weights[idx_particle]
+            weight = 1 / self.n_particles
+            like_bim += weight * np.sum(np.array([
+                outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams)) *
+                self.model.likelihood(outcome, modelparams, expparams)
+                for outcome in range(self.model.n_outcomes(expparams))
+            ]),axis=0)
+            
+        return self.current_bim + like_bim
+        
+        
+    def update(self, outcome, expparams):
+        # Before we update, we need to commit the new Bayesian information
+        # matrix corresponding to the measurement we just made.
+        self.current_bim = self.hypothetical_bim(expparams)
+        
+        # We now can update as normal.
+        SMCUpdater.update(self, outcome, expparams)

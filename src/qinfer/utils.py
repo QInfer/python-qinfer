@@ -36,3 +36,10 @@ def binomial_pdf(N,n,p):
     logprob = gammaln(N+1)-gammaln(n+1)- gammaln(N-n+1)  \
         + n*np.log(p)+(N-n)*np.log(1-p)
     return np.exp(logprob)
+
+def outer_product(vec):        
+    return (
+        np.dot(vec[:, np.newaxis], vec[np.newaxis, :])
+        if len(vec.shape) == 1 else
+        np.dot(vec, vec.T)
+        )

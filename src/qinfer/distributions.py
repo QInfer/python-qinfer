@@ -54,3 +54,6 @@ class UniformDistribution(Distribution):
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
 
+    def grad_log_pdf(self, var):
+        # TODO: This is not quite true
+        return np.zeros(var.shape)
