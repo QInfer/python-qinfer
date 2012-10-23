@@ -93,10 +93,12 @@ class SimplePrecessionModel(Model):
         return Model.pr0_to_likelihood_array(outcomes, pr0)
 
     def grad_log_likelihood(self, outcome, modelparams, expparams):
-        #TODO: vectorize this        
+        #TODO: vectorize this
+
+        arg = np.dot(modelparams, expparams[..., np.newaxis].T) / 2        
         return (
-            ( expparams / np.tan(expparams * modelparams / 2)) ** (outcome) *
-            (-expparams * np.tan(expparams * modelparams / 2)) ** (1-outcome)
+            ( expparams / np.tan(arg)) ** (outcome[0]) *
+            (-expparams * np.tan(arg)) ** (1-outcome[0])
         )
 ## TESTING CODE ################################################################
 
@@ -105,12 +107,12 @@ if __name__ == "__main__":
     import smc
     import matplotlib.pyplot as plt
 
-    N_PARTICLES = 10000
+    N_PARTICLES = 10
     
     prior = UniformDistribution([0,1])
     model = SimplePrecessionModel()
     
-    updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=0.5)
+    updater = smc.SMCUpdaterBCRB(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=0.8)
         
     # Sample true set of modelparams
     truemp = np.array([prior.sample()])
@@ -123,7 +125,7 @@ if __name__ == "__main__":
 #    plt.plot(particles[:,0],weights)
     
     # Get all Bayesian up in here
-    n_exp = 200
+    n_exp = 10
     for idx_exp in xrange(n_exp):
         thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
    

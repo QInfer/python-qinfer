@@ -289,12 +289,17 @@ class SMCUpdaterBCRB(SMCUpdater):
         
         for idx_particle in xrange(self.n_particles):
             # modelparams = self.particle_locations[idx_particle, :]
-            modelparams = self.prior.sample()
+
+            modelparams = np.array([self.prior.sample()])
+
             # weight = self.particle_weights[idx_particle]
             weight = 1 / self.n_particles
             like_bim += weight * np.sum(np.array([
-                outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams)) *
-                self.model.likelihood(outcome, modelparams, expparams)
+                outer_product(self.model.grad_log_likelihood(
+                np.array([outcome]) if not isinstance(outcome, np.ndarray) else
+                outcome, modelparams, expparams)) *
+                self.model.likelihood(np.array([outcome]) if not isinstance(outcome, np.ndarray) else
+                outcome, modelparams, expparams)
                 for outcome in range(self.model.n_outcomes(expparams))
             ]),axis=0)
             

@@ -71,7 +71,7 @@ if __name__ == "__main__":
  
     
     # Get all Bayesian up in here
-    n_exp = 100
+    n_exp = 1000
     tic = time.time()
     for idx_exp in xrange(n_exp):
         # Randomly choose one of the three experiments from expparams and make
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     est_mean = updater.est_mean()
     ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    
     
-    points = updater.est_credible_region(level = .95)
+    points = updater.est_credible_region(level = .99)
     tri = Delaunay(points)
     faces = []
     for ia, ib, ic in tri.convex_hull:
