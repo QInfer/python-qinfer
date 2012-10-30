@@ -33,11 +33,11 @@ import numpy as np
 
 from utils import binomial_pdf
 
-from abstract_model import Model
+from abstract_model import Model,DifferentiableModel
     
 ## CLASSES ##
 
-class SimplePrecessionModel(Model):
+class SimplePrecessionModel(DifferentiableModel):
     
     ## PROPERTIES ##
     
@@ -95,10 +95,10 @@ class SimplePrecessionModel(Model):
     def grad_log_likelihood(self, outcome, modelparams, expparams):
         #TODO: vectorize this
 
-        arg = np.dot(modelparams, expparams[..., np.newaxis].T) / 2        
+        arg = modelparams * expparams / 2        
         return (
-            ( expparams / np.tan(arg)) ** (outcome[0]) *
-            (-expparams * np.tan(arg)) ** (1-outcome[0])
+            ( expparams / np.tan(arg)) ** (outcome) *
+            (-expparams * np.tan(arg)) ** (1-outcome)
         )
 ## TESTING CODE ################################################################
 
@@ -107,15 +107,15 @@ if __name__ == "__main__":
     import smc
     import matplotlib.pyplot as plt
 
-    N_PARTICLES = 10
+    N_PARTICLES = 1000
     
     prior = UniformDistribution([0,1])
     model = SimplePrecessionModel()
     
-    updater = smc.SMCUpdaterBCRB(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=0.8)
+    updater = smc.SMCUpdaterBCRB(model, N_PARTICLES, prior,resample_a=.99, resample_thresh=0.5)
         
     # Sample true set of modelparams
-    truemp = np.array([prior.sample()])
+    truemp = prior.sample()
     
     # Plot true state and prior
 #    fig = plt.figure()
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 #    plt.plot(particles[:,0],weights)
     
     # Get all Bayesian up in here
-    n_exp = 10
+    n_exp = 100
     for idx_exp in xrange(n_exp):
         thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
    
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     print "Error: {}".format(np.sum(np.abs(truemp[0]-updater.est_mean())**2))
     print "Trace Cov: {}".format(np.trace(updater.est_covariance_mtx()))
     print "Resample count: {}".format(updater.resample_count)
- 
+    print "BCRB: {}".format(1/updater.current_bim)
         
     
     plt.show()  

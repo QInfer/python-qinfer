@@ -284,25 +284,21 @@ class SMCUpdaterBCRB(SMCUpdater):
             ]), axis=0) / self.n_particles
         
     def hypothetical_bim(self, expparams):
-        # E_{prior} E_{data | model, exp} [outer-product of grad-log-like]
+        # E_{prior} E_{data | model, exp} [outer-product of grad-log-likelihood]
         like_bim = np.zeros(self.current_bim.shape)
         
         for idx_particle in xrange(self.n_particles):
-            # modelparams = self.particle_locations[idx_particle, :]
+        
+            modelparams = self.prior.sample()
 
-            modelparams = np.array([self.prior.sample()])
-
-            # weight = self.particle_weights[idx_particle]
             weight = 1 / self.n_particles
-            like_bim += weight * np.sum(np.array([
-                outer_product(self.model.grad_log_likelihood(
-                np.array([outcome]) if not isinstance(outcome, np.ndarray) else
-                outcome, modelparams, expparams)) *
-                self.model.likelihood(np.array([outcome]) if not isinstance(outcome, np.ndarray) else
-                outcome, modelparams, expparams)
-                for outcome in range(self.model.n_outcomes(expparams))
-            ]),axis=0)
             
+            for outcome in xrange(self.model.n_outcomes(expparams)):
+                 
+                grad = outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams)) 
+                L = self.model.likelihood(np.array([outcome]), modelparams, expparams)[0]
+                like_bim += weight * grad * L
+                
         return self.current_bim + like_bim
         
         
