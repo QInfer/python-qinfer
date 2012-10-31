@@ -71,7 +71,7 @@ if __name__ == "__main__":
  
     
     # Get all Bayesian up in here
-    n_exp = 1000
+    n_exp = 100
     tic = time.time()
     for idx_exp in xrange(n_exp):
         # Randomly choose one of the three experiments from expparams and make

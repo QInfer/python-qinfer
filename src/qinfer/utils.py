@@ -43,3 +43,21 @@ def outer_product(vec):
         if len(vec.shape) == 1 else
         np.dot(vec, vec.T)
         )
+        
+def particle_meanfn(weights, locations, fn):
+    fn_vals = fn(locations).flatten()
+    return np.sum(weights * fn_vals)
+    
+def particle_covariance_mtx(weights,locations):
+        
+        xs = locations.transpose([1, 0])
+        ws = weights
+        
+        mu = np.sum(ws * xs, axis = 1)
+        
+        return (
+            np.sum(
+                ws * xs[:, np.newaxis, :] * xs[np.newaxis, :, :],
+                axis=2
+                )
+            ) - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])

@@ -125,10 +125,16 @@ if __name__ == "__main__":
 #    plt.plot(particles[:,0],weights)
     
     # Get all Bayesian up in here
-    n_exp = 100
+    n_exp = 10
+    
+    # theoretical BIM
+    BIM = 0    
+    
     for idx_exp in xrange(n_exp):
         thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
-   
+        
+        BIM += thisexp**2
+        
         outcome = model.simulate_experiment(truemp, thisexp)
        
         updater.update(outcome, thisexp)
@@ -149,6 +155,8 @@ if __name__ == "__main__":
     print "Trace Cov: {}".format(np.trace(updater.est_covariance_mtx()))
     print "Resample count: {}".format(updater.resample_count)
     print "BCRB: {}".format(1/updater.current_bim)
+    print "Theoretical BCRB: {}".format(1/BIM)
+
         
     
     plt.show()  

@@ -37,8 +37,11 @@ __all__ = [
 ## IMPORTS #####################################################################
 
 import numpy as np
+
+# for BCRB and BED classes
 import scipy.linalg as la
-from utils import outer_product
+import scipy.optimize as opt
+from utils import outer_product, particle_meanfn, particle_covariance_mtx
 
 ## CLASSES #####################################################################
 
@@ -80,6 +83,10 @@ class SMCUpdater(object):
         # We wrap this in a property to prevent external resetting and to enable
         # a docstring.
         return self._resample_count
+
+    @property
+    def get_model(self):
+        return self.model
             
     @property
     def n_ess(self):
@@ -134,9 +141,7 @@ class SMCUpdater(object):
         posterior distribution to reflect knowledge of that experiment.
         
         After updating, resamples the posterior distribution if necessary.
-        
-        :param int outcome: Index of the outcome of the experiment that was performed.
-        :param expparams: TODO
+       
         """
         
         # Since hypothetical_update returns an array indexed by
@@ -247,7 +252,7 @@ class SMCUpdater(object):
                 )
             ) - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
             
-    def est_credible_region(self, level = 0.95):
+    def est_credible_region(self, level = 0.95, region = 'particles'):
         # sort the particles by weight
         idsort = np.argsort(self.particle_weights)[::-1]
         # cummulative sum of the sorted weights
@@ -264,19 +269,15 @@ class SMCUpdaterBCRB(SMCUpdater):
     functionality.
     
     Models considered by this class must be differentiable.
-    
-    Parameters
-    ----------
-    *args, **kwargs:
-        See :class:`SMCUpdater`.
     """
+    
 
 
     def __init__(self, *args, **kwargs):
         SMCUpdater.__init__(self, *args, **kwargs)
         
-        #if not isinstance(self.model, DifferentiableModel):
-        #    raise ValueError("Model must be differentiable.")
+        if not isinstance(self.model, DifferentiableModel):
+            raise ValueError("Model must be differentiable.")
         
         self.current_bim = np.sum(np.array([
             outer_product(self.prior.grad_log_pdf(particle))
@@ -293,10 +294,10 @@ class SMCUpdaterBCRB(SMCUpdater):
 
             weight = 1 / self.n_particles
             
-            for outcome in xrange(self.model.n_outcomes(expparams)):
+            for outcome in np.arange(self.model.n_outcomes(expparams))[...,np.newaxis]:
                  
                 grad = outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams)) 
-                L = self.model.likelihood(np.array([outcome]), modelparams, expparams)[0]
+                L = self.model.likelihood(outcome, modelparams, expparams)[0]
                 like_bim += weight * grad * L
                 
         return self.current_bim + like_bim
@@ -309,3 +310,50 @@ class SMCUpdaterBCRB(SMCUpdater):
         
         # We now can update as normal.
         SMCUpdater.update(self, outcome, expparams)
+        
+
+class SMCUpdaterBED(SMCUpdater):
+    """
+    Subclass of :class:`SMCUpdater`, adding Bayesian experimental design
+    functionality.
+    
+    """
+
+    def __init__(self, *args, **kwargs):
+        SMCUpdater.__init__(self, *args, **kwargs)
+
+                        
+    ## PROPERTIES ##############################################################            
+            
+        
+    ## METHODS #################################################################            
+            
+    def min_expected_var_experiment(self):
+        """
+        Find the optimal experiment defined by the one minimizing the expected variance
+        """
+            
+        #The objective function to minimize
+        def expected_variance(expparams):
+            
+            #TODO: this calls the likelihood function twice for every outcome; fix it
+            each_outcome = [
+            
+            particle_covariance_mtx(self.hypothetical_update(outcome, expparams),
+                                    self.particle_locations) *             
+            particle_meanfn(self.particle_weights,
+                            self.particle_locations,
+                            lambda modelparams: self.model.likelihood(outcome, modelparams, expparams))
+    
+            
+            for outcome in np.arange(self.model.n_outcomes(expparams))[...,np.newaxis]
+            ]    
+            return np.sum(each_outcome)
+            
+        best_exp = #TODO: put optimization code here
+        
+        return best_exp
+
+            
+
+        
