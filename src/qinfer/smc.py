@@ -38,6 +38,8 @@ __all__ = [
 
 import numpy as np
 
+from abstract_model import DifferentiableModel
+
 # for BCRB and BED classes
 import scipy.linalg as la
 import scipy.optimize as opt
