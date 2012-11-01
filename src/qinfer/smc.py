@@ -350,7 +350,7 @@ class SMCUpdaterBED(SMCUpdater):
             ]    
             return np.sum(each_outcome)
             
-        best_exp = #TODO: put optimization code here
+#        best_exp = #TODO: put optimization code here
         
         return best_exp
 

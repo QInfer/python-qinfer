@@ -27,7 +27,12 @@
 
 from __future__ import division
 import numpy as np
-from scipy.special import gammaln
+from scipy.special import gammaln, gamma
+
+from scipy.linalg import sqrtm
+
+import numpy.linalg as la
+
 
 ###############################################################################
 
@@ -45,8 +50,10 @@ def outer_product(vec):
         )
         
 def particle_meanfn(weights, locations, fn):
-    fn_vals = fn(locations).flatten()
-    return np.sum(weights * fn_vals)
+    fn_vals = fn(locations)
+    return np.sum(weights * fn_vals.transpose([1, 0]),
+        axis=1)
+
     
 def particle_covariance_mtx(weights,locations):
         
@@ -61,3 +68,52 @@ def particle_covariance_mtx(weights,locations):
                 axis=2
                 )
             ) - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
+            
+
+
+def ellipsoid_volume(A=None, invA=None):
+    
+    if invA is None and A is None:
+        raise ValueError("Must pass either inverse(A) or A.")
+        
+    if invA is None and A is not None:
+        invA = la.inv(A)
+    
+    # Find the unit sphere volume.
+    # http://en.wikipedia.org/wiki/Unit_sphere#General_area_and_volume_formulas
+    n  = invA.shape[0]
+    Vn = (np.pi ** (n/2)) / gamma(1 + (n/2))
+    
+    return Vn * la.det(sqrtm(invA))
+
+def mvee(points,tol):
+    N, d = points.shape
+    
+    Q = np.zeros([N,d+1])
+    Q[:,0:d] = points[0:N,0:d]  
+    Q[:,d] = np.ones([1,N])
+
+    Q = np.transpose(Q)
+    points = np.transpose(points)
+    count = 1
+    err = 1
+    u = (1/N) * np.ones(shape = (N,))
+
+    # Khachiyan Algorithm TODO:find ref
+    while err > tol:
+        
+        X = np.dot(np.dot(Q, np.diag(u)), np.transpose(Q))
+        M = np.diag( np.dot(np.dot(np.transpose(Q), la.inv(X)),Q)) 
+        jdx = np.argmax(M)
+        step_size = (M[jdx] - d - 1)/((d+1)*(M[jdx] - 1))
+        new_u = (1 - step_size)*u 
+        new_u[jdx] = new_u[jdx] + step_size
+        count = count + 1
+        err = la.norm(new_u - u)
+        u = new_u
+    
+    U = np.diag(u)
+    A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.dot(np.dot(points,u),np.transpose(np.dot(points,u))) )
+    c = np.dot(points,u)
+    
+    return A, c
