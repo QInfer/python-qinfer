@@ -37,6 +37,7 @@ __all__ = [
 ## IMPORTS #####################################################################
 
 import numpy as np
+import warnings
 
 from abstract_model import DifferentiableModel
 
@@ -200,7 +201,8 @@ class SMCUpdater(object):
         # parameters in the Liu and West algorithm
         mean, cov = self.est_mean(), self.est_covariance_mtx()
         a, h = self.resample_a, self.resample_h
-        S = np.real(h * la.sqrtm(cov))
+        S, S_err = la.sqrtm(cov, disp=False)
+	S = np.real(h * S)
         n_mp = self.model.n_modelparams
         
         new_locs = np.empty(self.particle_locations.shape)        
@@ -247,12 +249,17 @@ class SMCUpdater(object):
         xs = self.particle_locations.transpose([1, 0])
         ws = self.particle_weights
         
-        return (
+        cov = (
             np.sum(
                 ws * xs[:, np.newaxis, :] * xs[np.newaxis, :, :],
                 axis=2
                 )
             ) - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
+
+	if not np.all(la.eig(cov)[0] >= 0):
+	    warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.')
+	    
+	return cov
             
     def est_credible_region(self, level = 0.95):
         # sort the particles by weight
