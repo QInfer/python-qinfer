@@ -92,7 +92,7 @@ def mvee(points,tol):
     Q = np.zeros([N,d+1])
     Q[:,0:d] = points[0:N,0:d]  
     Q[:,d] = np.ones([1,N])
-
+    
     Q = np.transpose(Q)
     points = np.transpose(points)
     count = 1
@@ -109,11 +109,10 @@ def mvee(points,tol):
         new_u = (1 - step_size)*u 
         new_u[jdx] = new_u[jdx] + step_size
         count = count + 1
-        err = la.norm(new_u - u)
+        err = la.norm(new_u - u)       
         u = new_u
     
-    U = np.diag(u)
-    A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.dot(np.dot(points,u),np.transpose(np.dot(points,u))) )
+    U = np.diag(u)    
     c = np.dot(points,u)
-    
-    return A, c
+    A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.dot(c,np.transpose(c)) )    
+    return A, np.transpose(c)
