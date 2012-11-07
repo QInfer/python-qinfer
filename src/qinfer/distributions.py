@@ -50,7 +50,7 @@ class UniformDistribution(Distribution):
         self._delta = ranges[:, 1] - ranges[:, 0]
         
     def sample(self, n=1):
-        shape = (self._n_rvs,n)# if n == 1 else (self._n_rvs, n)
+        shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
 
