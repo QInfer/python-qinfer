@@ -41,6 +41,8 @@ import warnings
 
 from abstract_model import DifferentiableModel
 
+from resamplers import LiuWestResampler
+
 # for BCRB and BED classes
 import scipy.linalg as la
 import scipy.optimize as opt
@@ -60,7 +62,7 @@ class SMCUpdater(object):
     """
     def __init__(self,
             model, n_particles, prior,
-            resample_a=0.98, resample_thresh=0.5
+            resample_a=None, resampler=None, resample_thresh=0.5
             ):
 
         self._resample_count = 0
@@ -68,10 +70,25 @@ class SMCUpdater(object):
         self.model = model
         self.n_particles = n_particles
         self.prior = prior
-        self.resample_a = resample_a
-        self.resample_h = np.sqrt(1 - resample_a**2)
+        
+        ## RESAMPLER CONFIGURATION ##
+        # Backward compatibility with the old resample_a keyword argument,
+        # which assumed that the Liu and West resampler was being used.
+        if resample_a is not None:
+            warnings.warn("The 'resample_a' keyword argument is deprecated; use 'resampler=LiuWestResampler(a)' instead.")
+            if resampler is not None:
+                raise ValueError("Both a resample_a and an explicit resampler were provided; please provide only one.")
+            self.resampler = LiuWestResampler(a=resample_a)
+        else:    
+            if resampler is not None:
+                self.resampler = LiuWestResampler()
+            else:
+                self.resampler = resampler
+            
+        
         self.resample_thresh = resample_thresh        
         
+        ## PARTICLE INITIALIZATION ##
         self.particle_locations = np.zeros((n_particles, model.n_modelparams))
         self.particle_weights = np.ones((n_particles,)) / n_particles
         
@@ -191,48 +208,21 @@ class SMCUpdater(object):
                 self._maybe_resample()
             
     def resample(self):
-        """
-        Resample the particles according to algorithm given in 
-        Liu and West (2000)
-        """
+        # TODO: add amended docstring.
         
+        # Record that we have performed a resampling step.
         self._resample_count += 1
         
-        # parameters in the Liu and West algorithm
-        mean, cov = self.est_mean(), self.est_covariance_mtx()
-        a, h = self.resample_a, self.resample_h
-        S, S_err = la.sqrtm(cov, disp=False)
-	S = np.real(h * S)
-        n_mp = self.model.n_modelparams
-        
-        new_locs = np.empty(self.particle_locations.shape)        
-        cumsum_weights = np.cumsum(self.particle_weights)[:, np.newaxis]
-        
-        n_ms = self.particle_locations.shape[0]
-        idxs_to_resample = np.arange(n_ms)
-        
-        # Loop as long as there are any particles left to resample.
-        while idxs_to_resample.size:
-            # Draw j with probability self.particle_weights[j].
-            js = np.argmax(np.random.random(size = (1, idxs_to_resample.size)) < cumsum_weights[idxs_to_resample], axis=0)
+        # Find the new particle locations according to the chosen resampling
+        # algorithm.
+        # We pass the model so that the resampler can check for validity of
+        # newly placed particles.
+        self.particle_locations = \
+            self.resampler(self.model, self.particle_weights, self.particle_locations)
             
-            # Set mu_i to a x_j + (1 - a) mu.
-            mus = a * self.particle_locations[js,:] + (1 - a) * mean
-            
-            # Draw x_i from N(mu_i, S).
-            new_locs[idxs_to_resample, :] = mus + np.dot(S, np.random.randn(n_mp, mus.shape[0])).T
-            
-            # Now we remove from the list any valid models.
-            idxs_to_resample = idxs_to_resample[np.nonzero(np.logical_not(
-                self.model.are_models_valid(new_locs[idxs_to_resample, :])
-            ))[0]]
-
-
-        # Now we reset the weights to be uniform, letting the density of
-        # particles represent the information that used to be stored in the
-        # weights.
+        # Reset the weights to uniform.
         self.particle_weights[:] = (1/self.n_particles)
-        self.particle_locations = new_locs
+        
         
     ## ESTIMATION METHODS ######################################################
     
