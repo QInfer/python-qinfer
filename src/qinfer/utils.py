@@ -116,3 +116,9 @@ def mvee(points,tol):
     c = np.dot(points,u)
     A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.dot(c,np.transpose(c)) )    
     return A, np.transpose(c)
+
+def uniquify(seq):
+    #from http://stackoverflow.com/a/480227/1205799
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in seq if x not in seen and not seen_add(x)]
