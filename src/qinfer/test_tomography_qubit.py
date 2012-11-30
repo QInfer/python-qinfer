@@ -115,18 +115,13 @@ if __name__ == "__main__":
     est_mean = updater.est_mean()
     ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    
     
-    points = updater.est_credible_region(level = .95)
-    tri = Delaunay(points)
-    faces = []
-    
-    for ia, ib, ic in tri.convex_hull:
-        faces.append(points[[ia, ib, ic]])    
+    faces, vertices = updater.region_est_hull()
     
     items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
     ax.add_collection(items)
     
     
-    A, centroid = mvee(points[uniquify(tri.convex_hull.flatten())],0.001)
+    A, centroid = updater.region_est_ellipsoid()
     
     #PLot covariance ellipse
     U, D, V = la.svd(A)

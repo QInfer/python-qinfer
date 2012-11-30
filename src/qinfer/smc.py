@@ -44,9 +44,10 @@ from abstract_model import DifferentiableModel
 from resamplers import LiuWestResampler
 
 # for BCRB and BED classes
+from scipy.spatial import Delaunay
 import scipy.linalg as la
 import scipy.optimize as opt
-from utils import outer_product, particle_meanfn, particle_covariance_mtx
+from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
 
 ## CLASSES #####################################################################
 
@@ -261,6 +262,24 @@ class SMCUpdater(object):
         idcred[np.sum(idcred)] = True
         # particle locations inside the region
         return self.particle_locations[idsort][idcred]
+        
+    def region_est_ellipsoid(self, level = 0.95, tol = 0.0001):
+        faces, vertices = self.region_est_hull(level = level)
+                
+        A, centroid = mvee(vertices,tol)
+        return A, centroid
+    
+    def region_est_hull(self, level = 0.95):
+        points = self.est_credible_region(level = level)
+        tri = Delaunay(points)
+        faces = []
+        hull = tri.convex_hull
+        
+        for ia, ib, ic in hull:
+            faces.append(points[[ia, ib, ic]])    
+
+        vertices = points[uniquify(hull.flatten())]
+        return faces, vertices
         
                 
 class SMCUpdaterBCRB(SMCUpdater):
