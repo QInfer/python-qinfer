@@ -38,7 +38,7 @@ import matplotlib.pyplot as plt
 import time
 from scipy.spatial import Delaunay
 import numpy.linalg as la
-from utils import mvee
+from utils import mvee, uniquify
 
 if __name__ == "__main__":
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
  
     
     # Get all Bayesian up in here
-    n_exp = 10
+    n_exp = 2
     
     tic = time.time()
     for idx_exp in xrange(n_exp):
@@ -115,21 +115,18 @@ if __name__ == "__main__":
     est_mean = updater.est_mean()
     ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    
     
-    points = updater.est_credible_region(level = .95)
-    tri = Delaunay(points)
-    faces = []
-    
-    for ia, ib, ic in tri.convex_hull:
-        faces.append(points[[ia, ib, ic]])    
+    faces, vertices = updater.region_est_hull()
     
     items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
     ax.add_collection(items)
     
     
-    A, centroid = mvee(points,0.00001)
+    A, centroid = updater.region_est_ellipsoid()
     
     #PLot covariance ellipse
     U, D, V = la.svd(A)
+    
+    
     rx, ry, rz = [1/np.sqrt(d) for d in D]
     u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]    
     

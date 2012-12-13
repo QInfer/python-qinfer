@@ -44,9 +44,10 @@ from abstract_model import DifferentiableModel
 from resamplers import LiuWestResampler
 
 # for BCRB and BED classes
+from scipy.spatial import Delaunay
 import scipy.linalg as la
 import scipy.optimize as opt
-from utils import outer_product, particle_meanfn, particle_covariance_mtx
+from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
 
 ## CLASSES #####################################################################
 
@@ -338,98 +339,116 @@ class SMCUpdater(object):
         # credible particles.
         return self.particle_locations[id_sort][id_cred]
 
+    def region_est_ellipsoid(self, level = 0.95, tol = 0.0001):
+        faces, vertices = self.region_est_hull(level = level)
+                
+        A, centroid = mvee(vertices,tol)
+        return A, centroid
+    
+    def region_est_hull(self, level = 0.95):
+        points = self.est_credible_region(level = level)
+        tri = Delaunay(points)
+        faces = []
+        hull = tri.convex_hull
+        
+        for ia, ib, ic in hull:
+            faces.append(points[[ia, ib, ic]])    
 
+        vertices = points[uniquify(hull.flatten())]
+        return faces, vertices
+        
+                
 class SMCUpdaterBCRB(SMCUpdater):
     """
+
     Subclass of :class:`SMCUpdater`, adding Bayesian Cramer-Rao bound
     functionality.
-
+    
     Models considered by this class must be differentiable.
     """
-
+    
 
 
     def __init__(self, *args, **kwargs):
         SMCUpdater.__init__(self, *args, **kwargs)
-
+        
         if not isinstance(self.model, DifferentiableModel):
             raise ValueError("Model must be differentiable.")
-
+        
         self.current_bim = np.sum(np.array([
             outer_product(self.prior.grad_log_pdf(particle))
             for particle in self.particle_locations
             ]), axis=0) / self.n_particles
-
+        
     def hypothetical_bim(self, expparams):
         # E_{prior} E_{data | model, exp} [outer-product of grad-log-likelihood]
         like_bim = np.zeros(self.current_bim.shape)
-
+        
         for idx_particle in xrange(self.n_particles):
-
+        
             modelparams = self.prior.sample()
 
             weight = 1 / self.n_particles
-
+            
             for outcome in np.arange(self.model.n_outcomes(expparams))[...,np.newaxis]:
-
-                grad = outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams))
+                 
+                grad = outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams)) 
                 L = self.model.likelihood(outcome, modelparams, expparams)[0]
                 like_bim += weight * grad * L
-
+                
         return self.current_bim + like_bim
-
-
+        
+        
     def update(self, outcome, expparams):
         # Before we update, we need to commit the new Bayesian information
         # matrix corresponding to the measurement we just made.
         self.current_bim = self.hypothetical_bim(expparams)
-
+        
         # We now can update as normal.
         SMCUpdater.update(self, outcome, expparams)
-
+        
 
 class SMCUpdaterBED(SMCUpdater):
     """
+
     Subclass of :class:`SMCUpdater`, adding Bayesian experimental design
     functionality.
-
+    
     """
 
     def __init__(self, *args, **kwargs):
         SMCUpdater.__init__(self, *args, **kwargs)
 
-
-    ## PROPERTIES ##############################################################
-
-
-    ## METHODS #################################################################
-
+                        
+    ## PROPERTIES ##############################################################            
+            
+        
+    ## METHODS #################################################################            
+            
     def min_expected_var_experiment(self):
         """
         Find the optimal experiment defined by the one minimizing the expected variance
-        """
 
+        """
+            
         #The objective function to minimize
         def expected_variance(expparams):
-
+            
             #TODO: this calls the likelihood function twice for every outcome; fix it
             each_outcome = [
-
+            
             particle_covariance_mtx(self.hypothetical_update(outcome, expparams),
-                                    self.particle_locations) *
+                                    self.particle_locations) *             
             particle_meanfn(self.particle_weights,
                             self.particle_locations,
                             lambda modelparams: self.model.likelihood(outcome, modelparams, expparams))
-
-
+    
+            
             for outcome in np.arange(self.model.n_outcomes(expparams))[...,np.newaxis]
-            ]
+            ]    
             return np.sum(each_outcome)
-
+            
 #        best_exp = #TODO: put optimization code here
-
+        
         return best_exp
-
-
-
 
