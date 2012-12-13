@@ -81,7 +81,7 @@ class SMCUpdater(object):
                 raise ValueError("Both a resample_a and an explicit resampler were provided; please provide only one.")
             self.resampler = LiuWestResampler(a=resample_a)
         else:
-            if resampler is not None:
+            if resampler is None:
                 self.resampler = LiuWestResampler()
             else:
                 self.resampler = resampler
@@ -225,7 +225,7 @@ class SMCUpdater(object):
         # algorithm.
         # We pass the model so that the resampler can check for validity of
         # newly placed particles.
-        self.particle_locations = \
+        self.particle_weights, self.particle_locations = \
             self.resampler(self.model, self.particle_weights, self.particle_locations)
 
         # Reset the weights to uniform.

@@ -31,6 +31,7 @@ from __future__ import division
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
+    'ClusteringResampler',
     'LiuWestResampler'
 ]
 
@@ -42,14 +43,84 @@ import warnings
 
 from utils import outer_product, particle_meanfn, particle_covariance_mtx
 
+try:
+    import sklearn
+    import sklearn.cluster
+except ImportError:
+    warnings.warn("Could not import scikit-learn. Some features may not work.")
+    sklearn = None
+
 ## CLASSES #####################################################################
+
+class ClusteringResampler(object):
+    r"""
+    Creates a resampler that breaks the particles into clusters, then applies
+    a secondary resampling algorithm to each cluster independently.
+    
+    :param secondary_resampler: Resampling algorithm to be applied to each
+        cluster. If ``None``, defaults to ``LiuWestResampler()``.
+    """
+    
+    def __init__(self, secondary_resampler=None, quiet=True):
+        self.secondary_resampler = (
+            secondary_resampler
+            if secondary_resampler is not None
+            else LiuWestResampler()
+        )
+        self.quiet = quiet
+        
+    ## METHODS ##
+    
+    def __call__(self, model, particle_weights, particle_locations):
+        ## TODO: docstring.
+        
+        # Allocate new arrays to hold the weights and locations.        
+        new_weights = np.empty(particle_weights.shape)
+        new_locs    = np.empty(particle_locations.shape)
+        
+        # Create and run a SciKit-Learn DBSCAN clusterer.
+        clusterer = sklearn.cluster.DBSCAN()
+        cluster_labels = clusterer.fit_predict(particle_locations)
+        
+        # Find out how many clusters were identified.
+        # Cluster counting logic from:
+        # [http://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html].
+        n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+        if not self.quiet:
+            print "[Resampling] DBSCAN identified {} cluster{}.".format(n_clusters, "s" if n_clusters > 1 else "")
+        
+        # Loop over clusters, calling the secondary resampler for each.
+        for idx_cluster in xrange(n_clusters):
+            # Grab a boolean array identifying the particles in a  particular
+            # cluster.
+            this_cluster = cluster_labels == idx_cluster
+            
+            # Pass the particles in that cluster to the secondary resampler
+            # and record the new weights and locations.
+            cluster_ws, cluster_locs = self.secondary_resampler(model,
+                particle_weights[this_cluster],
+                particle_locations[this_cluster]
+            )
+            
+            # Renormalize the weights of each resampled particle by the total
+            # weight of the cluster to which it belongs.
+            cluster_ws /= np.sum(particle_weights[this_cluster])
+            
+            # Store the updated cluster.
+            new_weights[this_cluster] = cluster_ws
+            new_locs[this_cluster]    = cluster_locs
+            
+        return new_weights, new_locs
 
 class LiuWestResampler(object):
     r"""
     Creates a resampler instance that applies the algorithm of
     Liu and West (2000) to redistribute the particles.
+    
+    :param float a: Value of the Liu and West parameter :math:`a` to be used
+        by the resampler.
     """
-    def __init__(self, a=0.98):
+    def __init__(self, a=0.98, renormalize=False):
         self.a = a # Implicitly calls the property setter below to set _h.
 
     ## PROPERTIES ##
@@ -68,7 +139,7 @@ class LiuWestResampler(object):
     def __call__(self, model, particle_weights, particle_locations):
         """
         Resample the particles according to algorithm given in 
-        Liu and West (2000)
+        Liu and West (2000).
         """
         
         # Give shorter names to weights and locations.
@@ -105,8 +176,7 @@ class LiuWestResampler(object):
 
         # Now we reset the weights to be uniform, letting the density of
         # particles represent the information that used to be stored in the
-        # weights. This is done by SMCUpdater, and so we simply need to return
-        # the new locations here.
-        return new_locs
+        # weights.
+        return np.ones((w.shape[0],)) / w.shape[0], new_locs
         
     
