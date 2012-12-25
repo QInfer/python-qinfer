@@ -355,6 +355,7 @@ class SMCUpdater(object):
             faces.append(points[[ia, ib, ic]])    
 
         vertices = points[uniquify(hull.flatten())]
+        
         return faces, vertices
         
                 

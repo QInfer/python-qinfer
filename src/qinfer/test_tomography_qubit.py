@@ -44,8 +44,7 @@ from resamplers import ClusteringResampler
 
 if __name__ == "__main__":
 
-    N_PARTICLES = 10000
-
+    N_PARTICLES = 100
             
     # Model and prior initialization
     prior = tomography.HilbertSchmidtUniform()
@@ -57,7 +56,7 @@ if __name__ == "__main__":
     ], dtype=model.expparams_dtype)
     
     # SMC initialization
-    updater = smc.SMCUpdater(model, N_PARTICLES, prior, resampler=ClusteringResampler(quiet=False), resample_thresh=0.5)
+    updater = smc.SMCUpdater(model, N_PARTICLES, prior, resample_thresh=0.5)
     
     
     tic = toc = None
@@ -82,7 +81,7 @@ if __name__ == "__main__":
  
     
     # Get all Bayesian up in here
-    n_exp = 200
+    n_exp = 100
     
     tic = time.time()
     for idx_exp in xrange(n_exp):
@@ -123,20 +122,19 @@ if __name__ == "__main__":
     ax.add_collection(items)
     
     
-    A, centroid = updater.region_est_ellipsoid()
+    A, centroid = updater.region_est_ellipsoid(tol=0.0001)
     
     #PLot covariance ellipse
     U, D, V = la.svd(A)
     
     
     rx, ry, rz = [1/np.sqrt(d) for d in D]
-    u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]    
+    u, v = np.mgrid[0:2*np.pi:20j,-np.pi/2:np.pi/2:10j]    
     
-    x=rx*np.cos(u)*np.sin(v)
-    y=ry*np.sin(u)*np.sin(v)
-    z=rz*np.cos(v)
-    
-    
+    x=rx*np.cos(u)*np.cos(v)
+    y=ry*np.sin(u)*np.cos(v)
+    z=rz*np.sin(v)
+        
     for idx in xrange(x.shape[0]):
         for idy in xrange(y.shape[1]):
             x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.transpose(V),np.array([x[idx,idy],y[idx,idy],z[idx,idy]])) + centroid
