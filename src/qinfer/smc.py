@@ -48,6 +48,7 @@ from scipy.spatial import Delaunay
 import scipy.linalg as la
 import scipy.optimize as opt
 from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
+from scipy.stats.distributions import binom
 
 ## CLASSES #####################################################################
 
@@ -453,3 +454,37 @@ class SMCUpdaterBED(SMCUpdater):
         
         return best_exp
 
+class SMCUpdaterABC(SMCUpdater):
+    """
+
+    Subclass of :class:`SMCUpdater`, adding approximate Bayesian computation
+    functionality.
+    
+    """
+
+    def __init__(self, model, n_particles, prior,
+                 ABC_tol = 0.01, ABC_sim = 1e4, **kwargs):
+        self.ABC_tol = ABC_tol
+        self.ABC_sim = ABC_sim
+        
+        SMCUpdater.__init__(self, model, n_particles, prior, **kwargs)
+        
+    def hypothetical_update(self, outcomes, expparams):
+        weights = np.copy(self.particle_weights)
+
+        # Check if we have a single outcome or an array. If we only have one
+        # outcome, wrap it in a one-index array.
+        if not isinstance(outcomes, np.ndarray):
+            outcomes = np.array([outcomes])
+        
+        for idx_particle in xrange(self.n_particles):
+            n = self.model.simulate_experiment(self.particle_locations[idx_particle], expparams, repeat = self.ABC_sim)
+            weights[idx_particle] = weights[idx_particle] * np.sum(np.abs(n-outcomes)/self.ABC_sim <= self.ABC_tol) 
+        # normalize
+        return weights / np.sum(weights)
+        
+    def update(self, outcome, expparams, check_for_resample=True):
+        self.particle_weights = self.hypothetical_update(outcome, expparams)
+
+        if check_for_resample:
+            self._maybe_resample()

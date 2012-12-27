@@ -56,7 +56,8 @@ if __name__ == "__main__":
     ], dtype=model.expparams_dtype)
     
     # SMC initialization
-    updater = smc.SMCUpdater(model, N_PARTICLES, prior, resample_thresh=0.5)
+    updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, ABC_tol = 1e-6, ABC_sim = 1e5)
+#    updater = smc.SMCUpdater(model, N_PARTICLES, prior)
     
     
     tic = toc = None
