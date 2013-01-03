@@ -31,20 +31,58 @@ from __future__ import division
 ## IMPORTS #####################################################################
 
 import numpy as np
-import tomography, smc
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import time
 from scipy.spatial import Delaunay
 import numpy.linalg as la
-from utils import mvee, uniquify
 
-from resamplers import ClusteringResampler
+## Imports from within QInfer. ##
+from .. import tomography, smc
+from ..utils import mvee, uniquify
+from ..resamplers import ClusteringResampler
+
+## External libraries bundled with QInfer. ##
+from .._lib import docopt
+
+## DOCUMENTATION ###############################################################
+
+USAGE = """
+Usage: qubit_tomography_example.py [options]
+
+-h, --help                  Prints this help and returns.
+-n NP, --n_particles=NP     Specifies how many particles to use in the SMC
+                            approximation. [default: 5000]
+-e NE, --n_exp=NE           Specifies how many measurements are to be made.
+                            [default: 100]
+-a ALGO, --algorithm=ALGO   Specifies which algorithm to use; currently 'SMC'
+                            and 'SMC-ABC' are supported. [default: SMC]
+--abctol=TOL                Specifies the tolerance used by the SMC-ABC
+                            algorithm. [default: 8e-6]
+--abcsim=SIM                Specifies how many simulations are used by each ABC
+                            step. [default: 10000]
+"""
+
+## TODO ########################################################################
+
+"""
+    - Add plotting options to USAGE.
+    - Add printing options to USAGE.    
+"""
+
+## SCRIPT ######################################################################
 
 if __name__ == "__main__":
 
-    N_PARTICLES = 1000
+    # Handle command-line arguments using docopt.
+    args = docopt.docopt(USAGE)
+    N_PARTICLES = int(args['--n_particles'])
+    n_exp       = int(args['--n_exp'])
+    algo        = args['--algorithm']
+    abctol      = float(args['--abctol'])
+    abcsim      = int(args['--abcsim'])
+    
             
     # Model and prior initialization
     prior = tomography.HilbertSchmidtUniform()
@@ -56,8 +94,10 @@ if __name__ == "__main__":
     ], dtype=model.expparams_dtype)
     
     # SMC initialization
-    updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, ABC_tol = 8e-6, ABC_sim = 1e5)
-#    updater = smc.SMCUpdater(model, N_PARTICLES, prior)
+    if algo == 'SMC':
+        updater = smc.SMCUpdater(model, N_PARTICLES, prior)
+    elif algo == 'SMC-ABC':
+        updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, ABC_tol=abctol, ABC_sim=abcsim)
     
     
     tic = toc = None
@@ -82,7 +122,6 @@ if __name__ == "__main__":
  
     
     # Get all Bayesian up in here
-    n_exp = 100
     
     tic = time.time()
     for idx_exp in xrange(n_exp):
