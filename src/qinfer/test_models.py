@@ -107,55 +107,71 @@ if __name__ == "__main__":
     import smc
     import matplotlib.pyplot as plt
 
-    N_PARTICLES = 1000
+    N_PARTICLES = 100
     
     prior = UniformDistribution([0,1])
     model = SimplePrecessionModel()
-    
-    updater = smc.SMCUpdaterBCRB(model, N_PARTICLES, prior,resample_a=.99, resample_thresh=0.5)
+
+# To test BCRB uncomment all BIM lines   
+#    updater = smc.SMCUpdaterBCRB(model, N_PARTICLES, prior,resample_a=.99, resample_thresh=0.5)
         
+# To test ABC
+    updaterEXACT = smc.SMCUpdater(model, N_PARTICLES, prior)
+    updaterABC = smc.SMCUpdaterABC(model, N_PARTICLES, prior, ABC_tol = 1e-5, ABC_sim = 1e4)
+
     # Sample true set of modelparams
     truemp = prior.sample()
     
     # Plot true state and prior
-#    fig = plt.figure()
-#    particles = updater.particle_locations
-#    weights = updater.particle_weights      
-#    
-#    plt.plot(particles[:,0],weights)
+    fig = plt.figure()
+    particles = updaterEXACT.particle_locations
+    weights = updaterEXACT.particle_weights      
+    particlesABC = updaterABC.particle_locations
+    weightsABC = updaterABC.particle_weights      
     
+    plt.plot(particles[:,0],weights, '.')
+    plt.plot(particlesABC[:,0],weightsABC, '.r')
+
     # Get all Bayesian up in here
-    n_exp = 10
+    n_exp = 1000
     
     # theoretical BIM
-    BIM = 0    
+#    BIM = 0    
     
     for idx_exp in xrange(n_exp):
         thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
         
-        BIM += thisexp**2
+#        BIM += thisexp**2
         
         outcome = model.simulate_experiment(truemp, thisexp)
        
-        updater.update(outcome, thisexp)
+        updaterEXACT.update(outcome, thisexp)
+        updaterABC.update(outcome, thisexp)
         
-#        if np.mod(3*idx_exp,n_exp)==0:
-#            fig = plt.figure()
-#            
-#            particles = updater.particle_locations
-#            weights = updater.particle_weights      
-#            plt.plot(particles[:,0],weights)
-
-    est_mean = updater.est_mean()
+        if np.mod(4*idx_exp,n_exp)==0:
+            fig = plt.figure()
+            
+            particles = updaterEXACT.particle_locations
+            weights = updaterEXACT.particle_weights      
+            particlesABC = updaterABC.particle_locations
+            weightsABC = updaterABC.particle_weights      
+            
+            plt.plot(particles[:,0],weights, '.')
+            plt.plot(particlesABC[:,0],weightsABC, '.r')
     
     print "True param: {}".format(truemp)    
-    print "Est. mean: {}".format(updater.est_mean())
-#    print "Est. cov: {}".format(updater.est_covariance_mtx())
-    print "Error: {}".format(np.sum(np.abs(truemp[0]-updater.est_mean())**2))
-    print "Trace Cov: {}".format(np.trace(updater.est_covariance_mtx()))
-    print "Resample count: {}".format(updater.resample_count)
-    print "BCRB: {}".format(1/updater.current_bim)
-    print "Theoretical BCRB: {}".format(1/BIM)
+    print "Est. mean EXACT: {}".format(updaterEXACT.est_mean())
+    print "Est. mean ABC: {}".format(updaterABC.est_mean())
+    
+    print "Error EXACT: {}".format(np.sum(np.abs(truemp[0]-updaterEXACT.est_mean())**2))
+    print "Trace Cov EXACT: {}".format(np.trace(updaterEXACT.est_covariance_mtx()))
+    print "Resample count EXACT: {}".format(updaterEXACT.resample_count)
+    print "Error ABC: {}".format(np.sum(np.abs(truemp[0]-updaterABC.est_mean())**2))
+    print "Trace Cov ABC: {}".format(np.trace(updaterABC.est_covariance_mtx()))
+    print "Resample count ABC: {}".format(updaterABC.resample_count)
+
+#    print "BCRB: {}".format(1/updater.current_bim)
+#    print "Theoretical BCRB: {}".format(1/BIM)
 
         
     

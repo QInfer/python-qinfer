@@ -44,7 +44,7 @@ from resamplers import ClusteringResampler
 
 if __name__ == "__main__":
 
-    N_PARTICLES = 100
+    N_PARTICLES = 1000
             
     # Model and prior initialization
     prior = tomography.HilbertSchmidtUniform()
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     ], dtype=model.expparams_dtype)
     
     # SMC initialization
-    updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, ABC_tol = 1e-6, ABC_sim = 1e5)
+    updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, ABC_tol = 8e-6, ABC_sim = 1e5)
 #    updater = smc.SMCUpdater(model, N_PARTICLES, prior)
     
     
