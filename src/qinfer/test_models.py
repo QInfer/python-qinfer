@@ -119,7 +119,7 @@ if __name__ == "__main__":
         
 # To test ABC
     updaterEXACT = smc.SMCUpdater(model, N_PARTICLES, prior)
-    updaterABC = smc.SMCUpdaterABC(model, N_PARTICLES, prior, ABC_tol = 1e-5, ABC_sim = 1e4)
+    updaterABC = smc.SMCUpdaterABC(model, N_PARTICLES, prior, abc_tol = 1e-5, abc_sim = 1e4)
 
     # Sample true set of modelparams
     truemp = prior.sample()
