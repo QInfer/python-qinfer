@@ -463,9 +463,9 @@ class SMCUpdaterABC(SMCUpdater):
     """
 
     def __init__(self, model, n_particles, prior,
-                 ABC_tol = 0.01, ABC_sim = 1e4, **kwargs):
-        self.ABC_tol = ABC_tol
-        self.ABC_sim = ABC_sim
+                 abc_tol=0.01, abc_sim=1e4, **kwargs):
+        self.abc_tol = abc_tol
+        self.abc_sim = abc_sim
         
         SMCUpdater.__init__(self, model, n_particles, prior, **kwargs)
         
@@ -478,8 +478,8 @@ class SMCUpdaterABC(SMCUpdater):
             outcomes = np.array([outcomes])
         
         for idx_particle in xrange(self.n_particles):
-            n = self.model.simulate_experiment(self.particle_locations[idx_particle], expparams, repeat = self.ABC_sim)
-            weights[idx_particle] = weights[idx_particle] * np.sum(np.abs(n-outcomes)/self.ABC_sim <= self.ABC_tol) 
+            n = self.model.simulate_experiment(self.particle_locations[idx_particle], expparams, repeat=self.abc_sim)
+            weights[idx_particle] = weights[idx_particle] * np.sum(np.abs(n-outcomes)/self.abc_sim <= self.abc_tol) 
         # normalize
         return weights / np.sum(weights)
         

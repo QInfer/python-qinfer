@@ -97,7 +97,7 @@ if __name__ == "__main__":
     if algo == 'SMC':
         updater = smc.SMCUpdater(model, N_PARTICLES, prior)
     elif algo == 'SMC-ABC':
-        updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, ABC_tol=abctol, ABC_sim=abcsim)
+        updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, abc_tol=abctol, abc_sim=abcsim)
     
     
     tic = toc = None
