@@ -106,7 +106,9 @@ if __name__ == "__main__":
     from distributions import UniformDistribution
     import smc
     import matplotlib.pyplot as plt
-
+    from scipy.stats.kde import gaussian_kde
+    from copy import copy
+    
     N_PARTICLES = 100
     
     prior = UniformDistribution([0,1])
@@ -154,11 +156,27 @@ if __name__ == "__main__":
             particles = updaterEXACT.particle_locations
             weights = updaterEXACT.particle_weights      
             particlesABC = updaterABC.particle_locations
-            weightsABC = updaterABC.particle_weights      
+            weightsABC = updaterABC.particle_weights
             
+            #this is shameful hack to get the Kernal estimate
+            temp = copy(updaterEXACT)
+            temp.resample
+            
+            pdf = gaussian_kde(temp.particle_locations[:,0])
+            
+            x = np.linspace(0,1,100)
             plt.plot(particles[:,0],weights, '.')
+            plt.plot(x,pdf(x),'b')
+
+            temp = copy(updaterABC)
+            temp.resample
+            
+            pdf = gaussian_kde(temp.particle_locations[:,0])
+            plt.plot(x,pdf(x),'r')
+
             plt.plot(particlesABC[:,0],weightsABC, '.r')
-    
+#            plt.plot(x,pdfABC(x),'r')
+            
     print "True param: {}".format(truemp)    
     print "Est. mean EXACT: {}".format(updaterEXACT.est_mean())
     print "Est. mean ABC: {}".format(updaterABC.est_mean())
