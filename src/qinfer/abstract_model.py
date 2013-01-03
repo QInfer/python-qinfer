@@ -116,6 +116,7 @@ class Model(Simulatable):
     
     ## INITIALIZERS ##
     def __init__(self):
+        super(Model, self).__init__()
         self._call_count = 0
     
     ## CONCRETE PROPERTIES ##
