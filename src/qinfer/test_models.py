@@ -109,7 +109,7 @@ if __name__ == "__main__":
     from scipy.stats.kde import gaussian_kde
     from copy import copy
     
-    N_PARTICLES = 100
+    N_PARTICLES = 10000
     
     prior = UniformDistribution([0,1])
     model = SimplePrecessionModel()
@@ -119,20 +119,37 @@ if __name__ == "__main__":
         
 # To test ABC
     updaterEXACT = smc.SMCUpdater(model, N_PARTICLES, prior)
-    updaterABC = smc.SMCUpdaterABC(model, N_PARTICLES, prior, abc_tol = 1e-5, abc_sim = 1e4)
+    updaterABC = smc.SMCUpdaterABC(model, N_PARTICLES, prior, abc_tol = 0, abc_sim = 1e2)
 
     # Sample true set of modelparams
     truemp = prior.sample()
     
     # Plot true state and prior
     fig = plt.figure()
+    
     particles = updaterEXACT.particle_locations
     weights = updaterEXACT.particle_weights      
     particlesABC = updaterABC.particle_locations
-    weightsABC = updaterABC.particle_weights      
+    weightsABC = updaterABC.particle_weights
     
+    #this is shameful hack to get the Kernal estimate
+    temp = copy(updaterEXACT)
+    temp.resample
+    
+    pdf = gaussian_kde(temp.particle_locations[:,0])
+    
+    x = np.linspace(0,1,1000)
     plt.plot(particles[:,0],weights, '.')
+    plt.plot(x,pdf(x),'b')
+
+    temp = copy(updaterABC)
+    temp.resample
+    
+    pdf = gaussian_kde(temp.particle_locations[:,0])
+    plt.plot(x,pdf(x),'r')
+
     plt.plot(particlesABC[:,0],weightsABC, '.r')
+    plt.plot(truemp,0,'g')
 
     # Get all Bayesian up in here
     n_exp = 1000
@@ -164,7 +181,7 @@ if __name__ == "__main__":
             
             pdf = gaussian_kde(temp.particle_locations[:,0])
             
-            x = np.linspace(0,1,100)
+            x = np.linspace(0,1,1000)
             plt.plot(particles[:,0],weights, '.')
             plt.plot(x,pdf(x),'b')
 
@@ -175,7 +192,7 @@ if __name__ == "__main__":
             plt.plot(x,pdf(x),'r')
 
             plt.plot(particlesABC[:,0],weightsABC, '.r')
-#            plt.plot(x,pdfABC(x),'r')
+            plt.plot(truemp,0,'g')
             
     print "True param: {}".format(truemp)    
     print "Est. mean EXACT: {}".format(updaterEXACT.est_mean())
