@@ -477,9 +477,16 @@ class SMCUpdaterABC(SMCUpdater):
         if not isinstance(outcomes, np.ndarray):
             outcomes = np.array([outcomes])
         
+        #TODO: lots of assumptions have been made to ensure the following works
+        # 1 - this may only work for binary outcomes
+        # 2 - in any case, it assumes the outcome of an experiment is a single number
         for idx_particle in xrange(self.n_particles):
+            # first simulate abc_sim experiments
             n = self.model.simulate_experiment(self.particle_locations[idx_particle], expparams, repeat=self.abc_sim)
+            # re-weight the particle by multiplying by number of simulated 
+            # that came within a tolerance of abc_tol of the actual outcome            
             weights[idx_particle] = weights[idx_particle] * np.sum(np.abs(n-outcomes)/self.abc_sim <= self.abc_tol) 
+        
         # normalize
         return weights / np.sum(weights)
         
