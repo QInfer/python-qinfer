@@ -65,6 +65,7 @@ Usage: qubit_tomography_example.py [options]
                             algorithm. [default: 8e-6]
 --abcsim=SIM                Specifies how many simulations are used by each ABC
                             step. [default: 10000]
+-v, --verbose               Prints additional debugging information.
 """
 
 ## TODO ########################################################################
@@ -86,6 +87,7 @@ if __name__ == "__main__":
     resamp_algo = args['--resampler']
     abctol      = float(args['--abctol'])
     abcsim      = int(args['--abcsim'])
+    verbose     = bool(args['--verbose'])
     
             
     # Model and prior initialization
@@ -101,10 +103,10 @@ if __name__ == "__main__":
     if resamp_algo == 'LW':
         resampler = LiuWestResampler()
     elif resamp_algo == 'DBSCAN-LW':
-        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=False)
+        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=False, quiet=not verbose)
     elif resamp_algo == 'WDBSCAN-LW':
         print "[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly."
-        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=True)
+        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=True, quiet=not verbose)
     else:
         raise ValueError('Must specify a valid resampler.')
         
