@@ -42,10 +42,13 @@ import scipy.linalg as la
 import warnings
 
 from utils import outer_product, particle_meanfn, particle_covariance_mtx
+import metrics
 
 try:
     import sklearn
     import sklearn.cluster
+    import sklearn.metrics
+    import sklearn.metrics.pairwise
 except ImportError:
     warnings.warn("Could not import scikit-learn. Some features may not work.")
     sklearn = None
@@ -61,13 +64,16 @@ class ClusteringResampler(object):
         cluster. If ``None``, defaults to ``LiuWestResampler()``.
     """
     
-    def __init__(self, secondary_resampler=None, quiet=True):
+    def __init__(self, secondary_resampler=None, metric='euclidean', weighted=False, quiet=True):
         self.secondary_resampler = (
             secondary_resampler
             if secondary_resampler is not None
             else LiuWestResampler()
         )
+        
         self.quiet = quiet
+        self.metric = metric
+        self.weighted = weighted
         
     ## METHODS ##
     
@@ -78,9 +84,14 @@ class ClusteringResampler(object):
         new_weights = np.empty(particle_weights.shape)
         new_locs    = np.empty(particle_locations.shape)
         
+        # Calculate and possibly reweight the metric.
+        M = sklearn.metrics.pairwise.pairwise_distances(particle_locations, metric=self.metric)
+        if self.weighted:
+            M = metrics.weighted_pairwise_distances(M, particle_weights)
+        
         # Create and run a SciKit-Learn DBSCAN clusterer.
-        clusterer = sklearn.cluster.DBSCAN()
-        cluster_labels = clusterer.fit_predict(particle_locations)
+        clusterer = sklearn.cluster.DBSCAN(metric='precomputed')
+        cluster_labels = clusterer.fit_predict(M)
         
         # Find out how many clusters were identified.
         # Cluster counting logic from:
@@ -109,6 +120,11 @@ class ClusteringResampler(object):
             # Store the updated cluster.
             new_weights[this_cluster] = cluster_ws
             new_locs[this_cluster]    = cluster_locs
+
+        # Assert that we have not introduced any NaNs or Infs by resampling.
+        assert np.all(np.logical_not(np.logical_or(
+                np.isnan(new_locs), np.isinf(new_locs)
+            )))
             
         return new_weights, new_locs
 
@@ -172,7 +188,6 @@ class LiuWestResampler(object):
             idxs_to_resample = idxs_to_resample[np.nonzero(np.logical_not(
                 model.are_models_valid(new_locs[idxs_to_resample, :])
             ))[0]]
-
 
         # Now we reset the weights to be uniform, letting the density of
         # particles represent the information that used to be stored in the

@@ -41,7 +41,7 @@ import numpy.linalg as la
 ## Imports from within QInfer. ##
 from .. import tomography, smc
 from ..utils import mvee, uniquify
-from ..resamplers import ClusteringResampler
+from ..resamplers import LiuWestResampler, ClusteringResampler
 
 ## External libraries bundled with QInfer. ##
 from .._lib import docopt
@@ -58,6 +58,9 @@ Usage: qubit_tomography_example.py [options]
                             [default: 100]
 -a ALGO, --algorithm=ALGO   Specifies which algorithm to use; currently 'SMC'
                             and 'SMC-ABC' are supported. [default: SMC]
+-r ALGO, --resampler=ALGO   Specifies which resampling algorithm to use;
+                            currently 'LW', 'DBSCAN-LW' and 'WDBSCAN-LW' are
+                            supported. [default: LW]
 --abctol=TOL                Specifies the tolerance used by the SMC-ABC
                             algorithm. [default: 8e-6]
 --abcsim=SIM                Specifies how many simulations are used by each ABC
@@ -80,6 +83,7 @@ if __name__ == "__main__":
     N_PARTICLES = int(args['--n_particles'])
     n_exp       = int(args['--n_exp'])
     algo        = args['--algorithm']
+    resamp_algo = args['--resampler']
     abctol      = float(args['--abctol'])
     abcsim      = int(args['--abcsim'])
     
@@ -93,11 +97,24 @@ if __name__ == "__main__":
         ([0, 0, 1], 1)
     ], dtype=model.expparams_dtype)
     
+    # Resampler initialization
+    if resamp_algo == 'LW':
+        resampler = LiuWestResampler()
+    elif resamp_algo == 'DBSCAN-LW':
+        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=False)
+    elif resamp_algo == 'WDBSCAN-LW':
+        print "[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly."
+        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=True)
+    else:
+        raise ValueError('Must specify a valid resampler.')
+        
     # SMC initialization
     if algo == 'SMC':
-        updater = smc.SMCUpdater(model, N_PARTICLES, prior)
+        updater = smc.SMCUpdater(model, N_PARTICLES, prior, resampler=resampler)
     elif algo == 'SMC-ABC':
-        updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, abc_tol=abctol, abc_sim=abcsim)
+        updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, resampler=resampler, abc_tol=abctol, abc_sim=abcsim)
+    else:
+        raise ValueError('Must specify a valid algorithm.')
     
     
     tic = toc = None
