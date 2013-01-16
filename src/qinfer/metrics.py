@@ -52,10 +52,10 @@ except ImportError:
 
 ## FUNCTIONS ###################################################################
 
-def weighted_pairwise_distances(X, w, metric='euclidean'):
+def weighted_pairwise_distances(X, w, metric='euclidean', w_pow=0.5):
     r"""
     Given a feature matrix ``X`` with weights ``w``, calculates the modified
-    distance metric :math:`\tilde{d}(p, q) = d(p, q) / (w(p) w(q) N^2)`, where
+    distance metric :math:`\tilde{d}(p, q) = d(p, q) / (w(p) w(q) N^2)^p`, where
     :math:`N` is the length of ``X``. This metric is such that "heavy" feature
     vectors are considered to be closer to each other than "light" feature
     vectors, and are hence correspondingly less likely to be considered part of
@@ -69,5 +69,5 @@ def weighted_pairwise_distances(X, w, metric='euclidean'):
     N = w.shape[0]
     w_matrix = outer_product(w) * N**2
     
-    return base_metric / w_matrix
+    return base_metric / (w_matrix ** w_pow)
     

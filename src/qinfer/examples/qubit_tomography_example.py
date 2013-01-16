@@ -61,6 +61,14 @@ Usage: qubit_tomography_example.py [options]
 -r ALGO, --resampler=ALGO   Specifies which resampling algorithm to use;
                             currently 'LW', 'DBSCAN-LW' and 'WDBSCAN-LW' are
                             supported. [default: LW]
+--lw-a=A                    Parameter ``a`` of the LW resampling algorithm.
+                            [default: 0.98]
+--dbscan-eps=EPS            Epsilon parameter for the DBSCAN-based resamplers.
+                            [default: 0.5]
+--dbscan-minparticles=N     Minimum number of particles allowed in a cluster by
+                            the DBSCAN-based resamplers. [default: 5]
+--wdbscan-pow=POW           Power by which the weight is to be raised in the
+                            WDBSCAN weighting step. [default: 0.5]
 --abctol=TOL                Specifies the tolerance used by the SMC-ABC
                             algorithm. [default: 8e-6]
 --abcsim=SIM                Specifies how many simulations are used by each ABC
@@ -88,6 +96,10 @@ if __name__ == "__main__":
     abctol      = float(args['--abctol'])
     abcsim      = int(args['--abcsim'])
     verbose     = bool(args['--verbose'])
+    lw_a        = float(args['--lw-a'])
+    dbscan_eps  = float(args['--dbscan-eps'])
+    dbscan_min  = float(args['--dbscan-minparticles'])
+    wdbscan_pow = float(args['--wdbscan-pow'])
     
             
     # Model and prior initialization
@@ -100,13 +112,16 @@ if __name__ == "__main__":
     ], dtype=model.expparams_dtype)
     
     # Resampler initialization
+    lw_args = {"a": lw_a}
+    dbscan_args = {"eps": dbscan_eps, "min_particles": dbscan_min, "w_pow": wdbscan_pow}
+    
     if resamp_algo == 'LW':
-        resampler = LiuWestResampler()
+        resampler = LiuWestResampler(**lw_args)
     elif resamp_algo == 'DBSCAN-LW':
-        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=False, quiet=not verbose)
+        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(**lw_args), weighted=False, quiet=not verbose, **dbscan_args)
     elif resamp_algo == 'WDBSCAN-LW':
         print "[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly."
-        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=True, quiet=not verbose)
+        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=True, quiet=not verbose, **dbscan_args)
     else:
         raise ValueError('Must specify a valid resampler.')
         

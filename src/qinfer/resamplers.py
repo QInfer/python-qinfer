@@ -64,16 +64,19 @@ class ClusteringResampler(object):
         cluster. If ``None``, defaults to ``LiuWestResampler()``.
     """
     
-    def __init__(self, secondary_resampler=None, metric='euclidean', weighted=False, quiet=True):
+    def __init__(self, eps=0.5, secondary_resampler=None, min_particles=5, metric='euclidean', weighted=False, w_pow=0.5, quiet=True):
         self.secondary_resampler = (
             secondary_resampler
             if secondary_resampler is not None
             else LiuWestResampler()
         )
         
+        self.eps = eps
         self.quiet = quiet
+        self.min_particles = min_particles
         self.metric = metric
         self.weighted = weighted
+        self.w_pow = w_pow
         
     ## METHODS ##
     
@@ -87,18 +90,26 @@ class ClusteringResampler(object):
         # Calculate and possibly reweight the metric.
         M = sklearn.metrics.pairwise.pairwise_distances(particle_locations, metric=self.metric)
         if self.weighted:
-            M = metrics.weighted_pairwise_distances(M, particle_weights)
+            M = metrics.weighted_pairwise_distances(M, particle_weights, w_pow=self.w_pow)
         
         # Create and run a SciKit-Learn DBSCAN clusterer.
-        clusterer = sklearn.cluster.DBSCAN(metric='precomputed')
+        clusterer = sklearn.cluster.DBSCAN(min_samples=self.min_particles, eps=self.eps, metric='precomputed')
         cluster_labels = clusterer.fit_predict(M)
         
         # Find out how many clusters were identified.
         # Cluster counting logic from:
         # [http://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html].
         n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+        
+        # If more than 10% of the particles were labeled as NOISE,
+        # warn.
+        n_noise = np.sum(cluster_labels == -1)
+        if n_noise / particle_weights.shape[0] >= 0.1:
+            warnings.warn("More than 10% of the particles were classified as NOISE. Consider increasing the neighborhood size ``eps``.")
+        
+        # Print debugging info.
         if not self.quiet:
-            print "[Resampling] DBSCAN identified {} cluster{}.".format(n_clusters, "s" if n_clusters > 1 else "")
+            print "[Resampling] DBSCAN identified {} cluster{}. {} particles identified as NOISE.".format(n_clusters, "s" if n_clusters > 1 else "", n_noise)
         
         # Loop over clusters, calling the secondary resampler for each.
         for idx_cluster in xrange(n_clusters):
