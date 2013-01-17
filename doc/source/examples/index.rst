@@ -5,28 +5,18 @@
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
     
-.. _index:
+.. _examples:
     
-QInfer - Library for Statistical Inference in Quantum Information
-=================================================================
+QInfer Examples
+===============
 
-.. module:: qinfer
+.. module:: qinfer.examples
 
 Contents:
 
 .. toctree::
-    intro
-    examples/index
-    apiref/index
-    biblo
-    acknowledgements
+    :glob:
     :maxdepth: 2
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+    *
+    

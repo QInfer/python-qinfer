@@ -57,10 +57,11 @@ class SMCUpdater(object):
     r"""
     Creates a new Sequential Monte carlo updater
 
-    :param Model model: Model whose parameters are to be inferred.
+    :param qinfer.abstract_model.Model model: Model whose parameters are to be inferred.
     :param int n_particles: The number of particles to be used in the particle approximation.
     :param Distribution prior: A representation of the prior distribution.
-    :param float resample_a: Specifies the parameter :math:`a` to be used in when resampling.
+    :param callable resampler: Specifies the resampling algorithm to be used. See :ref:`resamplers`
+        for more details.
     :param float resample_thresh: Specifies the threshold for :math:`N_{\text{ess}}` to decide when to resample.
     """
     def __init__(self,
@@ -113,10 +114,6 @@ class SMCUpdater(object):
         # We wrap this in a property to prevent external resetting and to enable
         # a docstring.
         return self._resample_count
-
-    @property
-    def get_model(self):
-        return self.model
 
     @property
     def n_ess(self):
