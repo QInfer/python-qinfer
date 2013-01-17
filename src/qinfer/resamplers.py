@@ -42,6 +42,7 @@ import scipy.linalg as la
 import warnings
 
 from utils import outer_product, particle_meanfn, particle_covariance_mtx
+from exceptions import ResamplerWarning
 import metrics
 
 try:
@@ -50,7 +51,7 @@ try:
     import sklearn.metrics
     import sklearn.metrics.pairwise
 except ImportError:
-    warnings.warn("Could not import scikit-learn. Some features may not work.")
+    warnings.warn("Could not import scikit-learn. Some features may not work.", ImportWarning)
     sklearn = None
 
 ## CLASSES #####################################################################
@@ -105,7 +106,7 @@ class ClusteringResampler(object):
         # warn.
         n_noise = np.sum(cluster_labels == -1)
         if n_noise / particle_weights.shape[0] >= 0.1:
-            warnings.warn("More than 10% of the particles were classified as NOISE. Consider increasing the neighborhood size ``eps``.")
+            warnings.warn("More than 10% of the particles were classified as NOISE. Consider increasing the neighborhood size ``eps``.", ResamplerWarning)
         
         # Print debugging info.
         if not self.quiet:

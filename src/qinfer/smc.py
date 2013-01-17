@@ -48,6 +48,7 @@ from scipy.spatial import Delaunay
 import scipy.linalg as la
 import scipy.optimize as opt
 from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
+from exceptions import ApproximationWarning
 from scipy.stats.distributions import binom
 
 ## CLASSES #####################################################################
@@ -77,7 +78,7 @@ class SMCUpdater(object):
         # Backward compatibility with the old resample_a keyword argument,
         # which assumed that the Liu and West resampler was being used.
         if resample_a is not None:
-            warnings.warn("The 'resample_a' keyword argument is deprecated; use 'resampler=LiuWestResampler(a)' instead.")
+            warnings.warn("The 'resample_a' keyword argument is deprecated; use 'resampler=LiuWestResampler(a)' instead.", DeprecationWarning)
             if resampler is not None:
                 raise ValueError("Both a resample_a and an explicit resampler were provided; please provide only one.")
             self.resampler = LiuWestResampler(a=resample_a)
@@ -300,7 +301,7 @@ class SMCUpdater(object):
         # positive-semidefinite covariance matrix. If a negative eigenvalue
         # is produced, we should warn the caller of this.
         if not np.all(la.eig(cov)[0] >= 0):
-            warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.')
+            warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.', ApproximationWarning)
 
         return cov
 
