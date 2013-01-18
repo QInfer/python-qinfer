@@ -31,19 +31,76 @@ from __future__ import division
 ## IMPORTS #####################################################################
 
 import numpy as np
-import tomography, smc
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import time
 from scipy.spatial import Delaunay
 import numpy.linalg as la
-from utils import mvee, uniquify
+
+## Imports from within QInfer. ##
+from .. import tomography, smc
+from ..utils import mvee, uniquify
+from ..resamplers import LiuWestResampler, ClusteringResampler
+
+## External libraries bundled with QInfer. ##
+from .._lib import docopt
+
+## DOCUMENTATION ###############################################################
+
+USAGE = """
+Usage: qubit_tomography_example.py [options]
+
+-h, --help                  Prints this help and returns.
+-n NP, --n_particles=NP     Specifies how many particles to use in the SMC
+                            approximation. [default: 5000]
+-e NE, --n_exp=NE           Specifies how many measurements are to be made.
+                            [default: 100]
+-a ALGO, --algorithm=ALGO   Specifies which algorithm to use; currently 'SMC'
+                            and 'SMC-ABC' are supported. [default: SMC]
+-r ALGO, --resampler=ALGO   Specifies which resampling algorithm to use;
+                            currently 'LW', 'DBSCAN-LW' and 'WDBSCAN-LW' are
+                            supported. [default: LW]
+--lw-a=A                    Parameter ``a`` of the LW resampling algorithm.
+                            [default: 0.98]
+--dbscan-eps=EPS            Epsilon parameter for the DBSCAN-based resamplers.
+                            [default: 0.5]
+--dbscan-minparticles=N     Minimum number of particles allowed in a cluster by
+                            the DBSCAN-based resamplers. [default: 5]
+--wdbscan-pow=POW           Power by which the weight is to be raised in the
+                            WDBSCAN weighting step. [default: 0.5]
+--abctol=TOL                Specifies the tolerance used by the SMC-ABC
+                            algorithm. [default: 8e-6]
+--abcsim=SIM                Specifies how many simulations are used by each ABC
+                            step. [default: 10000]
+-v, --verbose               Prints additional debugging information.
+"""
+
+## TODO ########################################################################
+
+"""
+    - Add plotting options to USAGE.
+    - Add printing options to USAGE.    
+"""
+
+## SCRIPT ######################################################################
 
 if __name__ == "__main__":
 
-    N_PARTICLES = 100
-
+    # Handle command-line arguments using docopt.
+    args = docopt.docopt(USAGE)
+    N_PARTICLES = int(args['--n_particles'])
+    n_exp       = int(args['--n_exp'])
+    algo        = args['--algorithm']
+    resamp_algo = args['--resampler']
+    abctol      = float(args['--abctol'])
+    abcsim      = int(args['--abcsim'])
+    verbose     = bool(args['--verbose'])
+    lw_a        = float(args['--lw-a'])
+    dbscan_eps  = float(args['--dbscan-eps'])
+    dbscan_min  = float(args['--dbscan-minparticles'])
+    wdbscan_pow = float(args['--wdbscan-pow'])
+    
             
     # Model and prior initialization
     prior = tomography.HilbertSchmidtUniform()
@@ -54,9 +111,27 @@ if __name__ == "__main__":
         ([0, 0, 1], 1)
     ], dtype=model.expparams_dtype)
     
-    # SMC initialization
-    updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=0.5)
+    # Resampler initialization
+    lw_args = {"a": lw_a}
+    dbscan_args = {"eps": dbscan_eps, "min_particles": dbscan_min, "w_pow": wdbscan_pow}
     
+    if resamp_algo == 'LW':
+        resampler = LiuWestResampler(**lw_args)
+    elif resamp_algo == 'DBSCAN-LW':
+        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(**lw_args), weighted=False, quiet=not verbose, **dbscan_args)
+    elif resamp_algo == 'WDBSCAN-LW':
+        print "[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly."
+        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=True, quiet=not verbose, **dbscan_args)
+    else:
+        raise ValueError('Must specify a valid resampler.')
+        
+    # SMC initialization
+    if algo == 'SMC':
+        updater = smc.SMCUpdater(model, N_PARTICLES, prior, resampler=resampler)
+    elif algo == 'SMC-ABC':
+        updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, resampler=resampler, abc_tol=abctol, abc_sim=abcsim)
+    else:
+        raise ValueError('Must specify a valid algorithm.')    
     
     tic = toc = None
     
@@ -80,8 +155,6 @@ if __name__ == "__main__":
  
     
     # Get all Bayesian up in here
-    n_exp = 2
-    
     tic = time.time()
     for idx_exp in xrange(n_exp):
         # Randomly choose one of the three experiments from expparams and make
@@ -121,20 +194,19 @@ if __name__ == "__main__":
     ax.add_collection(items)
     
     
-    A, centroid = updater.region_est_ellipsoid()
+    A, centroid = updater.region_est_ellipsoid(tol=0.0001)
     
     #PLot covariance ellipse
     U, D, V = la.svd(A)
     
     
     rx, ry, rz = [1/np.sqrt(d) for d in D]
-    u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]    
+    u, v = np.mgrid[0:2*np.pi:20j,-np.pi/2:np.pi/2:10j]    
     
-    x=rx*np.cos(u)*np.sin(v)
-    y=ry*np.sin(u)*np.sin(v)
-    z=rz*np.cos(v)
-    
-    
+    x=rx*np.cos(u)*np.cos(v)
+    y=ry*np.sin(u)*np.cos(v)
+    z=rz*np.sin(v)
+        
     for idx in xrange(x.shape[0]):
         for idy in xrange(y.shape[1]):
             x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.transpose(V),np.array([x[idx,idy],y[idx,idy],z[idx,idy]])) + centroid

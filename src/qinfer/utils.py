@@ -86,7 +86,7 @@ def ellipsoid_volume(A=None, invA=None):
     
     return Vn * la.det(sqrtm(invA))
 
-def mvee(points,tol):
+def mvee(points,tol=0.001):
     N, d = points.shape
     
     Q = np.zeros([N,d+1])
@@ -114,7 +114,7 @@ def mvee(points,tol):
     
     U = np.diag(u)    
     c = np.dot(points,u)
-    A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.dot(c,np.transpose(c)) )    
+    A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.outer(c,c) )    
     return A, np.transpose(c)
 
 def uniquify(seq):
@@ -122,3 +122,49 @@ def uniquify(seq):
     seen = set()
     seen_add = seen.add
     return [ x for x in seq if x not in seen and not seen_add(x)]
+    
+    
+#==============================================================================
+#Test Code
+if __name__ == "__main__":
+
+    from mpl_toolkits.mplot3d import Axes3D
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    import matplotlib.pyplot as plt
+    from scipy.spatial import Delaunay
+    
+    #some random points
+    points = np.array([[ 0.53135758, -0.25818091, -0.32382715], 
+    [ 0.58368177, -0.3286576,  -0.23854156,], 
+    [ 0.18741533,  0.03066228, -0.94294771], 
+    [ 0.65685862, -0.09220681, -0.60347573],
+    [ 0.63137604, -0.22978685, -0.27479238],
+    [ 0.59683195, -0.15111101, -0.40536606],
+    [ 0.68646128,  0.0046802,  -0.68407367],
+    [ 0.62311759,  0.0101013,  -0.75863324]])
+    
+    # compute mvee
+    A, centroid = mvee(points)
+    print A
+    
+    # point it and some other stuff
+    U, D, V = la.svd(A)    
+        
+    rx, ry, rz = [1/np.sqrt(d) for d in D]
+    u, v = np.mgrid[0:2*np.pi:20j,-np.pi/2:np.pi/2:10j]    
+    
+    x=rx*np.cos(u)*np.cos(v)
+    y=ry*np.sin(u)*np.cos(v)
+    z=rz*np.sin(v)
+            
+    for idx in xrange(x.shape[0]):
+        for idy in xrange(y.shape[1]):
+            x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.transpose(V),np.array([x[idx,idy],y[idx,idy],z[idx,idy]])) + centroid
+            
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(points[:,0],points[:,1],points[:,2])    
+    ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
+    plt.show()
+ 

@@ -48,6 +48,8 @@ from scipy.spatial import Delaunay
 import scipy.linalg as la
 import scipy.optimize as opt
 from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
+from exceptions import ApproximationWarning
+from scipy.stats.distributions import binom
 
 ## CLASSES #####################################################################
 
@@ -55,10 +57,11 @@ class SMCUpdater(object):
     r"""
     Creates a new Sequential Monte carlo updater
 
-    :param Model model: Model whose parameters are to be inferred.
+    :param qinfer.abstract_model.Model model: Model whose parameters are to be inferred.
     :param int n_particles: The number of particles to be used in the particle approximation.
     :param Distribution prior: A representation of the prior distribution.
-    :param float resample_a: Specifies the parameter :math:`a` to be used in when resampling.
+    :param callable resampler: Specifies the resampling algorithm to be used. See :ref:`resamplers`
+        for more details.
     :param float resample_thresh: Specifies the threshold for :math:`N_{\text{ess}}` to decide when to resample.
     """
     def __init__(self,
@@ -76,7 +79,7 @@ class SMCUpdater(object):
         # Backward compatibility with the old resample_a keyword argument,
         # which assumed that the Liu and West resampler was being used.
         if resample_a is not None:
-            warnings.warn("The 'resample_a' keyword argument is deprecated; use 'resampler=LiuWestResampler(a)' instead.")
+            warnings.warn("The 'resample_a' keyword argument is deprecated; use 'resampler=LiuWestResampler(a)' instead.", DeprecationWarning)
             if resampler is not None:
                 raise ValueError("Both a resample_a and an explicit resampler were provided; please provide only one.")
             self.resampler = LiuWestResampler(a=resample_a)
@@ -111,10 +114,6 @@ class SMCUpdater(object):
         # We wrap this in a property to prevent external resetting and to enable
         # a docstring.
         return self._resample_count
-
-    @property
-    def get_model(self):
-        return self.model
 
     @property
     def n_ess(self):
@@ -279,7 +278,7 @@ class SMCUpdater(object):
         # algorithm.
         # We pass the model so that the resampler can check for validity of
         # newly placed particles.
-        self.particle_locations = \
+        self.particle_weights, self.particle_locations = \
             self.resampler(self.model, self.particle_weights, self.particle_locations)
 
         # Reset the weights to uniform.
@@ -353,7 +352,7 @@ class SMCUpdater(object):
         # positive-semidefinite covariance matrix. If a negative eigenvalue
         # is produced, we should warn the caller of this.
         if not np.all(la.eig(cov)[0] >= 0):
-            warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.')
+            warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.', ApproximationWarning)
 
         return cov
 
@@ -409,6 +408,7 @@ class SMCUpdater(object):
             faces.append(points[[ia, ib, ic]])    
 
         vertices = points[uniquify(hull.flatten())]
+        
         return faces, vertices
         
                 
@@ -506,3 +506,44 @@ class SMCUpdaterBED(SMCUpdater):
         
         return best_exp
 
+class SMCUpdaterABC(SMCUpdater):
+    """
+
+    Subclass of :class:`SMCUpdater`, adding approximate Bayesian computation
+    functionality.
+    
+    """
+
+    def __init__(self, model, n_particles, prior,
+                 abc_tol=0.01, abc_sim=1e4, **kwargs):
+        self.abc_tol = abc_tol
+        self.abc_sim = abc_sim
+        
+        SMCUpdater.__init__(self, model, n_particles, prior, **kwargs)
+        
+    def hypothetical_update(self, outcomes, expparams):
+        weights = np.copy(self.particle_weights)
+
+        # Check if we have a single outcome or an array. If we only have one
+        # outcome, wrap it in a one-index array.
+        if not isinstance(outcomes, np.ndarray):
+            outcomes = np.array([outcomes])
+        
+        #TODO: lots of assumptions have been made to ensure the following works
+        # 1 - this may only work for binary outcomes
+        # 2 - in any case, it assumes the outcome of an experiment is a single number
+        for idx_particle in xrange(self.n_particles):
+            # first simulate abc_sim experiments
+            n = self.model.simulate_experiment(self.particle_locations[idx_particle], expparams, repeat=self.abc_sim)
+            # re-weight the particle by multiplying by number of simulated 
+            # that came within a tolerance of abc_tol of the actual outcome            
+            weights[idx_particle] = weights[idx_particle] * np.sum(np.abs(n-outcomes)/self.abc_sim <= self.abc_tol) 
+        
+        # normalize
+        return weights / np.sum(weights)
+        
+    def update(self, outcome, expparams, check_for_resample=True):
+        self.particle_weights = self.hypothetical_update(outcome, expparams)
+
+        if check_for_resample:
+            self._maybe_resample()

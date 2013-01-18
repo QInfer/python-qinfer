@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##
-# distributions.py: module for probability distributions
+# exceptions.py: Derived classes for Errors and Warnings specific to Qinfer.
 ##
 # © 2012 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
@@ -23,37 +23,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+## FEATURES ####################################################################
+
+from __future__ import division
+
+## ALL #########################################################################
+
+# We use __all__ to restrict what globals are visible to external modules.
+__all__ = [
+    'ResamplerWarning', 'ApproximationWarning'
+]
+
 ## IMPORTS #####################################################################
 
-import numpy as np
-import abc
+import warnings
 
 ## CLASSES #####################################################################
 
-class Distribution(object):
-    __metaclass__ = abc.ABCMeta
+class ResamplerWarning(RuntimeWarning):
+    pass
     
-    @abc.abstractmethod
-    def sample(self, n=1):
-        pass
+class ApproximationWarning(RuntimeWarning):
+    pass
 
-class UniformDistribution(Distribution):
-    def __init__(self, ranges=np.array([[0, 1]])):
-        if not isinstance(ranges, np.ndarray):
-            ranges = np.array(ranges)
-            
-        if len(ranges.shape) == 1:
-            ranges = ranges[np.newaxis, ...]
-    
-        self._ranges = ranges
-        self._n_rvs = ranges.shape[0]
-        self._delta = ranges[:, 1] - ranges[:, 0]
-        
-    def sample(self, n=1):
-        shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
-        z = np.random.random(shape)
-        return self._ranges[:, 0] + z * self._delta
-
-    def grad_log_pdf(self, var):
-        # TODO: This is not quite true
-        return np.zeros(var.shape)

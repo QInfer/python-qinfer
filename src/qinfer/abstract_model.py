@@ -32,13 +32,12 @@ import numpy as np
     
 ## CLASSES ##
 
-class Model(object):
+class Simulatable(object):
     __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
     
-    ## INITIALIZERS ##
     def __init__(self):
-        self._call_count = 0
-    
+        self._sim_count = 0
+        
     ## ABSTRACT PROPERTIES ##
     
     @abc.abstractproperty
@@ -63,7 +62,7 @@ class Model(object):
         the lifetime of a Model instance.
         """
         pass
-    
+        
     ## CONCRETE PROPERTIES ##
     
     @property
@@ -73,14 +72,14 @@ class Model(object):
         experiment is independent of the experiment being performed.
         
         This property is assumed by inference engines to be constant for
-        the lifetime of a Model instance.
+        the lifetime of a Simulatable instance.
         """
         return False       
     
     @property
-    def call_count(self):
-        # TODO: document
-        return self._call_count
+    def sim_count(self):
+        return self._sim_count
+        
     
     ## ABSTRACT METHODS ##
     
@@ -104,6 +103,30 @@ class Model(object):
         each set of model parameters represents is valid under this model.
         """
         pass
+        
+    @abc.abstractmethod
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        # TODO: document
+        self._sim_count += modelparams.shape[0] * expparams.shape[0] * repeat
+
+class Model(Simulatable):
+    # TODO: now that Model is a subclass of Simulatable, Model may no longer
+    #       be the best name. Maybe rename to SimulatableModel and
+    #       ExplicitModel?
+    
+    ## INITIALIZERS ##
+    def __init__(self):
+        super(Model, self).__init__()
+        self._call_count = 0
+    
+    ## CONCRETE PROPERTIES ##
+    
+    @property
+    def call_count(self):
+        # TODO: document
+        return self._call_count
+    
+    ## ABSTRACT METHODS ##
     
     @abc.abstractmethod
     def likelihood(self, outcomes, modelparams, expparams):
@@ -124,7 +147,13 @@ class Model(object):
         return self.are_models_valid(modelparams[np.newaxis, :])[0]
     
     def simulate_experiment(self, modelparams, expparams, repeat=1):
+        # NOTE: implements abstract method of Simulatable.
         # TODO: document
+        
+        # Call the superclass simulate_experiment, not recording the result.
+        # This is used to count simulation calls.
+        super(Model, self).simulate_experiment(modelparams, expparams, repeat)
+        
         probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
         cdf = np.cumsum(probabilities)
         randnum = np.random.random((repeat, 1))
