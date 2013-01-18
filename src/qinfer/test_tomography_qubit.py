@@ -40,11 +40,9 @@ from scipy.spatial import Delaunay
 import numpy.linalg as la
 from utils import mvee, uniquify
 
-from resamplers import ClusteringResampler
-
 if __name__ == "__main__":
 
-    N_PARTICLES = 10000
+    N_PARTICLES = 100
 
             
     # Model and prior initialization
@@ -57,7 +55,7 @@ if __name__ == "__main__":
     ], dtype=model.expparams_dtype)
     
     # SMC initialization
-    updater = smc.SMCUpdater(model, N_PARTICLES, prior, resampler=ClusteringResampler(quiet=False), resample_thresh=0.5)
+    updater = smc.SMCUpdater(model, N_PARTICLES, prior,resample_a=.98, resample_thresh=0.5)
     
     
     tic = toc = None
@@ -82,7 +80,7 @@ if __name__ == "__main__":
  
     
     # Get all Bayesian up in here
-    n_exp = 200
+    n_exp = 2
     
     tic = time.time()
     for idx_exp in xrange(n_exp):
