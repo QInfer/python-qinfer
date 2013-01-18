@@ -125,7 +125,7 @@ class SMCUpdater(object):
         """
         return 1 / (np.sum(self.particle_weights**2))
 
-    def hypothetical_update(self, outcomes, expparams):
+    def hypothetical_update(self, outcomes, expparams,return_likelihood=False):
         """
         Produces the particle weights for the posterior of a hypothetical
         experiment.
@@ -155,12 +155,17 @@ class SMCUpdater(object):
         # since NumPy broadcasting rules align on the right-most index.
         L = self.model.likelihood(outcomes, locs, expparams).transpose([0, 2, 1])
         weights = weights * L
-
         # normalize
-        return weights / np.sum(weights, axis=2)[..., np.newaxis]
+        norm_weights = weights / np.sum(weights, axis=2)[..., np.newaxis]
             # Note that newaxis is needed to align the two matrices.
             # This introduces a length-1 axis for the particle number,
             # so that the normalization is broadcast over all particles.
+	if not return_likelihood:
+	    return norm_weights
+	else:
+	    return norm_weights, L
+
+
 
     def update(self, outcome, expparams, check_for_resample=True):
         """
