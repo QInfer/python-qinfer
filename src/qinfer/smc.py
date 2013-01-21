@@ -160,10 +160,10 @@ class SMCUpdater(object):
             # Note that newaxis is needed to align the two matrices.
             # This introduces a length-1 axis for the particle number,
             # so that the normalization is broadcast over all particles.
-	if not return_likelihood:
-	    return norm_weights
-	else:
-	    return norm_weights, L
+        if not return_likelihood:
+            return norm_weights
+        else:
+            return norm_weights, L
 
 
 
@@ -219,59 +219,54 @@ class SMCUpdater(object):
             if (idx_exp + 1) % resample_interval == 0:
                 self._maybe_resample()
 
-    def bayes_risk(self,expparams):
-	# This subroutine computes the bayes risk for a hypothetical experiment
-	# defined by expparams.
+    def bayes_risk(self, expparams):
+        # TODO: docstring!
+        # This subroutine computes the bayes risk for a hypothetical experiment
+        # defined by expparams.
 
-	# Assume expparams is a single experiment
+        # Assume expparams is a single experiment
 
-	# expparams =
-	# Q = np array(Nmodelparams), which contains the diagonal part of the
-	#     rescaling matrix.  Non-diagonal could also be considered, but
-	#     for the moment this is not implemented.
-	nout=self.model.n_outcomes(expparams) # This is a vector so this won't work
-        w,L=self.hypothetical_update(np.arange(nout),expparams,True)
-	w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
-	L = L[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
-
+        # expparams =
+        # Q = np array(Nmodelparams), which contains the diagonal part of the
+        #     rescaling matrix.  Non-diagonal could also be considered, but
+        #     for the moment this is not implemented.
+        nout = self.model.n_outcomes(expparams) # This is a vector so this won't work
+        w, L = self.hypothetical_update(np.arange(nout), expparams, return_likelihood=True)
+        w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
+        L = L[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
 
         xs = self.particle_locations.transpose([1, 0]) # shape (n_mp, n_particles).
-	
-        mu=np.sum(
+        
+        mu = np.sum(
             # We need the particle index to be the rightmost index, so that
             # the two arrays align on the particle index as opposed to the
             # modelparam index.
-	    w[:, np.newaxis, :] * xs[np.newaxis, ...],
-            # The argument now has shape (n_modelparams, n_particles), so that
-            # the sum should collapse the particle index, 1.
+            w[:, np.newaxis, :] * xs[np.newaxis, ...],
+            # The argument now has shape (n_outcomes, n_modelparams, n_particles),
+            # so that the sum should collapse the particle index, 2.
             axis=2
         ) # <- has shape (n_outcomes, n_np).
-	
-	var = (
+        
+        var = (
             # This sum is a reduction over the particle index, chosen to be
             # axis=2. Thus, the sum represents an expectation value over the
             # outer product $x . x^T$.
 
-	    np.sum(w[:, np.newaxis, :] * xs[np.newaxis, ...]**2,
+            np.sum(w[:, np.newaxis, :] * xs[np.newaxis, ...]**2,
                 axis=2
                 ) # <- has shape (n_outcomes, n_mp).
                 # We finish by subracting from the above expectation value
                 # the outer product $mu . mu^T$.
                 - mu**2)
 
+        rescale_var = np.dot(self.model.Q, var)
+        # Q has shape (n_mp,),
+        # therefore <- has shape (n_outcomes,)
+        tot_like = np.sum(L, axis=1)
+        return -np.dot(tot_like.T, rescale_var)
 
-	#print self.model.Q
-	#print var
-	rescale_var=np.dot(self.model.Q,var)
-	# Q has shape (n_mp,),
-	# therefore <- has shape (n_outcomes,)
-	tot_like=np.sum(L,axis=1)
-	
-	
-	return -np.dot(tot_like.T,rescale_var)
-	
     def risk(self, x0):
-	return self.bayes_risk(np.array([(x0,)],dtype=self.model.expparams_dtype))		
+        return self.bayes_risk(np.array([(x0,)], dtype=self.model.expparams_dtype))
 
     def resample(self):
         # TODO: add amended docstring.
