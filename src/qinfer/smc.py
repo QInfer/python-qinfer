@@ -84,7 +84,7 @@ class SMCUpdater(object):
                 raise ValueError("Both a resample_a and an explicit resampler were provided; please provide only one.")
             self.resampler = LiuWestResampler(a=resample_a)
         else:
-            if resampler is not None:
+            if resampler is None:
                 self.resampler = LiuWestResampler()
             else:
                 self.resampler = resampler
