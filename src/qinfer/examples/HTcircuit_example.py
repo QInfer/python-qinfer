@@ -152,7 +152,7 @@ if __name__ == "__main__":
     tic = time.time()
     for idx_exp in xrange(n_exp):
         
-        outcome = model.simulate_experiment(truemp, expparams)
+        outcome = model.simulate_experiment(truemp, expparams,use_like=False)
         
         updater.update(outcome, expparams)
         

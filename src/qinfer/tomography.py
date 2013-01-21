@@ -246,16 +246,21 @@ class HTCircuitModel(Model):
             outcomes = np.argmax(cdf > randnum, axis=1)
             return outcomes[0] if repeat==1 else outcomes
         else:
-            #unpack m and f
-            m = expparams['nqubits']
-            f = expparams['boolf']
-            
-            # generate a random m-bit number
-            x = np.random.randint(0,2**m,repeat)
-            
-            # set the outcome as the last bit of f(x)
-            outcomes = []
-            [outcomes.append(int(bin(f[d])[-1])) for d in x]
+            #select |0> or |1> with probability given by lambda
+            if np.random.random() > 0.5*(1-modelparams):
+                # if |0>, select outcomes at random
+                outcomes = np.random.randint(0,2,repeat)
+            else:
+                #unpack m and f
+                m = expparams['nqubits']
+                f = expparams['boolf']
+                
+                # generate a random m-bit number
+                x = np.random.randint(0,2**m,repeat)
+                
+                # set the outcome as the last bit of f(x)
+                outcomes = []
+                [outcomes.append(int(bin(f[d])[-1])) for d in x]
             return outcomes
         
 ## TESTING CODE ################################################################
