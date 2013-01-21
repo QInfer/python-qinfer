@@ -101,7 +101,8 @@ class ClusteringResampler(object):
         # Find out how many clusters were identified.
         # Cluster counting logic from:
         # [http://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html].
-        n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+        is_noise = -1 in cluster_labels
+        n_clusters = len(set(cluster_labels)) - (1 if is_noise else 0)
         
         # If more than 10% of the particles were labeled as NOISE,
         # warn.
@@ -113,17 +114,29 @@ class ClusteringResampler(object):
         if not self.quiet:
             print "[Resampling] DBSCAN identified {} cluster{}. {} particles identified as NOISE.".format(n_clusters, "s" if n_clusters > 1 else "", n_noise)
         
+        
         # Loop over clusters, calling the secondary resampler for each.
-        for idx_cluster in xrange(n_clusters):
+        # The loop should include -1 if noise was found.
+        for idx_cluster in xrange(-1 if is_noise else 0, n_clusters):
             # Grab a boolean array identifying the particles in a  particular
             # cluster.
             this_cluster = cluster_labels == idx_cluster
+            
+            # If we are resampling the NOISE label, we must use the global moments.
+            if is_noise:
+                extra_args = {
+                    "precomputed_mean": particle_meanfn(particle_weights, particle_locations, lambda x: x),
+                    "precomputed_cov":  particle_covariance_mtx(particle_weights, particle_locations)
+                }
+            else:
+                extra_args = {}
             
             # Pass the particles in that cluster to the secondary resampler
             # and record the new weights and locations.
             cluster_ws, cluster_locs = self.secondary_resampler(model,
                 particle_weights[this_cluster],
-                particle_locations[this_cluster]
+                particle_locations[this_cluster],
+                **extra_args
             )
             
             # Renormalize the weights of each resampled particle by the total
@@ -144,7 +157,7 @@ class ClusteringResampler(object):
 class LiuWestResampler(object):
     r"""
     Creates a resampler instance that applies the algorithm of
-    Liu and West (2000) to redistribute the particles.
+    Liu and West (2001) to redistribute the particles.
     """
     def __init__(self, a=0.98):
         self.a = a # Implicitly calls the property setter below to set _h.
@@ -162,17 +175,26 @@ class LiuWestResampler(object):
 
     ## METHODS ##
     
-    def __call__(self, model, particle_weights, particle_locations):
+    def __call__(self, model, particle_weights, particle_locations, precomputed_mean=None, precomputed_cov=None):
         """
         Resample the particles according to algorithm given in 
-        Liu and West (2000)
+        Liu and West (2001).
         """
         
         # Give shorter names to weights and locations.
         w, l = particle_weights, particle_locations
         
-        # parameters in the Liu and West algorithm
-        mean, cov = particle_meanfn(w, l, lambda x: x), particle_covariance_mtx(w, l)
+        # Possibly recompute moments, if not provided.
+        if precomputed_mean is None:
+            mean = particle_meanfn(w, l, lambda x: x)
+        else:
+            mean = precomputed_mean
+        if precomputed_cov is None:
+            cov = particle_covariance_mtx(w, l)
+        else:
+            cov = precomputed_cov
+        
+        # parameters in the Liu and West algorithm            
         a, h = self._a, self._h
         S, S_err = la.sqrtm(cov, disp=False)
     	S = np.real(h * S)
