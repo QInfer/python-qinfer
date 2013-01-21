@@ -49,9 +49,9 @@ USAGE = """
 Usage: HTcircuit_example.py [options]
 
 -h, --help                  Prints this help and returns.
--m NH, n_Hadamarded=NH      Specifies the number of qubits which get a Hadamard
+-m NH, --n_Hadamarded=NH    Specifies the number of qubits which get a Hadamard
                             gate applied before the controlled Unitary
--M NQ, n_qubits=NQ          The total number of non-control qubits 
+-M NQ, --n_qubits=NQ        The total number of non-control qubits 
 -n NP, --n_particles=NP     Specifies how many particles to use in the SMC
                             approximation. [default: 5000]
 -e NE, --n_exp=NE           Specifies how many measurements are to be made.
@@ -112,7 +112,8 @@ if __name__ == "__main__":
     f = np.arange(2**N_QUBITS)
 
     # a random invertible function    
-    f = np.random.shuffle(f)
+    np.random.shuffle(f)
+
     # the last m bits     
     F  = f[-2**(N_HADAMARDED):]
     
@@ -145,14 +146,14 @@ if __name__ == "__main__":
     tic = toc = None
     
     # Sample true set of modelparams
-    truemp = np.array([prior.sample()]) 
+    truemp = prior.sample() 
     
     # Get all Bayesian up in here
     tic = time.time()
     for idx_exp in xrange(n_exp):
         
         outcome = model.simulate_experiment(truemp, expparams)
-       
+        
         updater.update(outcome, expparams)
         
             

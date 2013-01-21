@@ -237,18 +237,26 @@ class HTCircuitModel(Model):
         #concatenate over outcomes
         return Model.pr0_to_likelihood_array(outcomes, pr0)
     
-    def simulate_experiment(self, modelparams, expparams, repeat=1):
-        #unpack m and f
-        m = expparams['nqubits']
-        f = expparams['boolf']
-        
-        # generate a random m-bit number
-        x = np.random.randint(0,2**m,repeat)
-        
-        # set the outcome as the last bit of f(x)
-        outcomes = []
-        [outcomes.append(int(bin(f[d])[-1])) for d in x]
-        return outcomes
+    def simulate_experiment(self, modelparams, expparams, repeat=1, use_like = True):
+        if use_like:
+            probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
+            cdf = np.cumsum(probabilities)
+            randnum = np.random.random((repeat, 1))
+            
+            outcomes = np.argmax(cdf > randnum, axis=1)
+            return outcomes[0] if repeat==1 else outcomes
+        else:
+            #unpack m and f
+            m = expparams['nqubits']
+            f = expparams['boolf']
+            
+            # generate a random m-bit number
+            x = np.random.randint(0,2**m,repeat)
+            
+            # set the outcome as the last bit of f(x)
+            outcomes = []
+            [outcomes.append(int(bin(f[d])[-1])) for d in x]
+            return outcomes
         
 ## TESTING CODE ################################################################
 
