@@ -28,7 +28,6 @@
 
 from __future__ import division
 import numpy as np
-from utils import gammaln
 from abstract_model import Model
 import scipy.linalg as la
 
@@ -191,16 +190,89 @@ class QubitStatePauliModel(Model):
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)        
 
+class HTCircuitModel(Model):
+    
+    ## PROPERTIES ##
+    
+    @property
+    def n_modelparams(self):
+        return 1
+        
+    @property
+    def expparams_dtype(self):
+        return [('nqubits', 'int'), ('boolf', 'list')]
+    
+    @property
+    def is_n_outcomes_constant(self):
+        return True
+    
+    ## METHODS ##
+    
+    @staticmethod
+    def are_models_valid(modelparams):
+        return np.logical_and(modelparams.all(axis=1) >= 0,modelparams.all(axis=1) <= 1)
+    
+    def n_outcomes(self, expparams):
+        """
+        Returns an array of dtype ``uint`` describing the number of outcomes
+        for each experiment specified by ``expparams``.
+        
+        :param numpy.ndarray expparams: Array of experimental parameters. This
+            array must be of dtype agreeing with the ``expparams_dtype``
+            property.
+        """
+        return 2
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        #unpack m and f
+        m = expparams['nqubits']
+        f = expparams['boolf']
+        
+        # count the number of times the last bit of f is 0
+        count = np.sum([bin(x)[-1] == '0' for x in f])      
+        
+        #probability of getting 0
+        pr0 = 0.25*(1+modelparams)+0.5*(1-modelparams)*count/(2**m)
+        
+        #concatenate over outcomes
+        return Model.pr0_to_likelihood_array(outcomes, pr0)
+    
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        #unpack m and f
+        m = expparams['nqubits']
+        f = expparams['boolf']
+        
+        # generate a random m-bit number
+        x = np.random.randint(0,2**m,repeat)
+        
+        # set the outcome as the last bit of f(x)
+        outcomes = []
+        [outcomes.append(int(bin(f[d])[-1])) for d in x]
+        return outcomes
         
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":
-#
-    m = QubitStatePauliModel()
-    L = m.likelihood(
-        np.array([1]),
-        np.array([[0,0,0], [0.9,0,0], [0.1,0,0]]),
-        np.array([[1,0,0,1]])
+    m = 8
+    n = 10
+    fn = np.arange(2**n)
+    f  = fn[-2**(m):]
+    
+    param = np.array([[0]])
+    expp = {'nqubits':m,'boolf':f} 
+    
+
+    model = HTCircuitModel()
+
+
+    data = model.simulate_experiment(param,expp,10)
+    
+    print data
+
+    L = model.likelihood(
+        np.array(data),
+        np.array([[0]]),
+        expp
     )
     print L
 
