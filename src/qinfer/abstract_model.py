@@ -38,6 +38,9 @@ class Simulatable(object):
     def __init__(self):
         self._sim_count = 0
         
+        # Initialize a default scale matrix.
+        self._Q = np.ones((self.n_modelparams,))
+        
     ## ABSTRACT PROPERTIES ##
     
     @abc.abstractproperty
@@ -80,6 +83,23 @@ class Simulatable(object):
     def sim_count(self):
         return self._sim_count
         
+    @property
+    def Q(self):
+        r"""
+        Returns the diagonal of the scale matrix :math:`\matr{Q}` that
+        relates the scales of each of the model parameters. In particular,
+        the quadratic loss for this Simulatable is defined as:
+        
+        .. math::
+            L_{\matr{Q}}(\vec{x}, \hat{\vec{x}}) = (\vec{x} - \hat{\vec{x}})^\T \matr{Q} (\vec{x} - \hat{\vec{x}})
+            
+        If a subclass does not explicitly define the scale matrix, it is taken
+        to be the identity matrix of appropriate dimension.
+        
+        :return: The diagonal elements of :math:`\matr{Q}`.
+        :rtype: :class:`np.ndarray` of shape ``(n_modelparams, )``
+        """
+        return self._Q
     
     ## ABSTRACT METHODS ##
     
