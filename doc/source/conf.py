@@ -18,6 +18,13 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../src'))
 
+# The LaTeX preamble is placed here so that it can be used both by pngmath
+# and by the LaTeX output plugin.
+preamble = r"""
+\usepackage[bold]{hhtensor}
+\newcommand{\T}{\mathrm{T}}
+"""
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -25,7 +32,7 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.pngmath']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -197,7 +204,7 @@ latex_documents = [
 #latex_show_urls = False
 
 # Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
+latex_preamble = preamble
 
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
@@ -264,3 +271,4 @@ intersphinx_mapping = {
 
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['show-inheritance', 'undoc-members']
+pngmath_latex_preamble = preamble
