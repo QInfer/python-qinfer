@@ -197,9 +197,9 @@ class SMCUpdater(object):
         Updates based on a batch of outcomes and experiments, rather than just
         one.
 
-        :param np.ndarray outcomes: An array of outcomes of the experiments that
+        :param numpy.ndarray outcomes: An array of outcomes of the experiments that
             were performed.
-        :param np.ndarray expparams: Either a scalar or record single-index
+        :param numpy.ndarray expparams: Either a scalar or record single-index
             array of experiments that were performed.
         :param int resample_interval: Controls how often to check whether
             :math:`N_{\text{ess}}` falls below the resample threshold.
@@ -220,7 +220,19 @@ class SMCUpdater(object):
                 self._maybe_resample()
 
     def bayes_risk(self, expparams):
-        # TODO: docstring!
+        r"""
+        Calculates the Bayes risk for a hypothetical experiment, assuming the
+        quadratic loss function defined by the current model's scale matrix
+        (see :attr:`qinfer.abstract_model.Simulatable.Q`).
+        
+        :param expparams: The experiment at which to compute the Bayes risk.
+        :type expparams: :class:`~numpy.ndarray` of dtype given by the current
+            model's :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype` property,
+            and of shape ``(1,)``
+            
+        :return float: The Bayes risk for the current posterior distribution
+            of the hypothetical experiment ``expparams``.
+        """
         # This subroutine computes the bayes risk for a hypothetical experiment
         # defined by expparams.
 
@@ -253,7 +265,7 @@ class SMCUpdater(object):
             # outer product $x . x^T$.
 
             np.sum(w[:, np.newaxis, :] * xs[np.newaxis, ...]**2,
-                axis=2
+                    axis=2
                 ) # <- has shape (n_outcomes, n_mp).
                 # We finish by subracting from the above expectation value
                 # the outer product $mu . mu^T$.

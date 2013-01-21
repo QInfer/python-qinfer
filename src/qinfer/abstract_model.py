@@ -49,7 +49,7 @@ class Simulatable(object):
         Returns the number of real model parameters admitted by this model.
         
         This property is assumed by inference engines to be constant for
-        the lifetime of a Model instance.
+        the lifetime of a :class:`Simulatable` instance.
         """
         pass
         
@@ -97,7 +97,7 @@ class Simulatable(object):
         to be the identity matrix of appropriate dimension.
         
         :return: The diagonal elements of :math:`\matr{Q}`.
-        :rtype: :class:`np.ndarray` of shape ``(n_modelparams, )``
+        :rtype: :class:`~numpy.ndarray` of shape ``(n_modelparams, )``.
         """
         return self._Q
     
