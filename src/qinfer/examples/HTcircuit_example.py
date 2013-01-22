@@ -34,6 +34,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import numpy.linalg as la
+from scipy.stats.kde import gaussian_kde
+from copy import copy
 
 ## Imports from within QInfer. ##
 from .. import tomography, smc
@@ -150,14 +152,43 @@ if __name__ == "__main__":
     # Sample true set of modelparams
     truemp = prior.sample() 
     
+    
+    #Plotting intialization
+    res = 1000
+    p = np.linspace(-1,1,res)    
+    L = np.ones((n_exp+1, res))       
+    
+    
     # Get all Bayesian up in here
     tic = time.time()
     for idx_exp in xrange(n_exp):
-        
-        outcome = model.simulate_experiment(truemp, expparams,use_like=use_like)
-        
+        outcome = model.simulate_experiment(truemp, expparams,use_like=use_like)        
         updater.update(outcome, expparams)
         
+        temp = model.likelihood(np.array([outcome]),p,expparams)
+        
+        L[idx_exp+1,:] = L[idx_exp,:]*temp        
+        norm = 2*np.sum(L[idx_exp+1,:])/res
+        L[idx_exp+1,:] = L[idx_exp+1,:]/norm
+        
+        if np.mod(5*idx_exp,n_exp)==0:
+            particles = updater.particle_locations
+            weights = updater.particle_weights      
+            
+            Lm = L[idx_exp+1,:]
+            fig = plt.figure()
+            plt.plot(p,Lm, c = 'black')
+            bme = 2*np.sum(p * Lm)/res
+            plt.axvline(bme, c = 'blue', linewidth = 2)
+            plt.axvline(truemp, c = 'red', linewidth = 2)            
+            plt.axvline(updater.est_mean()[0], c = 'green', linewidth = 2)
+            #plt.scatter(particles[:,0],np.zeros((N_PARTICLES,)),s = 50*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
+            temp = copy(updater)
+            temp.resample()            
+            pdf = gaussian_kde(temp.particle_locations[:,0])
+            pdf.integrate_box_1d(-1,1)
+            plt.plot(p,pdf(p),'g')
+            plt.axis([-1,1,0,10])            
             
     est_mean = updater.est_mean()
     
