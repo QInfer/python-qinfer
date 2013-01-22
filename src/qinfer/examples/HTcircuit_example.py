@@ -137,8 +137,10 @@ if __name__ == "__main__":
         
     # SMC initialization
     if algo == 'SMC':
+        use_like = True
         updater = smc.SMCUpdater(model, N_PARTICLES, prior, resampler=resampler)
     elif algo == 'SMC-ABC':
+        use_like = False
         updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, resampler=resampler, abc_tol=abctol, abc_sim=abcsim)
     else:
         raise ValueError('Must specify a valid algorithm.')    
@@ -152,7 +154,7 @@ if __name__ == "__main__":
     tic = time.time()
     for idx_exp in xrange(n_exp):
         
-        outcome = model.simulate_experiment(truemp, expparams,use_like=False)
+        outcome = model.simulate_experiment(truemp, expparams,use_like=use_like)
         
         updater.update(outcome, expparams)
         
