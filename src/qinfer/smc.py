@@ -48,7 +48,7 @@ from scipy.spatial import Delaunay
 import scipy.linalg as la
 import scipy.optimize as opt
 from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
-from exceptions import ApproximationWarning
+from _exceptions import ApproximationWarning
 from scipy.stats.distributions import binom
 
 ## CLASSES #####################################################################

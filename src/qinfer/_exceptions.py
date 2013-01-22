@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##
-# exceptions.py: Derived classes for Errors and Warnings specific to Qinfer.
+# _exceptions.py: Derived classes for Errors and Warnings specific to Qinfer.
 ##
 # © 2012 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)

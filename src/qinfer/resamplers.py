@@ -41,7 +41,7 @@ import scipy.linalg as la
 import warnings
 
 from utils import outer_product, particle_meanfn, particle_covariance_mtx
-from exceptions import ResamplerWarning
+from _exceptions import ResamplerWarning
 import metrics
 
 ## CLASSES #####################################################################
