@@ -128,6 +128,36 @@ class Simulatable(object):
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         # TODO: document
         self._sim_count += modelparams.shape[0] * expparams.shape[0] * repeat
+        
+    ## CONCRETE METHODS ##
+    
+    def experiment_cost(self, expparams):
+        """
+        Given an array of experimental parameters, returns the cost associated
+        with performing each experiment. By default, this cost is constant
+        (one) for every experiment.
+        
+        :param expparams: An array of experimental parameters for which the cost
+            is to be evaluated.
+        :type expparams: :class:`~numpy.ndarray` of ``dtype`` given by
+            :attr:`~Simulatable.expparams_dtype`
+        :return: An array of costs corresponding to the specified experiments.
+        :rtype: :class:`~numpy.ndarray` of ``dtype`` ``float`` and of the
+            same shape as ``expparams``.
+        """
+        
+class LinearCostModelMixin(Simulatable):
+    # FIXME: move this mixin to a new module.
+    # TODO: test this mixin.
+    """
+    This mixin implements :meth:`Simulatable.experiment_cost` by setting the
+    cost of an experiment equal to the value of a given field of each
+    ``expparams`` element (by default, ``t``).
+    """
+    _field = "t"
+    
+    def experiment_cost(self, expparams):
+        return expparams[self._field]
 
 class Model(Simulatable):
     # TODO: now that Model is a subclass of Simulatable, Model may no longer

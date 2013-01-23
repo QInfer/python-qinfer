@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##
-# SMC.py: Sequential Monte Carlo module
+# smc.py: Sequential Monte Carlo module
 ##
 # © 2012 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
@@ -46,7 +46,6 @@ from resamplers import LiuWestResampler
 # for BCRB and BED classes
 from scipy.spatial import Delaunay
 import scipy.linalg as la
-import scipy.optimize as opt
 from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
 from _exceptions import ApproximationWarning
 from scipy.stats.distributions import binom
@@ -473,50 +472,6 @@ class SMCUpdaterBCRB(SMCUpdater):
         # We now can update as normal.
         SMCUpdater.update(self, outcome, expparams)
         
-
-class SMCUpdaterBED(SMCUpdater):
-    """
-
-    Subclass of :class:`SMCUpdater`, adding Bayesian experimental design
-    functionality.
-    
-    """
-
-    def __init__(self, *args, **kwargs):
-        SMCUpdater.__init__(self, *args, **kwargs)
-
-                        
-    ## PROPERTIES ##############################################################            
-            
-        
-    ## METHODS #################################################################            
-            
-    def min_expected_var_experiment(self):
-        """
-        Find the optimal experiment defined by the one minimizing the expected variance
-
-        """
-            
-        #The objective function to minimize
-        def expected_variance(expparams):
-            
-            #TODO: this calls the likelihood function twice for every outcome; fix it
-            each_outcome = [
-            
-            particle_covariance_mtx(self.hypothetical_update(outcome, expparams),
-                                    self.particle_locations) *             
-            particle_meanfn(self.particle_weights,
-                            self.particle_locations,
-                            lambda modelparams: self.model.likelihood(outcome, modelparams, expparams))
-    
-            
-            for outcome in np.arange(self.model.n_outcomes(expparams))[...,np.newaxis]
-            ]    
-            return np.sum(each_outcome)
-            
-#        best_exp = #TODO: put optimization code here
-        
-        return best_exp
 
 class SMCUpdaterABC(SMCUpdater):
     """
