@@ -237,7 +237,7 @@ class HTCircuitModel(Model):
         #concatenate over outcomes
         return Model.pr0_to_likelihood_array(outcomes, pr0)
     
-    def simulate_experiment(self, modelparams, expparams, repeat=1, use_like = True):
+    def simulate_experiment(self, modelparams, expparams, repeat=1, use_like = False):
         if use_like:
             probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
             cdf = np.cumsum(probabilities)
@@ -246,44 +246,47 @@ class HTCircuitModel(Model):
             outcomes = np.argmax(cdf > randnum, axis=1)
             return outcomes[0] if repeat==1 else outcomes
         else:
+            #unpack m and f
+            m = expparams['nqubits']
+            f = expparams['boolf']
+            
+            outcomes = np.zeros([modelparams.shape[0],repeat])
             #select |0> or |1> with probability given by lambda
-            if np.random.random() > 0.5*(1-modelparams):
-                # if |0>, select outcomes at random
-                outcomes = np.random.randint(0,2,repeat)
-            else:
-                #unpack m and f
-                m = expparams['nqubits']
-                f = expparams['boolf']
-                
-                # generate a random m-bit number
-                x = np.random.randint(0,2**m,repeat)
-                
-                # set the outcome as the last bit of f(x)
-                outcomes = []
-                [outcomes.append(int(bin(f[d])[-1])) for d in x]
+            idx_zeros = np.random.random([modelparams.shape[0],repeat]) > 0.5*(1-modelparams)
+            num_zeros = np.sum(idx_zeros)
+            num_ones  = modelparams.shape[0]*repeat - num_zeros 
+
+            #generate random outcomes for those |0> states
+            outcomes[idx_zeros] = np.random.randint(0,2,num_zeros)
+            
+            # for the |1> states, simulate the outcomes of the circuit
+            # generate random m-bit numbers
+            x = np.random.randint(0,2**m,num_ones)
+            
+            # set the outcomes to be the last bit of f(x)
+            outcomes[np.logical_not(idx_zeros)] = np.mod(f[x],2)
+            
             return outcomes
         
 ## TESTING CODE ################################################################
 
 if __name__ == "__main__":
-    m = 8
-    n = 10
+    m = 2
+    n = 4
     fn = np.arange(2**n)
     f  = fn[-2**(m):]
     
-    param = np.array([[0]])
+    param = np.array([[0],[1]])
     expp = {'nqubits':m,'boolf':f} 
     
 
     model = HTCircuitModel()
 
 
-    data = model.simulate_experiment(param,expp,10)
+    data = model.simulate_experiment(param,expp,repeat = 4,use_like=False)
     
-    print data
-
     L = model.likelihood(
-        np.array(data),
+        np.array([0,1,0,1]),
         np.array([[0]]),
         expp
     )

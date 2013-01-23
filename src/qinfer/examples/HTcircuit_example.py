@@ -171,7 +171,7 @@ if __name__ == "__main__":
         norm = 2*np.sum(L[idx_exp+1,:])/res
         L[idx_exp+1,:] = L[idx_exp+1,:]/norm
         
-        if np.mod(5*idx_exp,n_exp)==0:
+        if np.mod(2*idx_exp,n_exp)==0:
             particles = updater.particle_locations
             weights = updater.particle_weights      
             
