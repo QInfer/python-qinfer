@@ -45,14 +45,18 @@ from abstract_model import Simulatable, Model, DifferentiableModel
 import scipy.linalg as la
 import scipy.optimize as opt
 from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
+from ._lib import enum
 
 ## CLASSES #####################################################################
 
+OptimizationAlgorithms = enum.enum("CG", "NCG")
+
 class ExperimentDesigner(object):
     # TODO: docstring!
-    
-    def __init__(self, updater):
+
+    def __init__(self, updater, opt_algo=OptimizationAlgorithms.CG):
         self._updater = updater
+        self._opt_algo = opt_algo # TODO: check that opt_algo is valid.
         
     ## METHODS #################################################################
         
@@ -67,8 +71,11 @@ class ExperimentDesigner(object):
             ep[field] = x
             return up.bayes_risk(ep) + cost_scale_k * m.experiment_cost(ep)
             
-        # TODO: feed the objective_function above into the appropriate
-        #       optimizer.
-        
+        if self._opt_algo == OptimizationAlgorithms.CG:
+            # TODO: form initial guesses.
+            # TODO: Optimize each according to objective_function
+            raise NotImplementedError("CG opt algo not yet implemented.")
+        elif self._opt_algo == OptimizationAlgorithms.NCG:
+            raise NotImplementedError("NCG optimization algorithm not yet implemented.")
         
     
