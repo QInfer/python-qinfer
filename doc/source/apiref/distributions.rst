@@ -15,9 +15,23 @@ Probability Distributions
 Introduction
 ------------
 
+:class:`Distribution` - Abstract Base Class for Probability Distributions
+-------------------------------------------------------------------------
+
+.. autoclass:: Distribution
+    :members:
+
 Specific Distributions
 ----------------------
 
 .. autoclass:: UniformDistribution
     :members:
 
+.. autoclass:: HilbertSchmidtUniform
+    :members:
+    
+.. autoclass:: HaarUniform
+    :members:
+    
+.. autoclass:: GinibreUniform
+    :members:

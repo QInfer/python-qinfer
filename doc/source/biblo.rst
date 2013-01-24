@@ -10,4 +10,8 @@
 Biblography
 ===========
 
-TODO
+.. [GFWC12]
+    Granade C. E., Ferrie C., Wiebe N. & Cory D. G.  Robust online Hamiltonian learning. New Journal of Physics **14** 103013 (2012). :doi:`10.1088/1367-2630/14/10/103013`. :arxiv:`1207.1655`.
+.. [Mis12]
+    Miszczak J. `Generating and using truly random quantum states in Mathematica <http://www.iitis.pl/~miszczak/files/papers/miszczak12generating>`_. Computer Physics Communications **183** 118-124 (2012). :doi:`10.1016/j.cpc.2011.08.002`.
+

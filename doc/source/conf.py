@@ -32,7 +32,7 @@ preamble = r"""
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.pngmath']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.pngmath', 'sphinx.ext.extlinks']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -74,7 +74,7 @@ release = '0.1a1'
 exclude_patterns = []
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-#default_role = None
+default_role = "obj"
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True
@@ -272,3 +272,11 @@ intersphinx_mapping = {
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['show-inheritance', 'undoc-members']
 pngmath_latex_preamble = preamble
+
+
+## EXTLINKS CONFIGURATION ######################################################
+
+extlinks = {
+    'arxiv': ('http://arxiv.org/abs/%s', 'arXiv:'),
+    'doi': ('http://dx.doi.org/abs/%s', 'doi:'),
+}
