@@ -42,6 +42,7 @@ import numpy.linalg as la
 from .. import tomography, smc
 from ..utils import mvee, uniquify
 from ..resamplers import LiuWestResampler, ClusteringResampler
+from ..distributions import HilbertSchmidtUniform
 
 ## External libraries bundled with QInfer. ##
 from .._lib import docopt
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     
             
     # Model and prior initialization
-    prior = tomography.HilbertSchmidtUniform()
+    prior = HilbertSchmidtUniform()
     model = tomography.QubitStatePauliModel()
     expparams = np.array([
         ([1, 0, 0], 1), # Records are indicated by tuples.

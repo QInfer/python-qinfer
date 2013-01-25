@@ -31,7 +31,8 @@ from __future__ import division
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
-    'ExperimentDesigner'
+    'ExperimentDesigner',
+    'OptimizationAlgorithms'
 ]
 
 ## IMPORTS #####################################################################

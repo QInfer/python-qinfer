@@ -54,11 +54,12 @@ from scipy.stats.distributions import binom
 
 class SMCUpdater(object):
     r"""
-    Creates a new Sequential Monte carlo updater
+    Creates a new Sequential Monte carlo updater, using the algorithm of
+    [GFWC12]_.
 
     :param qinfer.abstract_model.Model model: Model whose parameters are to be inferred.
     :param int n_particles: The number of particles to be used in the particle approximation.
-    :param Distribution prior: A representation of the prior distribution.
+    :param qinfer.distributions.Distribution prior: A representation of the prior distribution.
     :param callable resampler: Specifies the resampling algorithm to be used. See :ref:`resamplers`
         for more details.
     :param float resample_thresh: Specifies the threshold for :math:`N_{\text{ess}}` to decide when to resample.
@@ -109,7 +110,12 @@ class SMCUpdater(object):
 
     @property
     def resample_count(self):
-        # TODO: docstring
+        """
+        Returns the number of times that the updater has resampled the particle
+        approximation.
+        
+        :rtype: `int`
+        """
         # We wrap this in a property to prevent external resetting and to enable
         # a docstring.
         return self._resample_count
@@ -123,6 +129,18 @@ class SMCUpdater(object):
         :return float: The effective sample size, given by :math:`1/\sum_i w_i^2`.
         """
         return 1 / (np.sum(self.particle_weights**2))
+
+    ## PRIVATE METHODS #########################################################
+    
+    def _maybe_resample(self):
+        """
+        Checks the resample threshold and conditionally resamples.
+        """
+        if self.n_ess < self.n_particles * self.resample_thresh:
+            self.resample()
+            pass
+
+    ## UPDATE METHODS ##########################################################
 
     def hypothetical_update(self, outcomes, expparams,return_likelihood=False):
         """
@@ -164,8 +182,6 @@ class SMCUpdater(object):
         else:
             return norm_weights, L
 
-
-
     def update(self, outcome, expparams, check_for_resample=True):
         """
         Given an experiment and an outcome of that experiment, updates the
@@ -173,6 +189,16 @@ class SMCUpdater(object):
 
         After updating, resamples the posterior distribution if necessary.
 
+        :param int outcome: Label for the outcome that was observed, as defined
+            by the :class:`~qinfer.abstract_model.Model` instance under study.
+        :param expparams: Parameters describing the experiment that was
+            performed.
+        :type expparams: :class:`~numpy.ndarray` of dtype given by the
+            :attr:`~qinfer.abstract_model.Model.expparams_dtype` property
+            of the underlying model
+        :param bool check_for_resample: If :obj:`True`, after performing the
+            update, the effective sample size condition will be checked and
+            a resampling step may be performed.
         """
 
         # Since hypothetical_update returns an array indexed by
@@ -182,14 +208,6 @@ class SMCUpdater(object):
 
         if check_for_resample:
             self._maybe_resample()
-
-    def _maybe_resample(self):
-        """
-        Checks the resample threshold and conditionally resamples.
-        """
-        if self.n_ess < self.n_particles * self.resample_thresh:
-            self.resample()
-            pass
 
     def batch_update(self, outcomes, expparams, resample_interval=5):
         r"""
@@ -218,66 +236,7 @@ class SMCUpdater(object):
             if (idx_exp + 1) % resample_interval == 0:
                 self._maybe_resample()
 
-    def bayes_risk(self, expparams):
-        r"""
-        Calculates the Bayes risk for a hypothetical experiment, assuming the
-        quadratic loss function defined by the current model's scale matrix
-        (see :attr:`qinfer.abstract_model.Simulatable.Q`).
-        
-        :param expparams: The experiment at which to compute the Bayes risk.
-        :type expparams: :class:`~numpy.ndarray` of dtype given by the current
-            model's :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype` property,
-            and of shape ``(1,)``
-            
-        :return float: The Bayes risk for the current posterior distribution
-            of the hypothetical experiment ``expparams``.
-        """
-        # This subroutine computes the bayes risk for a hypothetical experiment
-        # defined by expparams.
-
-        # Assume expparams is a single experiment
-
-        # expparams =
-        # Q = np array(Nmodelparams), which contains the diagonal part of the
-        #     rescaling matrix.  Non-diagonal could also be considered, but
-        #     for the moment this is not implemented.
-        nout = self.model.n_outcomes(expparams) # This is a vector so this won't work
-        w, L = self.hypothetical_update(np.arange(nout), expparams, return_likelihood=True)
-        w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
-        L = L[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
-
-        xs = self.particle_locations.transpose([1, 0]) # shape (n_mp, n_particles).
-        
-        mu = np.sum(
-            # We need the particle index to be the rightmost index, so that
-            # the two arrays align on the particle index as opposed to the
-            # modelparam index.
-            w[:, np.newaxis, :] * xs[np.newaxis, ...],
-            # The argument now has shape (n_outcomes, n_modelparams, n_particles),
-            # so that the sum should collapse the particle index, 2.
-            axis=2
-        ) # <- has shape (n_outcomes, n_np).
-        
-        var = (
-            # This sum is a reduction over the particle index, chosen to be
-            # axis=2. Thus, the sum represents an expectation value over the
-            # outer product $x . x^T$.
-
-            np.sum(w[:, np.newaxis, :] * xs[np.newaxis, ...]**2,
-                    axis=2
-                ) # <- has shape (n_outcomes, n_mp).
-                # We finish by subracting from the above expectation value
-                # the outer product $mu . mu^T$.
-                - mu**2)
-
-        rescale_var = np.dot(self.model.Q, var)
-        # Q has shape (n_mp,),
-        # therefore <- has shape (n_outcomes,)
-        tot_like = np.sum(L, axis=1)
-        return -np.dot(tot_like.T, rescale_var)
-
-    def risk(self, x0):
-        return self.bayes_risk(np.array([(x0,)], dtype=self.model.expparams_dtype))
+    ## RESAMPLING METHODS ######################################################
 
     def resample(self):
         # TODO: add amended docstring.
@@ -367,6 +326,66 @@ class SMCUpdater(object):
 
         return cov
 
+    def bayes_risk(self, expparams):
+        r"""
+        Calculates the Bayes risk for a hypothetical experiment, assuming the
+        quadratic loss function defined by the current model's scale matrix
+        (see :attr:`qinfer.abstract_model.Simulatable.Q`).
+        
+        :param expparams: The experiment at which to compute the Bayes risk.
+        :type expparams: :class:`~numpy.ndarray` of dtype given by the current
+            model's :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype` property,
+            and of shape ``(1,)``
+            
+        :return float: The Bayes risk for the current posterior distribution
+            of the hypothetical experiment ``expparams``.
+        """
+        # This subroutine computes the bayes risk for a hypothetical experiment
+        # defined by expparams.
+
+        # Assume expparams is a single experiment
+
+        # expparams =
+        # Q = np array(Nmodelparams), which contains the diagonal part of the
+        #     rescaling matrix.  Non-diagonal could also be considered, but
+        #     for the moment this is not implemented.
+        nout = self.model.n_outcomes(expparams) # This is a vector so this won't work
+        w, L = self.hypothetical_update(np.arange(nout), expparams, return_likelihood=True)
+        w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
+        L = L[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
+
+        xs = self.particle_locations.transpose([1, 0]) # shape (n_mp, n_particles).
+        
+        mu = np.sum(
+            # We need the particle index to be the rightmost index, so that
+            # the two arrays align on the particle index as opposed to the
+            # modelparam index.
+            w[:, np.newaxis, :] * xs[np.newaxis, ...],
+            # The argument now has shape (n_outcomes, n_modelparams, n_particles),
+            # so that the sum should collapse the particle index, 2.
+            axis=2
+        ) # <- has shape (n_outcomes, n_np).
+        
+        var = (
+            # This sum is a reduction over the particle index, chosen to be
+            # axis=2. Thus, the sum represents an expectation value over the
+            # outer product $x . x^T$.
+
+            np.sum(w[:, np.newaxis, :] * xs[np.newaxis, ...]**2,
+                    axis=2
+                ) # <- has shape (n_outcomes, n_mp).
+                # We finish by subracting from the above expectation value
+                # the outer product $mu . mu^T$.
+                - mu**2)
+
+        rescale_var = np.dot(self.model.Q, var)
+        # Q has shape (n_mp,),
+        # therefore <- has shape (n_outcomes,)
+        tot_like = np.sum(L, axis=1)
+        return -np.dot(tot_like.T, rescale_var)
+
+    ## REGION ESTIMATION METHODS ###############################################
+
     def est_credible_region(self, level=0.95):
         """
         Returns an array containing particles inside a credible region of a
@@ -402,14 +421,16 @@ class SMCUpdater(object):
         # the particles according to the sort order, then by selecting the
         # credible particles.
         return self.particle_locations[id_sort][id_cred]
-
-    def region_est_ellipsoid(self, level = 0.95, tol = 0.0001):
-        faces, vertices = self.region_est_hull(level = level)
-                
-        A, centroid = mvee(vertices,tol)
-        return A, centroid
     
-    def region_est_hull(self, level = 0.95):
+    def region_est_hull(self, level=0.95):
+        """
+        Estimates a credible region over models by taking the convex hull of
+        a credible subset of particles.
+        
+        :param float level: The desired crediblity level (see
+            :meth:`SMCUpdater.est_credible_region`).
+        """
+        # TODO: document return values.
         points = self.est_credible_region(level = level)
         tri = Delaunay(points)
         faces = []
@@ -421,6 +442,28 @@ class SMCUpdater(object):
         vertices = points[uniquify(hull.flatten())]
         
         return faces, vertices
+
+    def region_est_ellipsoid(self, level=0.95, tol=0.0001):
+        """
+        Estimates a credible region over models by finding the minimum volume
+        enclosing ellipse (MVEE) of a credible subset of particles.
+        
+        
+        :param float level: The desired crediblity level (see
+            :meth:`SMCUpdater.est_credible_region`).
+        :param float tol: The allowed error tolerance in the MVEE optimization
+            (see :meth:`~qinfer.utils.mvee`).
+        """
+        # TODO: document return values.
+        faces, vertices = self.region_est_hull(level=level)
+                
+        A, centroid = mvee(vertices, tol)
+        return A, centroid
+        
+    ## MISC METHODS ############################################################
+    
+    def risk(self, x0):
+        return self.bayes_risk(np.array([(x0,)], dtype=self.model.expparams_dtype))
         
                 
 class SMCUpdaterBCRB(SMCUpdater):
