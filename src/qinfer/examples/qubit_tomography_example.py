@@ -74,13 +74,13 @@ Usage: qubit_tomography_example.py [options]
                             algorithm. [default: 8e-6]
 --abcsim=SIM                Specifies how many simulations are used by each ABC
                             step. [default: 10000]
+-p, --plot                  If specified, plots will be made using matplotlib.
 -v, --verbose               Prints additional debugging information.
 """
 
 ## TODO ########################################################################
 
 """
-    - Add plotting options to USAGE.
     - Add printing options to USAGE.    
 """
 
@@ -101,9 +101,9 @@ if __name__ == "__main__":
     dbscan_eps  = float(args['--dbscan-eps'])
     dbscan_min  = float(args['--dbscan-minparticles'])
     wdbscan_pow = float(args['--wdbscan-pow'])
-    
+    do_plot     = bool(args['--plot'])    
             
-    # Model and prior initialization
+    # Model and prior initialization.
     prior = HilbertSchmidtUniform()
     model = tomography.QubitStatePauliModel()
     expparams = np.array([
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         ([0, 0, 1], 1)
     ], dtype=model.expparams_dtype)
     
-    # Resampler initialization
+    # Resampler initialization.
     lw_args = {"a": lw_a}
     dbscan_args = {"eps": dbscan_eps, "min_particles": dbscan_min, "w_pow": wdbscan_pow}
     
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     else:
         raise ValueError('Must specify a valid resampler.')
         
-    # SMC initialization
+    # SMC initialization.
     if algo == 'SMC':
         updater = smc.SMCUpdater(model, N_PARTICLES, prior, resampler=resampler)
     elif algo == 'SMC-ABC':
@@ -134,40 +134,41 @@ if __name__ == "__main__":
     else:
         raise ValueError('Must specify a valid algorithm.')    
     
-    tic = toc = None
-    
     # Sample true set of modelparams
     truemp = np.array([prior.sample()])
     
+    if do_plot:
+        # Plot true state and prior
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        particles = updater.particle_locations
+        
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        x=np.cos(u)*np.sin(v)
+        y=np.sin(u)*np.sin(v)
+        z=np.cos(v)
+        ax.plot_wireframe(x, y, z, color="gray")
 
-    # Plot true state and prior
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    particles = updater.particle_locations
-    
-    u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-    x=np.cos(u)*np.sin(v)
-    y=np.sin(u)*np.sin(v)
-    z=np.cos(v)
-    ax.plot_wireframe(x, y, z, color="gray")
-
-    ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10)
-    ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red',s = 25)
+        ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10)
+        ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red',s = 25)
  
-    
-    # Get all Bayesian up in here
+    # Record the start time.
     tic = time.time()
+    
+    # Get all Bayesian up in here.
     for idx_exp in xrange(n_exp):
         # Randomly choose one of the three experiments from expparams and make
         # an array containing just that experiment.
         thisexp = expparams[np.newaxis, np.random.randint(0,3)]
-        assert thisexp.shape == (1,), "Shape of thisexp is wrong--- that should never happen."
         
+        # Simulate an experiment according to the chosen expparams.
         outcome = model.simulate_experiment(truemp, thisexp)
        
+        # Feed the data to the SMC particle updater.
         updater.update(outcome, thisexp)
         
-        if np.mod(2*idx_exp,n_exp)==0:
+        # Optionally plot the data so far.
+        if do_plot and np.mod(2*idx_exp, n_exp) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             
@@ -175,67 +176,13 @@ if __name__ == "__main__":
             weights = updater.particle_weights      
             maxweight = np.max(weights)
 
-#            u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-#            x=np.cos(u)*np.sin(v)
-#            y=np.sin(u)*np.sin(v)
-#            z=np.cos(v)
-#
-#            ax.plot_wireframe(x, y, z, color="gray")
-
             ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
             ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red', s= 25)
-#            ax.scatter(thisexp[0,0]*(-1)**(outcome[0]),thisexp[0,1]*(-1)**(outcome[0]),thisexp[0,2]*(-1)**(outcome[0]),s = 50, c = 'black')
             
-    est_mean = updater.est_mean()
-    ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    
-    
-    faces, vertices = updater.region_est_hull()
-    
-    items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
-    ax.add_collection(items)
-    
-    
-    A, centroid = updater.region_est_ellipsoid(tol=0.0001)
-    
-    #PLot covariance ellipse
-    U, D, V = la.svd(A)
-    
-    
-    rx, ry, rz = [1/np.sqrt(d) for d in D]
-    u, v = np.mgrid[0:2*np.pi:20j,-np.pi/2:np.pi/2:10j]    
-    
-    x=rx*np.cos(u)*np.cos(v)
-    y=ry*np.sin(u)*np.cos(v)
-    z=rz*np.sin(v)
-        
-    for idx in xrange(x.shape[0]):
-        for idy in xrange(y.shape[1]):
-            x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.transpose(V),np.array([x[idx,idy],y[idx,idy],z[idx,idy]])) + centroid
-            
-            
-    ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
-    
-#    #PLot covariance ellipse
-#    U, D, V = la.svd(updater.est_covariance_mtx())
-#    
-#    rx, ry, rz = [np.sqrt(d)/0.5 for d in D]
-#    center = updater.est_mean()    
-#    u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]    
-#    x=rx*np.cos(u)*np.sin(v)
-#    y=ry*np.sin(u)*np.sin(v)
-#    z=rz*np.cos(v)
-#    
-#    
-#    for idx in xrange(x.shape[0]):
-#        for idy in xrange(x.shape[1]):
-#            x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.array([x[idx,idy],y[idx,idy],z[idx,idy]]),V) + center
-#            
-#            
-#    ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
-    
-    
+    # Record how long it took us.
     toc = time.time() - tic
-        
+            
+    # Print out summary statistics.    
     print "True param: {}".format(truemp)    
     print "Est. mean: {}".format(updater.est_mean())
     print "Est. cov: {}".format(updater.est_covariance_mtx())
@@ -243,7 +190,37 @@ if __name__ == "__main__":
     print "Trace Cov: {}".format(np.trace(updater.est_covariance_mtx()))
     print "Resample count: {}".format(updater.resample_count)
     print "Elapsed time: {}".format(toc)
+    
+    # Optionally plot everything.            
+    if do_plot:
+        est_mean = updater.est_mean()
+        ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    
+        
+        faces, vertices = updater.region_est_hull()
+        
+        items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
+        ax.add_collection(items)
+        
+        A, centroid = updater.region_est_ellipsoid(tol=0.0001)
+    
+        # Plot covariance ellipse.
+        U, D, V = la.svd(A)
+        
+        
+        rx, ry, rz = [1/np.sqrt(d) for d in D]
+        u, v = np.mgrid[0:2*np.pi:20j,-np.pi/2:np.pi/2:10j]    
+        
+        x=rx*np.cos(u)*np.cos(v)
+        y=ry*np.sin(u)*np.cos(v)
+        z=rz*np.sin(v)
+            
+        for idx in xrange(x.shape[0]):
+            for idy in xrange(y.shape[1]):
+                x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.transpose(V),np.array([x[idx,idy],y[idx,idy],z[idx,idy]])) + centroid
+                
+                
+        ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
+    
+        plt.show()
  
         
-    
-    plt.show()  

@@ -157,7 +157,7 @@ class ClusteringResampler(object):
 class LiuWestResampler(object):
     r"""
     Creates a resampler instance that applies the algorithm of
-    Liu and West (2001) to redistribute the particles.
+    [LW01]_ to redistribute the particles.
     """
     def __init__(self, a=0.98):
         self.a = a # Implicitly calls the property setter below to set _h.
@@ -178,7 +178,7 @@ class LiuWestResampler(object):
     def __call__(self, model, particle_weights, particle_locations, precomputed_mean=None, precomputed_cov=None):
         """
         Resample the particles according to algorithm given in 
-        Liu and West (2001).
+        [LW01]_.
         """
         
         # Give shorter names to weights and locations.

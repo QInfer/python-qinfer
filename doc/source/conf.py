@@ -263,6 +263,18 @@ epub_copyright = u'2012, Christopher Ferrie and Christopher Granade'
 #epub_tocdup = True
 
 
+
+## EXTLINKS CONFIGURATION ######################################################
+
+extlinks = {
+    'arxiv': ('http://arxiv.org/abs/%s', 'arXiv:'),
+    'doi': ('http://dx.doi.org/abs/%s', 'doi:'),
+}
+
+## OTHER CONFIGURATION PARAMETERS ##############################################
+
+
+
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'http://docs.python.org/': None,
@@ -273,10 +285,3 @@ autodoc_member_order = 'bysource'
 autodoc_default_flags = ['show-inheritance', 'undoc-members']
 pngmath_latex_preamble = preamble
 
-
-## EXTLINKS CONFIGURATION ######################################################
-
-extlinks = {
-    'arxiv': ('http://arxiv.org/abs/%s', 'arXiv:'),
-    'doi': ('http://dx.doi.org/abs/%s', 'doi:'),
-}

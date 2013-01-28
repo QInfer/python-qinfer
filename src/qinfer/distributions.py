@@ -32,14 +32,47 @@ import abc
 ## CLASSES #####################################################################
 
 class Distribution(object):
+    """
+    Abstract base class for probability distributions on one or more random
+    variables.
+    """
     __metaclass__ = abc.ABCMeta
+    
+    @abc.abstractproperty
+    def n_rvs(self):
+        """
+        The number of random variables that this distribution is over.
+        
+        :rtype: `int`
+        """
+        pass
     
     @abc.abstractmethod
     def sample(self, n=1):
+        """
+        Returns one or more samples from this probability distribution.
+        
+        :param int n: Number of samples to return.
+        :return numpy.ndarray: An array containing samples from the
+            distribution of shape ``(n, d)``, where ``d`` is the number of
+            random variables.
+        """
         pass
 
+
+_DEFAULT_RANGES = np.array([[0, 1]])
+_DEFAULT_RANGES.flags.writeable = False # Prevent anyone from modifying the
+                                        # default ranges.
 class UniformDistribution(Distribution):
-    def __init__(self, ranges=np.array([[0, 1]])):
+    """
+    Uniform distribution on a given rectangular region.
+    
+    :param numpy.ndarray ranges: Array of shape ``(n_rvs, 2)``, where ``n_rvs``
+        is the number of random variables, specifying the upper and lower limits
+        for each variable.
+    """
+    
+    def __init__(self, ranges=_DEFAULT_RANGES):
         if not isinstance(ranges, np.ndarray):
             ranges = np.array(ranges)
             
@@ -49,6 +82,10 @@ class UniformDistribution(Distribution):
         self._ranges = ranges
         self._n_rvs = ranges.shape[0]
         self._delta = ranges[:, 1] - ranges[:, 0]
+        
+    @property
+    def n_rvs(self):
+        return self._n_rvs
         
     def sample(self, n=1):
         shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
@@ -63,11 +100,11 @@ class UniformDistribution(Distribution):
 class HilbertSchmidtUniform(object):
     """
     Creates a new Hilber-Schmidt uniform prior on state space of dimension ``dim``.
-    See e.g. [Mis12]_.
+    See e.g. [Mez06]_ and [Mis12]_.
 
     :param int dim: Dimension of the state space.
     """
-    def __init__(self,dim = 2):
+    def __init__(self, dim=2):
         self.dim = dim
 
     def sample(self):
@@ -87,6 +124,7 @@ class HilbertSchmidtUniform(object):
         rho = np.dot(np.dot(np.identity(self.dim)+U,np.dot(z,z.conj().transpose())),np.identity(self.dim)+U.conj().transpose())
         rho = rho/np.trace(rho)
         
+        # TODO: generalize to Heisenberg-Weyl groups.
         z = np.real(np.trace(np.dot(rho,np.array([[1,0],[0,-1]]))))
         y = np.real(np.trace(np.dot(rho,np.array([[0,-1j],[1j,0]]))))
         x = np.real(np.trace(np.dot(rho,np.array([[0,1],[1,0]]))))
