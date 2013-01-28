@@ -7,5 +7,9 @@ setup(
     author='Chris Ferrie and Chris Granade',
     author_email='csferrie@gmail.com',
     package_dir={'': 'src'},
-    packages=['qinfer']
+    packages=[
+        'qinfer',
+        'qinfer._lib',
+        'qinfer.examples'
+    ]
 )
