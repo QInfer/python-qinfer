@@ -22,7 +22,7 @@ Installing QInfer
 =================
 
 **QInfer** provides a setup script, ``setup.py``, for installing from source.
-On Unix-like systems, **QuaEC** can be made available globally by running::
+On Unix-like systems, **QInfer** can be made available globally by running::
 
     $ cd /path/to/qinfer/
     $ sudo python setup.py install
