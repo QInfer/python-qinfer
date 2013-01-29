@@ -378,11 +378,12 @@ class SMCUpdater(object):
                 # the outer product $mu . mu^T$.
                 - mu**2)
 
-        rescale_var = np.dot(self.model.Q, var)
+
+        rescale_var = np.sum(self.model.Q * var, axis=1)
         # Q has shape (n_mp,),
         # therefore <- has shape (n_outcomes,)
         tot_like = np.sum(L, axis=1)
-        return -np.dot(tot_like.T, rescale_var)
+        return np.dot(tot_like.T, rescale_var)
 
     ## REGION ESTIMATION METHODS ###############################################
 

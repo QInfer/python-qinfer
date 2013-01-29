@@ -135,8 +135,11 @@ class HTCircuitModel(Model):
         m = expparams['nqubits']
         f = expparams['boolf']
         
-        # count the number of times the last bit of f is 0
-        count = np.sum([bin(x)[-1] == '0' for x in f])      
+        #the last m bits     
+        F  = f[-2**(m):]
+
+        # count the number of times the last bit of F is 0
+        count = np.sum([bin(x)[-1] == '0' for x in F])      
         
         #probability of getting 0
         pr0 = 0.25*(1+modelparams)+0.5*(1-modelparams)*count/(2**m)
@@ -156,6 +159,8 @@ class HTCircuitModel(Model):
             #unpack m and f
             m = expparams['nqubits']
             f = expparams['boolf']
+            #the last m bits     
+            F  = f[-2**(m):]
             
             outcomes = np.zeros([modelparams.shape[0],repeat])
             #select |0> or |1> with probability given by lambda
@@ -170,8 +175,8 @@ class HTCircuitModel(Model):
             # generate random m-bit numbers
             x = np.random.randint(0,2**m,num_ones)
             
-            # set the outcomes to be the last bit of f(x)
-            outcomes[np.logical_not(idx_zeros)] = np.mod(f[x],2)
+            # set the outcomes to be the last bit of F(x)
+            outcomes[np.logical_not(idx_zeros)] = np.mod(F[x],2)
             
             return outcomes
         

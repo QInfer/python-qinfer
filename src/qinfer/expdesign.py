@@ -61,7 +61,7 @@ class ExperimentDesigner(object):
         
     ## METHODS #################################################################
         
-    def design_expparams_field(self, field, other_fields=None, cost_scale_k=1.0):
+    def design_expparams_field(self, guess,field, other_fields=None, cost_scale_k=1.0):
         # TODO: this method is a definite WIP.
         up = self._updater
         m  = up.model
@@ -75,7 +75,8 @@ class ExperimentDesigner(object):
         if self._opt_algo == OptimizationAlgorithms.CG:
             # TODO: form initial guesses.
             # TODO: Optimize each according to objective_function
-            raise NotImplementedError("CG opt algo not yet implemented.")
+            #raise NotImplementedError("CG opt algo not yet implemented.")
+	    return scipy.optimize.fmin_cg(objective_function,guess[0][field], maxiter=10)
         elif self._opt_algo == OptimizationAlgorithms.NCG:
             raise NotImplementedError("NCG optimization algorithm not yet implemented.")
         

@@ -115,12 +115,8 @@ if __name__ == "__main__":
 
     # a random invertible function    
     np.random.shuffle(f)
-
-    # the last m bits     
-    F  = f[-2**(N_HADAMARDED):]
     
-    expparams = {'nqubits':N_HADAMARDED,'boolf':F} 
-    
+    expparams = {'nqubits':N_HADAMARDED,'boolf':f} 
     
     
     # Resampler initialization
