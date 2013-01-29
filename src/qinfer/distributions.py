@@ -92,9 +92,14 @@ class UniformDistribution(Distribution):
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
 
-    def grad_log_pdf(self, var):
-        # TODO: This is not quite true
-        return np.zeros(var.shape)
+class DiscreteUniformDistribution(Distribution):
+    def __init__(self, num_bits):
+        self._num_bits = num_bits
+        
+    def sample(self, n=1):
+        z = np.random.randint(2**self._num_bits,n)
+        return z
+
 
 # TODO: make the following into Distributions.        
 class HilbertSchmidtUniform(object):
