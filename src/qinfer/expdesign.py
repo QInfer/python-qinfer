@@ -61,22 +61,24 @@ class ExperimentDesigner(object):
         
     ## METHODS #################################################################
         
-    def design_expparams_field(self, guess,field, other_fields=None, cost_scale_k=1.0):
+    def design_expparams_field(self, guess,field, other_fields=None, cost_scale_k=1.0, disp=False):
         # TODO: this method is a definite WIP.
         up = self._updater
         m  = up.model
         
+        # TODO: set fields of ep based on other_fields.
+        ep = np.empty((1,), dtype=m.expparams_dtype)
+        
         def objective_function(x):
-            ep = np.empty((1,), dtype=m.expparams_dtype)
-            # TODO: set fields of ep based on other_fields.
             ep[field] = x
             return up.bayes_risk(ep) + cost_scale_k * m.experiment_cost(ep)
             
         if self._opt_algo == OptimizationAlgorithms.CG:
             # TODO: form initial guesses.
             # TODO: Optimize each according to objective_function
-            #raise NotImplementedError("CG opt algo not yet implemented.")
-	    return scipy.optimize.fmin_cg(objective_function,guess[0][field], maxiter=10)
+            x_opt = opt.fmin_cg(objective_function, guess[0][field], maxiter=10, disp=disp)
+            ep[field] = x_opt
+            return ep
         elif self._opt_algo == OptimizationAlgorithms.NCG:
             raise NotImplementedError("NCG optimization algorithm not yet implemented.")
         

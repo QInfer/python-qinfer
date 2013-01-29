@@ -145,6 +145,7 @@ class Simulatable(object):
         :rtype: :class:`~numpy.ndarray` of ``dtype`` ``float`` and of the
             same shape as ``expparams``.
         """
+        return np.ones(expparams.shape)
         
 class LinearCostModelMixin(Simulatable):
     # FIXME: move this mixin to a new module.
@@ -228,8 +229,10 @@ class Model(Simulatable):
             set of model parameters and experiment parameters.
         """
         pr0 = pr0[np.newaxis, ...]
+        pr1 = 1 - pr0
+        
         return np.concatenate([
-            pr0 if outcomes[idx] == 0 else 1 - pr0
+            pr0 if outcomes[idx] == 0 else pr1
             for idx in xrange(outcomes.shape[0])
             ]) 
         
