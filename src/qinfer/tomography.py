@@ -107,7 +107,7 @@ class HTCircuitModel(Model):
         
     @property
     def expparams_dtype(self):
-        return [('nqubits', 'int'), ('boolf', 'list')]
+        return [('nqubits', 'int'), ('boolf', 'object')]
     
     @property
     def is_n_outcomes_constant(self):
@@ -125,17 +125,15 @@ class HTCircuitModel(Model):
     def likelihood(self, outcomes, modelparams, expparams):
         #unpack m and f
         m = expparams['nqubits']
-        f = expparams['boolf']
+        f = expparams['boolf'][0]
         
         #the first and last m bits     
         F0  = f[:2**m]        
-        F1  = f[-2**m:]
-        
+        F1  = f[-2**m:]        
 
         # count the number of times the last bit of F is 0
         count0 = np.sum((F0+1) % 2)      
         count1 = np.sum((F1+1) % 2)      
-
         
         #probability of getting 0
         pr0 = modelparams*count0/(2**m)+(1-modelparams)*count1/(2**m)
@@ -145,16 +143,11 @@ class HTCircuitModel(Model):
     
     def simulate_experiment(self, modelparams, expparams, repeat=1, use_like = False):
         if use_like:
-            probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
-            cdf = np.cumsum(probabilities)
-            randnum = np.random.random((repeat, 1))
-            
-            outcomes = np.argmax(cdf > randnum, axis=1)
-            return outcomes[0] if repeat==1 else outcomes
+            return super(HTCircuitModel,self).simulate_experiment(modelparams, expparams, repeat)
         else:
             #unpack m and f
             m = expparams['nqubits']
-            f = expparams['boolf']
+            f = expparams['boolf'][0]
             #the first and last m bits     
             F0  = f[:2**m]        
             F1  = f[-2**m:]

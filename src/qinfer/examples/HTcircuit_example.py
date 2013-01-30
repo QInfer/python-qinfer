@@ -115,8 +115,7 @@ if __name__ == "__main__":
     # a random invertible function    
     np.random.shuffle(f)
     
-    expparams = {'nqubits':N_HADAMARDED,'boolf':f} 
-    
+    expparams = np.array([(N_HADAMARDED, f)], dtype=model.expparams_dtype)
     
     # Resampler initialization
     lw_args = {"a": lw_a}
