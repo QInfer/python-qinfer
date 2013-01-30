@@ -61,13 +61,33 @@ class ExperimentDesigner(object):
         
     ## METHODS #################################################################
         
-    def design_expparams_field(self, guess,field, other_fields=None, cost_scale_k=1.0, disp=False):
+    def design_expparams_field(self, guess, field, cost_scale_k=1.0, disp=False):
+        """
+        TODO
+        
+        :param guess: Either a record array with a single guess, or
+            a callable function that generates guesses.
+        :type guess: `callable` or :class:`~numpy.ndarray` of ``dtype``
+            :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype`
+        :param str field: The name of the ``expparams`` field to be optimized.
+            All other fields of ``guess`` will be held constant.
+        :param float cost_scale_k: A scale parameter :math:`k` relating the
+            Bayes risk to the experiment cost.
+            See :ref:`expdesign`.
+        :param bool disp: If `True`, the optimization will print additional
+            information as it proceeds.
+        :return: TODO
+        """
+        
         # TODO: this method is a definite WIP.
         up = self._updater
         m  = up.model
         
-        # TODO: set fields of ep based on other_fields.
-        ep = np.empty((1,), dtype=m.expparams_dtype)
+        if callable(guess):
+            ep = guess()
+        else:
+            # Make a copy of the guess that we can manipulate.
+            ep = np.copy(guess)
         
         def objective_function(x):
             ep[field] = x

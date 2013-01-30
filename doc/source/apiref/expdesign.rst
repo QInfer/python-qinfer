@@ -27,11 +27,12 @@ function
 where :math:`r(\vec{e})` is the Bayes risk (see [GFWC12]_), :math:`C(\vec{e})`
 is a cost function describing the cost associated with each experiment and where
 :math:`k` is a parameter describing how much we are willing to pay for
-reductions in risk. In QInfer, the cost function is specified as a method of
+reductions in risk. In QInfer, the cost function is specified as the
+:meth:`~qinfer.abstract_model.Simulatable.experiment_cost` method of
 the :class:`~qinfer.abstract_model.Simulatable` class under study.
 
-:class:`ExperimentDesigner` - Risk Minimization Algorithm
----------------------------------------------------------
+:class:`ExperimentDesigner` - Greedy Risk Minimization Algorithm
+----------------------------------------------------------------
 
 Class Reference 
 ~~~~~~~~~~~~~~~
