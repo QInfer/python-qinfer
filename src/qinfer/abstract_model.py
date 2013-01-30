@@ -207,7 +207,7 @@ class Model(Simulatable):
         
         probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
         cdf = np.cumsum(probabilities,axis=0)
-        randnum = np.random.random((1, repeat, 1))
+        randnum = np.random.random((1, modelparams.shape[0], repeat))
         outcomes = np.argmax(cdf > randnum, axis=0)
         return outcomes[0] if repeat==1 else outcomes
                 
