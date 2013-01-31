@@ -206,10 +206,9 @@ class Model(Simulatable):
         super(Model, self).simulate_experiment(modelparams, expparams, repeat)
         
         probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
-        cdf = np.cumsum(probabilities)
-        randnum = np.random.random((repeat, 1))
-        
-        outcomes = np.argmax(cdf > randnum, axis=1)
+        cdf = np.cumsum(probabilities,axis=0)
+        randnum = np.random.random((1, modelparams.shape[0], repeat))
+        outcomes = np.argmax(cdf > randnum, axis=0)
         return outcomes[0] if repeat==1 else outcomes
                 
     ## STATIC METHODS ##

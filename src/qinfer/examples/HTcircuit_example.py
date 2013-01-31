@@ -33,7 +33,6 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import numpy.linalg as la
 from scipy.stats.kde import gaussian_kde
 from copy import copy
 
@@ -108,7 +107,7 @@ if __name__ == "__main__":
     
             
     # Model and prior initialization
-    prior = UniformDistribution([-1,1])
+    prior = UniformDistribution([0,1])
     model = tomography.HTCircuitModel()
 
     f = np.arange(2**N_QUBITS)
@@ -116,8 +115,7 @@ if __name__ == "__main__":
     # a random invertible function    
     np.random.shuffle(f)
     
-    expparams = {'nqubits':N_HADAMARDED,'boolf':f} 
-    
+    expparams = np.array([(N_HADAMARDED, f)], dtype=model.expparams_dtype)
     
     # Resampler initialization
     lw_args = {"a": lw_a}
@@ -151,7 +149,7 @@ if __name__ == "__main__":
     
     #Plotting intialization
     res = 1000
-    p = np.linspace(-1,1,res)    
+    p = np.linspace(0,1,res)    
     L = np.ones((n_exp+1, res))       
     
     
@@ -164,7 +162,7 @@ if __name__ == "__main__":
         temp = model.likelihood(np.array([outcome]),p,expparams)
         
         L[idx_exp+1,:] = L[idx_exp,:]*temp        
-        norm = 2*np.sum(L[idx_exp+1,:])/res
+        norm = np.sum(L[idx_exp+1,:])/res
         L[idx_exp+1,:] = L[idx_exp+1,:]/norm
         
         if np.mod(2*idx_exp,n_exp)==0:
@@ -174,7 +172,7 @@ if __name__ == "__main__":
             Lm = L[idx_exp+1,:]
             fig = plt.figure()
             plt.plot(p,Lm, c = 'black')
-            bme = 2*np.sum(p * Lm)/res
+            bme = np.sum(p * Lm)/res
             plt.axvline(bme, c = 'blue', linewidth = 2)
             plt.axvline(truemp, c = 'red', linewidth = 2)            
             plt.axvline(updater.est_mean()[0], c = 'green', linewidth = 2)
@@ -182,9 +180,9 @@ if __name__ == "__main__":
             temp = copy(updater)
             temp.resample()            
             pdf = gaussian_kde(temp.particle_locations[:,0])
-            pdf.integrate_box_1d(-1,1)
+            pdf.integrate_box_1d(0,1)
             plt.plot(p,pdf(p),'g')
-            plt.axis([-1,1,0,10])            
+            plt.axis([0,1,0,np.max(Lm)])            
             
     est_mean = updater.est_mean()
     

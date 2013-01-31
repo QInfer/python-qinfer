@@ -547,7 +547,7 @@ class SMCUpdaterABC(SMCUpdater):
         # first simulate abc_sim experiments
         n = self.model.simulate_experiment(self.particle_locations, expparams, repeat=self.abc_sim)
         # re-weight the particle by multiplying by number of simulated 
-        # that came within a tolerance of abc_tol of the actual outcome            
+        # that came within a tolerance of abc_tol of the actual outcome    
         weights = weights * np.sum(np.abs(n-outcomes)/self.abc_sim <= self.abc_tol,1) 
         
         # normalize

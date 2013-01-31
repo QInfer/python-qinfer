@@ -98,7 +98,7 @@ class QubitStatePauliModel(Model):
         return Model.pr0_to_likelihood_array(outcomes, pr0)        
 
 class HTCircuitModel(Model):
-    
+        
     ## PROPERTIES ##
     
     @property
@@ -107,7 +107,7 @@ class HTCircuitModel(Model):
         
     @property
     def expparams_dtype(self):
-        return [('nqubits', 'int'), ('boolf', 'list')]
+        return [('nqubits', 'int'), ('boolf', 'object')]
     
     @property
     def is_n_outcomes_constant(self):
@@ -120,47 +120,37 @@ class HTCircuitModel(Model):
         return np.logical_and(modelparams.all(axis=1) >= 0,modelparams.all(axis=1) <= 1)
     
     def n_outcomes(self, expparams):
-        """
-        Returns an array of dtype ``uint`` describing the number of outcomes
-        for each experiment specified by ``expparams``.
-        
-        :param numpy.ndarray expparams: Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property.
-        """
         return 2
     
     def likelihood(self, outcomes, modelparams, expparams):
         #unpack m and f
         m = expparams['nqubits']
-        f = expparams['boolf']
+        f = expparams['boolf'][0]
         
-        #the last m bits     
-        F  = f[-2**(m):]
+        #the first and last m bits     
+        F0  = f[:2**m]        
+        F1  = f[-2**m:]        
 
         # count the number of times the last bit of F is 0
-        count = np.sum([bin(x)[-1] == '0' for x in F])      
+        count0 = np.sum((F0+1) % 2)      
+        count1 = np.sum((F1+1) % 2)      
         
         #probability of getting 0
-        pr0 = 0.25*(1+modelparams)+0.5*(1-modelparams)*count/(2**m)
+        pr0 = modelparams*count0/(2**m)+(1-modelparams)*count1/(2**m)
         
         #concatenate over outcomes
         return Model.pr0_to_likelihood_array(outcomes, pr0)
     
     def simulate_experiment(self, modelparams, expparams, repeat=1, use_like = False):
         if use_like:
-            probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
-            cdf = np.cumsum(probabilities)
-            randnum = np.random.random((repeat, 1))
-            
-            outcomes = np.argmax(cdf > randnum, axis=1)
-            return outcomes[0] if repeat==1 else outcomes
+            return super(HTCircuitModel,self).simulate_experiment(modelparams, expparams, repeat)
         else:
             #unpack m and f
             m = expparams['nqubits']
-            f = expparams['boolf']
-            #the last m bits     
-            F  = f[-2**(m):]
+            f = expparams['boolf'][0]
+            #the first and last m bits     
+            F0  = f[:2**m]        
+            F1  = f[-2**m:]
             
             outcomes = np.zeros([modelparams.shape[0],repeat])
             #select |0> or |1> with probability given by lambda
@@ -168,15 +158,13 @@ class HTCircuitModel(Model):
             num_zeros = np.sum(idx_zeros)
             num_ones  = modelparams.shape[0]*repeat - num_zeros 
 
-            #generate random outcomes for those |0> states
-            outcomes[idx_zeros] = np.random.randint(0,2,num_zeros)
+            # for the |0> state set the outcomes to be the last bit of F0(x)
+            x = np.random.randint(0,2**m,num_zeros)            
+            outcomes[idx_zeros] = np.mod(F0[x],2)
             
-            # for the |1> states, simulate the outcomes of the circuit
-            # generate random m-bit numbers
+            # for the |1> state set the outcomes to be the last bit of F1(x)
             x = np.random.randint(0,2**m,num_ones)
-            
-            # set the outcomes to be the last bit of F(x)
-            outcomes[np.logical_not(idx_zeros)] = np.mod(F[x],2)
+            outcomes[np.logical_not(idx_zeros)] = np.mod(F1[x],2)
             
             return outcomes
         
@@ -187,10 +175,9 @@ if __name__ == "__main__":
     m = 2
     n = 4
     fn = np.arange(2**n)
-    f  = fn[-2**(m):]
     
     param = np.array([[0],[1]])
-    expp = {'nqubits':m,'boolf':f} 
+    expp = {'nqubits':m,'boolf':fn} 
     
 
     model = HTCircuitModel()
