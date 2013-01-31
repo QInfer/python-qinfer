@@ -66,7 +66,7 @@ class ExperimentDesigner(object):
         
     ## METHODS #################################################################
         
-    def design_expparams_field(self, guess, field, cost_scale_k=1.0, disp=False):
+    def design_expparams_field(self, guess, field, cost_scale_k=1.0, disp=False, maxiter=None):
         """
         TODO
         
@@ -102,9 +102,12 @@ class ExperimentDesigner(object):
             return up.bayes_risk(ep) + cost_scale_k * m.experiment_cost(ep)
             
         if self._opt_algo == OptimizationAlgorithms.CG:
+            opt_options = {}
+            if maxiter is not None:
+                opt_options['maxiter'] = maxiter
             # TODO: form initial guesses.
             # TODO: Optimize each according to objective_function
-            x_opt = opt.fmin_cg(objective_function, guess[0][field], maxiter=10, disp=disp)
+            x_opt = opt.fmin_cg(objective_function, guess[0][field], disp=disp, **opt_options)
             ep[field] = x_opt
             return ep
         elif self._opt_algo == OptimizationAlgorithms.NCG:
