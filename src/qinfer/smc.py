@@ -92,6 +92,8 @@ class SMCUpdater(object):
 
         self.resample_thresh = resample_thresh
 
+        self._data_record = []
+
         ## PARTICLE INITIALIZATION ##
         # Particles are stored using two arrays, particle_locations and
         # particle_weights, such that:
@@ -129,6 +131,11 @@ class SMCUpdater(object):
         :return float: The effective sample size, given by :math:`1/\sum_i w_i^2`.
         """
         return 1 / (np.sum(self.particle_weights**2))
+
+    @property
+    def data_record(self):
+        # TODO: return read-only view onto the data record.
+        return self._data_record
 
     ## PRIVATE METHODS #########################################################
     
@@ -200,6 +207,10 @@ class SMCUpdater(object):
             update, the effective sample size condition will be checked and
             a resampling step may be performed.
         """
+
+        # First, record the outcome.
+        # TODO: record the experiment as well.
+        self._data_record.append(outcome)
 
         # Since hypothetical_update returns an array indexed by
         # [outcome, experiment, particle], we need to strip off those two

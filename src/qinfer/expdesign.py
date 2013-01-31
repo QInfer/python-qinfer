@@ -32,6 +32,7 @@ from __future__ import division
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
     'ExperimentDesigner',
+    'Heuristic',
     'OptimizationAlgorithms'
 ]
 
@@ -52,6 +53,10 @@ from ._lib import enum
 
 OptimizationAlgorithms = enum.enum("CG", "NCG")
 
+class Heuristic(object):
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError("Not yet implemented.")
+
 class ExperimentDesigner(object):
     # TODO: docstring!
 
@@ -67,7 +72,8 @@ class ExperimentDesigner(object):
         
         :param guess: Either a record array with a single guess, or
             a callable function that generates guesses.
-        :type guess: `callable` or :class:`~numpy.ndarray` of ``dtype``
+        :type guess: Instance of :class:`~Heuristic`, `callable`
+            or :class:`~numpy.ndarray` of ``dtype``
             :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype`
         :param str field: The name of the ``expparams`` field to be optimized.
             All other fields of ``guess`` will be held constant.
@@ -83,8 +89,10 @@ class ExperimentDesigner(object):
         up = self._updater
         m  = up.model
         
-        if callable(guess):
-            ep = guess()
+        if isinstance(guess, Heuristic):
+            raise NotImplementedError("Not yet implemented.")
+        elif callable(guess):
+            ep = guess(idx_exp=len(up.data_record), mean=up.est_mean(), cov=up.est_covariance_mtx())
         else:
             # Make a copy of the guess that we can manipulate.
             ep = np.copy(guess)
