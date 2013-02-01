@@ -58,6 +58,15 @@ parameters, then returns an array of sample data.
 >>> print D.shape
 (3, 100, 9)
 
+If exactly one datum is requested, :meth:`~abstract_model.Simulatable.simulate_experiment`
+will return a scalar:
+
+>>> print m.simulate_experiment(np.array([0.5]), np.array([3.5 * np.pi]), repeat=1).shape
+()
+
+.. todo::
+    Ensure that the simulated data matches the likelihood.
+
 Likelihooods
 ~~~~~~~~~~~~
 
