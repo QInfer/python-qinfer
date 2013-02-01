@@ -82,6 +82,10 @@ class SimplePrecessionModel(DifferentiableModel):
         # call counting there.
         super(SimplePrecessionModel, self).likelihood(outcomes, modelparams, expparams)
         
+        # Possibly add a second axis to modelparams.
+        if len(modelparams.shape) == 1:
+            modelparams = modelparams[..., np.newaxis]
+        
         # Allocating first serves to make sure that a shape mismatch later
         # will cause an error.
         pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
