@@ -63,6 +63,11 @@ def binom_est_p(n, N, hedge=float(0)):
         value of :math:`n`.
     """
     return (n + hedge) / (N + 2 * hedge)
+    
+def binom_est_error(p, N):
+    r"""
+    """
+    return np.sqrt(N * p * (1 - p))
 
 ## CLASSES #####################################################################
 
@@ -157,7 +162,7 @@ class ALEApproximateModel(Model):
             )
             n += np.sum(sim_data, axis=0) # Sum over the outcomes axis to find the
                                           # number of 1s.
-            error_est_p1 = binom_est_p(n, N, self._adapt_hedge)
+            error_est_p1 = binom_est_error(binom_est_p(n, N, self._adapt_hedge), N)
             if np.all(error_est_p1 < self._error_tol): break
             
         return Model.pr0_to_likelihood_array(outcomes, 1 - binom_est_p(n, N, self._est_hedge))
