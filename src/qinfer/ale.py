@@ -31,6 +31,7 @@ from __future__ import division
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
+    'binom_est_p',
     'ALEApproximateModel'
 ]
 
@@ -48,25 +49,72 @@ from scipy.stats.distributions import binom
 ## FUNCTIONS ###################################################################
 
 def binom_est_p(n, N, hedge=float(0)):
+    r"""
+    Given a number of successes :math:`n` and a number of trials :math:`N`,
+    estimates the binomial distribution parameter :math:`p` using the
+    hedged maximum likelihood estimator of [FB12]_.
+    
+    :param n: Number of successes.
+    :type n: `numpy.ndarray` or `int`
+    :param int N: Number of trials.
+    :param float hedge: Hedging parameter :math:`\beta`.
+    :rtype: `float` or `numpy.ndarray`.
+    :return: The estimated binomial distribution parameter :math:`p` for each
+        value of :math:`n`.
+    """
     return (n + hedge) / (N + 2 * hedge)
 
 ## CLASSES #####################################################################
 
 class ALEApproximateModel(Model):
-    # TODO: document
+    r"""
+    Given a :class:`~qinfer.abstract_model.Simulatable`, estiamtes the
+    likelihood of that simulator by using adaptive likelihood estimation (ALE).
+    
+    :param qinfer.abstract_model.Simulatable simulator: Simulator to estimate
+        the likelihood function of.
+    :param float error_tol: Allowed error in the estimated likelihood. Note that
+        the simulation cost scales as :math:`O(\epsilon^{-2})`, where
+        :math:`\epsilon` is the error tolerance.
+    :param int min_samp: Minimum number of samples to use in estimating the
+        likelihood.
+    :param int samp_step: Number of samples by which to increment if the error
+        tolerance is not met.
+    :param float est_hedge: Amount of hedging to use in reporting the final
+        estimate.
+    :param float adapt_hedge: Amount of hedging to use in deciding if the error
+        tolerance has been met. Increasing this parameter will in general
+        cause the algorithm to require more samples.
+    """
     
     def __init__(self, simulator,
         error_tol=1e-2, min_samp=10, samp_step=10,
         est_hedge=float(0), adapt_hedge=0.509
     ):
-        # TODO: check that simulator always has two outcomes.
+        ## INPUT VALIDATION ##
+        if not isinstance(simulator, Simulatable):
+            raise TypeError("Simulator must be an instance of Simulatable.")
+
+        if error_tol <= 0:
+            raise ValueError("Error tolerance must be strictly positive.")
+        if error_tol >= 1:
+            raise ValueError("Error tolerance must be less than 1.")
+            
+        if min_samp <= 0:
+            raise ValueError("Minimum number of samples (min_samp) must be positive.")
+        if samp_step <= 0:
+            raise ValueError("Sample step (samp_step) must be positive.")
+        if est_hedge < 0:
+            raise ValueError("Estimator hedging (est_hedge) must be non-negative.")
+        if adapt_hedge < 0:
+            raise ValueError("Adaptive hedging (adapt_hedge) must be non-negative.")
+            
         self._simulator = simulator
-        self._error_tol = error_tol
-        self._min_samp = min_samp
-        self._samp_step = samp_step
-        # TODO: check that hedging is always non-negative.
-        self._est_hedge = est_hedge
-        self._adapt_hedge = adapt_hedge
+        self._error_tol = float(error_tol)
+        self._min_samp = int(min_samp)
+        self._samp_step = int(samp_step)
+        self._est_hedge = float(est_hedge)
+        self._adapt_hedge = float(adapt_hedge)
         
     ## WRAPPED METHODS AND PROPERTIES ##
     # These methods and properties do nothing but pass along to the
