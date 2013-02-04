@@ -66,7 +66,7 @@ class ExperimentDesigner(object):
         
     ## METHODS #################################################################
         
-    def design_expparams_field(self, guess, field, cost_scale_k=1.0, disp=False, maxiter=None):
+    def design_expparams_field(self, guess, field, cost_scale_k=1.0, disp=False, maxiter=None,store_guess=False):
         """
         TODO
         
@@ -108,7 +108,22 @@ class ExperimentDesigner(object):
             # TODO: form initial guesses.
             # TODO: Optimize each according to objective_function
             x_opt = opt.fmin_cg(objective_function, guess[0][field], disp=disp, **opt_options)
-            ep[field] = x_opt
+	    
+	    if store_guess:
+		guess_qual=objective_function(x_opt)
+		if not hasattr(self, 'best_cost'):
+		    ep[field] = x_opt
+		    self.best_cost=guess_qual #Stores best guess
+		    self.best_ep=ep
+		elif (self.best_cost > guess_qual):
+		    ep[field]=x_opt
+		    self.best_cost=guess_qual
+		    self.best_ep=ep
+		else:
+		    ep=self.best_ep # Guess is bad, return current best guess
+	    else:
+		ep[field]=x_opt
+            
             return ep
         elif self._opt_algo == OptimizationAlgorithms.NCG:
             raise NotImplementedError("NCG optimization algorithm not yet implemented.")
