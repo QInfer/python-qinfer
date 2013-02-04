@@ -179,8 +179,21 @@ class SMCUpdater(object):
         # since NumPy broadcasting rules align on the right-most index.
         L = self.model.likelihood(outcomes, locs, expparams).transpose([0, 2, 1])
         weights = weights * L
+        
+        # Sum up the weights to find the renormalization scale.
+        norm_scale = np.sum(weights, axis=2)[..., np.newaxis]
+        
+        # As a special case, check whether any entries of the norm_scale
+        # are zero. If this happens, that implies that all of the weights are
+        # zero--- that is, that the hypothicized outcome was impossible.
+        # Conditioned on an impossible outcome, all of the weights should be
+        # zero. To allow this to happen without causing a NaN to propagate,
+        # we forcibly set the norm_scale to 1, so that the weights will
+        # all remain zero.
+        norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
+        
         # normalize
-        norm_weights = weights / np.sum(weights, axis=2)[..., np.newaxis]
+        norm_weights = weights / norm_scale
             # Note that newaxis is needed to align the two matrices.
             # This introduces a length-1 axis for the particle number,
             # so that the normalization is broadcast over all particles.
