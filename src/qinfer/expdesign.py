@@ -63,8 +63,12 @@ class ExperimentDesigner(object):
     def __init__(self, updater, opt_algo=OptimizationAlgorithms.CG):
         self._updater = updater
         self._opt_algo = opt_algo # TODO: check that opt_algo is valid.
+	self.__best_cost=None
         
     ## METHODS #################################################################
+    def new_exp(self):
+	self.__best_cost=None
+	
         
     def design_expparams_field(self, guess, field, cost_scale_k=1.0, disp=False, maxiter=None,store_guess=False):
         """
@@ -111,16 +115,16 @@ class ExperimentDesigner(object):
 	    
 	    if store_guess:
 		guess_qual=objective_function(x_opt)
-		if not hasattr(self, 'best_cost'):
+		if self.__best_cost == None :
 		    ep[field] = x_opt
-		    self.best_cost=guess_qual #Stores best guess
-		    self.best_ep=ep
-		elif (self.best_cost > guess_qual):
+		    self.__best_cost=guess_qual #Stores best guess
+		    self.__best_ep=ep
+		elif (self.__best_cost > guess_qual):
 		    ep[field]=x_opt
-		    self.best_cost=guess_qual
-		    self.best_ep=ep
+		    self.__best_cost=guess_qual
+		    self.__best_ep=ep
 		else:
-		    ep=self.best_ep # Guess is bad, return current best guess
+		    ep=self.__best_ep # Guess is bad, return current best guess
 	    else:
 		ep[field]=x_opt
             
