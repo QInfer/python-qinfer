@@ -23,33 +23,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-
-## FEATURES ####################################################################
-
-from __future__ import division
-
-## IMPORTS #####################################################################
-
-import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import matplotlib.pyplot as plt
-import time
-from scipy.spatial import Delaunay
-import numpy.linalg as la
-
-## Imports from within QInfer. ##
-from .. import tomography, smc
-from ..utils import mvee, uniquify
-from ..resamplers import LiuWestResampler, ClusteringResampler
-from ..distributions import HilbertSchmidtUniform
-
-## External libraries bundled with QInfer. ##
-from .._lib import docopt
-
 ## DOCUMENTATION ###############################################################
 
-USAGE = """
+"""
 Usage: qubit_tomography_example.py [options]
 
 -h, --help                  Prints this help and returns.
@@ -78,18 +54,32 @@ Usage: qubit_tomography_example.py [options]
 -v, --verbose               Prints additional debugging information.
 """
 
-## TODO ########################################################################
+## FEATURES ####################################################################
 
-"""
-    - Add printing options to USAGE.    
-"""
+from __future__ import division
+
+## IMPORTS #####################################################################
+
+import numpy as np
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import matplotlib.pyplot as plt
+import time
+import numpy.linalg as la
+
+## Imports from within QInfer. ##
+from .. import tomography, smc
+from ..resamplers import LiuWestResampler, ClusteringResampler
+from ..distributions import HilbertSchmidtUniform
+
+## External libraries bundled with QInfer. ##
+from .._lib import docopt
 
 ## SCRIPT ######################################################################
 
 if __name__ == "__main__":
 
     # Handle command-line arguments using docopt.
-    args = docopt.docopt(USAGE)
+    args = docopt.docopt(__doc__)
     N_PARTICLES = int(args['--n_particles'])
     n_exp       = int(args['--n_exp'])
     algo        = args['--algorithm']
@@ -114,15 +104,25 @@ if __name__ == "__main__":
     
     # Resampler initialization.
     lw_args = {"a": lw_a}
-    dbscan_args = {"eps": dbscan_eps, "min_particles": dbscan_min, "w_pow": wdbscan_pow}
+    dbscan_args = {
+        "eps": dbscan_eps,
+        "min_particles": dbscan_min,
+        "w_pow": wdbscan_pow
+    }
     
     if resamp_algo == 'LW':
         resampler = LiuWestResampler(**lw_args)
     elif resamp_algo == 'DBSCAN-LW':
-        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(**lw_args), weighted=False, quiet=not verbose, **dbscan_args)
+        resampler = ClusteringResampler(
+            secondary_resampler=LiuWestResampler(**lw_args),
+            weighted=False, quiet=not verbose, **dbscan_args
+        )
     elif resamp_algo == 'WDBSCAN-LW':
         print "[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly."
-        resampler = ClusteringResampler(secondary_resampler=LiuWestResampler(), weighted=True, quiet=not verbose, **dbscan_args)
+        resampler = ClusteringResampler(
+            secondary_resampler=LiuWestResampler(**lw_args),
+            weighted=True, quiet=not verbose, **dbscan_args
+        )
     else:
         raise ValueError('Must specify a valid resampler.')
         
@@ -130,7 +130,9 @@ if __name__ == "__main__":
     if algo == 'SMC':
         updater = smc.SMCUpdater(model, N_PARTICLES, prior, resampler=resampler)
     elif algo == 'SMC-ABC':
-        updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior, resampler=resampler, abc_tol=abctol, abc_sim=abcsim)
+        updater = smc.SMCUpdaterABC(model, N_PARTICLES, prior,
+            resampler=resampler, abc_tol=abctol, abc_sim=abcsim
+        )
     else:
         raise ValueError('Must specify a valid algorithm.')    
     
@@ -144,13 +146,13 @@ if __name__ == "__main__":
         particles = updater.particle_locations
         
         u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-        x=np.cos(u)*np.sin(v)
-        y=np.sin(u)*np.sin(v)
-        z=np.cos(v)
+        x = np.cos(u) * np.sin(v)
+        y = np.sin(u) * np.sin(v)
+        z = np.cos(v)
         ax.plot_wireframe(x, y, z, color="gray")
 
-        ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10)
-        ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red',s = 25)
+        ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], s=10)
+        ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=25)
  
     # Record the start time.
     tic = time.time()
@@ -159,7 +161,7 @@ if __name__ == "__main__":
     for idx_exp in xrange(n_exp):
         # Randomly choose one of the three experiments from expparams and make
         # an array containing just that experiment.
-        thisexp = expparams[np.newaxis, np.random.randint(0,3)]
+        thisexp = expparams[np.newaxis, np.random.randint(0, 3)]
         
         # Simulate an experiment according to the chosen expparams.
         outcome = model.simulate_experiment(truemp, thisexp)
@@ -176,8 +178,11 @@ if __name__ == "__main__":
             weights = updater.particle_weights      
             maxweight = np.max(weights)
 
-            ax.scatter(particles[:,0],particles[:,1],particles[:,2], s = 10*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
-            ax.scatter(truemp[:,0],truemp[:,1],truemp[:,2],c = 'red', s= 25)
+            ax.scatter(
+                particles[:, 0], particles[:, 1], particles[:, 2],
+                s=10 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
+            )
+            ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=25)
             
     # Record how long it took us.
     toc = time.time() - tic
@@ -194,7 +199,7 @@ if __name__ == "__main__":
     # Optionally plot everything.            
     if do_plot:
         est_mean = updater.est_mean()
-        ax.scatter(est_mean[0],est_mean[1],est_mean[2],c = 'cyan', s = 25)    
+        ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)    
         
         faces, vertices = updater.region_est_hull()
         
@@ -207,16 +212,20 @@ if __name__ == "__main__":
         U, D, V = la.svd(A)
         
         
-        rx, ry, rz = [1/np.sqrt(d) for d in D]
-        u, v = np.mgrid[0:2*np.pi:20j,-np.pi/2:np.pi/2:10j]    
+        rx, ry, rz = [1 / np.sqrt(d) for d in D]
+        u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
         
-        x=rx*np.cos(u)*np.cos(v)
-        y=ry*np.sin(u)*np.cos(v)
-        z=rz*np.sin(v)
+        x = rx * np.cos(u) * np.cos(v)
+        y = ry * np.sin(u) * np.cos(v)
+        z = rz * np.sin(v)
             
         for idx in xrange(x.shape[0]):
             for idy in xrange(y.shape[1]):
-                x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.transpose(V),np.array([x[idx,idy],y[idx,idy],z[idx,idy]])) + centroid
+                x[idx, idy], y[idx, idy], z[idx, idy] = \
+                    np.dot(
+                        np.transpose(V),
+                        np.array([x[idx,idy],y[idx,idy],z[idx,idy]])
+                    ) + centroid
                 
                 
         ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
