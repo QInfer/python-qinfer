@@ -96,6 +96,7 @@ class ALEApproximateModel(Model):
         error_tol=1e-2, min_samp=10, samp_step=10,
         est_hedge=float(0), adapt_hedge=0.509
     ):
+        
         ## INPUT VALIDATION ##
         if not isinstance(simulator, Simulatable):
             raise TypeError("Simulator must be an instance of Simulatable.")
@@ -115,6 +116,10 @@ class ALEApproximateModel(Model):
             raise ValueError("Adaptive hedging (adapt_hedge) must be non-negative.")
             
         self._simulator = simulator
+        # We had to have the simulator in place before we could call
+        # the superclass.
+        super(ALEApproximateModel, self).__init__()
+        
         self._error_tol = float(error_tol)
         self._min_samp = int(min_samp)
         self._samp_step = int(samp_step)

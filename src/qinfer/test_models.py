@@ -157,7 +157,7 @@ class NoisyCoinModel(Model):
         pr0 = modelparams * a + (1 - modelparams) * b
         
         # Concatenate over outcomes.
-        return abstract_model.Model.pr0_to_likelihood_array(outcomes, pr0)
+        return Model.pr0_to_likelihood_array(outcomes, pr0)
         
 ## TESTING CODE ################################################################
 
