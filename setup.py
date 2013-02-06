@@ -10,6 +10,7 @@ setup(
     packages=[
         'qinfer',
         'qinfer._lib',
-        'qinfer.examples'
+        'qinfer.examples',
+        'qinfer.ui',
     ]
 )
