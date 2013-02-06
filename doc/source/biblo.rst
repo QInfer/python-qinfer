@@ -10,6 +10,8 @@
 Biblography
 ===========
 
+.. [FB12]
+    Ferrie C., Blume-Kohout R. Estimating the bias of a noisy coin.  AIP Conf. Proc. 1443, 14-21 (2012). :doi:`10.1063/1.3703615`. :arxiv:`arXiv:1201.1493`.
 .. [GFWC12]
     Granade C. E., Ferrie C., Wiebe N. & Cory D. G.  Robust online Hamiltonian learning. New Journal of Physics **14** 103013 (2012). :doi:`10.1088/1367-2630/14/10/103013`. :arxiv:`1207.1655`.
 .. [LW01]

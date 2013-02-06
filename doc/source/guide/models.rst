@@ -64,6 +64,9 @@ will return a scalar:
 >>> print m.simulate_experiment(np.array([0.5]), np.array([3.5 * np.pi]), repeat=1).shape
 ()
 
+Note that in NumPy, a shape tuple of length zero indicates a scalar value,
+as such an array has no indices.
+
 .. todo::
     Ensure that the simulated data matches the likelihood.
 
