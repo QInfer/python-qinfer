@@ -149,12 +149,13 @@ class SMCUpdater(object):
 
     ## UPDATE METHODS ##########################################################
 
-    def hypothetical_update(self, outcomes, expparams,return_likelihood=False):
+    def hypothetical_update(self, outcomes, expparams, return_likelihood=False):
         """
         Produces the particle weights for the posterior of a hypothetical
         experiment.
 
-        :param outcomes: Integer index of the outcome of the hypothetical experiment.
+        :param outcomes: Integer index of the outcome of the hypothetical
+            experiment.
             TODO: Fix this to take an array-like of ints as well.
         :type outcomes: int or an ndarray of dtype int.
         :param expparams: TODO

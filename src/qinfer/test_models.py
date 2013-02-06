@@ -33,11 +33,16 @@ import numpy as np
 
 from utils import binomial_pdf
 
-from abstract_model import Model,DifferentiableModel
+from abstract_model import Model, DifferentiableModel
     
-## CLASSES ##
+## CLASSES #####################################################################
 
 class SimplePrecessionModel(DifferentiableModel):
+    r"""
+    Describes the free evolution of a single qubit prepared in the
+    :math:`\ket{+}` state under a Hamiltonian :math:`H = \omega \sigma_z / 2`,
+    as explored in [GFWC12]_. (TODO: add other citations.)
+    """
     
     ## PROPERTIES ##
     
@@ -104,8 +109,59 @@ class SimplePrecessionModel(DifferentiableModel):
             ( expparams / np.tan(arg)) ** (outcome) *
             (-expparams * np.tan(arg)) ** (1-outcome)
         )
+        
+class NoisyCoinModel(Model):
+    r"""
+    Implements the "noisy coin" model of [FB12]_, where the model parameter
+    :math:`p` is the probability of the noisy coin. This model has two
+    experiment parameters, :math:`\alpha` and :math:`\beta`, which are the
+    probabilities of observing a "0" outcome conditoned on the "true" outcome
+    being 0 and 1, respectively. That is, for an ideal coin, :math:`\alpha = 1`
+    and :math:`\beta = 0`.
+    
+    Note that :math:`\alpha` and :math:`\beta` are implemented as experiment
+    parameters not because we expect to design over those values, but because
+    a specification of each is necessary to honestly describe an experiment
+    that was performed.
+    """
+        
+    ## PROPERTIES ##
+    
+    @property
+    def n_modelparams(self):
+        return 1
+        
+    @property
+    def expparams_dtype(self):
+        return [('alpha','float'), ('beta','float')]
+    
+    @property
+    def is_n_outcomes_constant(self):
+        return True
+    
+    ## METHODS ##
+    
+    @staticmethod
+    def are_models_valid(modelparams):
+        return np.logical_and(modelparams.all(axis=1) >= 0,modelparams.all(axis=1) <= 1)
+    
+    def n_outcomes(self, expparams):
+        return 2
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        # Unpack alpha and beta.
+        a = expparams['alpha']
+        b = expparams['beta']
+        
+        # Find the probability of getting a "0" outcome.
+        pr0 = modelparams * a + (1 - modelparams) * b
+        
+        # Concatenate over outcomes.
+        return abstract_model.Model.pr0_to_likelihood_array(outcomes, pr0)
+        
 ## TESTING CODE ################################################################
 
+# TODO: the following needs cleaned up quite badly.
 if __name__ == "__main__":
     from distributions import UniformDistribution
     import smc
