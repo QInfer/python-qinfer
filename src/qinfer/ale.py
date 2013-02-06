@@ -67,7 +67,7 @@ def binom_est_p(n, N, hedge=float(0)):
 def binom_est_error(p, N):
     r"""
     """
-    return np.sqrt(N * p * (1 - p))
+    return np.sqrt(p * (1 - p) / N)
 
 ## CLASSES #####################################################################
 
