@@ -27,7 +27,8 @@
 
 # Several parts of the design of this modules are based on
 # http://stackoverflow.com/questions/7714868/python-multiprocessing-how-can-i-reliably-redirect-stdout-from-a-child-process/11779039#11779039
-# to avoid triggering "Fatal IO error 11 (Resource temporarily unavailable) on X server"
+# to avoid triggering
+# "Fatal IO error 11 (Resource temporarily unavailable) on X server"
 # due to multiple processes sharing X resources.
 
 ## FEATURES ####################################################################
@@ -76,7 +77,7 @@ Properties = enum.enum(
 )
     
 Actions = enum.enum(
-    "GET", "SET", "CLOSE"
+    "GET", "SET", "COMPLETE", "CLOSE"
 )
 
 ## CLASSES #####################################################################
@@ -108,11 +109,23 @@ class ProgressDialog(object):
         self.maxprog = maxprog
         
     def __del__(self):
-        self._conn.send((Actions.CLOSE, None, None))
+        self.close()
+        
+    def close(self):
+        try:
+            self._conn.send((Actions.CLOSE, None, None))
+        except:
+            pass
         time.sleep(0.02)
-        self._process.poll()
+        try:
+            self._process.poll()
+        except:
+            pass
         if self._process.returncode is None: # proc is still alive
             self._process.terminate()
+            
+    def complete(self):
+        self._conn.send((Actions.COMPLETE, None, None))
     
     # TODO: implement reading out progress, title and status.    
     title = property()
@@ -143,6 +156,8 @@ class ProgressDialog(object):
 if __name__ == "__main__":
     
     ## IMPORTS #################################################################
+    
+    from .config import read_config, save_config
     
     # These imports are dangerous in a multiprocess environment,
     # so hide them here.
@@ -195,6 +210,21 @@ if __name__ == "__main__":
 
     ## FUNCTIONS ###############################################################
 
+    def do_completion():
+        """
+        Called when a task completes. Responsible for calling any
+        command-line programs the user has specified to be triggered on task
+        completions.
+        """
+        config = read_config()
+        if config.has_option("Task Monitoring", "completion_cmd"):
+            call_cmd = config.get("Task Monitoring", "completion_cmd")
+            subprocess.call(
+                call_cmd.format(
+                    task_title=dialog.task_title
+                ),
+                shell=True) # FIXME: shouldn't use shell.
+
     def handle_conn():
         # Recieve one thing from the conn, then return.
         # Since this is handled in the idle loop, we'll
@@ -220,6 +250,8 @@ if __name__ == "__main__":
             pass
         elif action == Actions.CLOSE:
             app.exit()
+        elif action == Actions.COMPLETE:
+            do_completion()
             
     ## SCRIPT ##################################################################     
 
@@ -231,8 +263,12 @@ if __name__ == "__main__":
     )
 
     # NOW go on and make the GUI!
-    app = QtGui.QApplication(sys.argv)
+    # Window name set using hack at:
+    # https://groups.google.com/forum/#!topic/pyside/24qxvwfrRDs
+    app = QtGui.QApplication(["Progress"] + sys.argv[1:])
+    app.setApplicationName("Progress")
     
+    # TODO: Change which dialog based on other command line arguments.
     dialog = _ProgressDialog()
     dialog.show()
     
