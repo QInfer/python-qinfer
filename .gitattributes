@@ -2,5 +2,5 @@
 * text=auto
 
 # Set diff handlers for Python files.
-*.py  diff=python
+*.py text diff=python
 
