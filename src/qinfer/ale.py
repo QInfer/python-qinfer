@@ -64,10 +64,12 @@ def binom_est_p(n, N, hedge=float(0)):
     """
     return (n + hedge) / (N + 2 * hedge)
     
-def binom_est_error(p, N):
+def binom_est_error(p, N, hedge = float(0)):
     r"""
     """
-    return np.sqrt(p * (1 - p) / N)
+    
+    # asymptotic np.sqrt(p * (1 - p) / N)
+    return np.sqrt(p*(1-p)/(N+2*hedge+1))
 
 ## CLASSES #####################################################################
 
@@ -167,7 +169,7 @@ class ALEApproximateModel(Model):
             )
             n += np.sum(sim_data, axis=0) # Sum over the outcomes axis to find the
                                           # number of 1s.
-            error_est_p1 = binom_est_error(binom_est_p(n, N, self._adapt_hedge), N)
+            error_est_p1 = binom_est_error(binom_est_p(n, N, self._adapt_hedge), N, self._adapt_hedge)
             if np.all(error_est_p1 < self._error_tol): break
             
         return Model.pr0_to_likelihood_array(outcomes, 1 - binom_est_p(n, N, self._est_hedge))
