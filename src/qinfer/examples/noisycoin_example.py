@@ -33,6 +33,7 @@ Arguments:
 Options:
     -h             Show this screen and exit.
     -o FILE        Save performance data to a file.
+    --plot         Plots the results.
     --smc          Enable SMC performance measurements.
     --smcale       Enable SMC-ALE performance measurements.
     --n-sim=N      Number of simulated runs to average over. [default: 1000]
@@ -71,11 +72,24 @@ def exactBME(k, K, a, b, gamma=1):
     idx_k = np.arange(k+1)    
     idx_K = np.arange(K-k+1)[np.newaxis].transpose()
     
-    numerator   = gammaln(k+1)-gammaln(idx_k+1)-gammaln(k-idx_k+1)+gammaln(K-k+1)-gammaln(idx_K+1)-gammaln(K-k-idx_K+1)+(idx_k+idx_K)*np.log(a-b)+(k-idx_k)*np.log(b)+(K-k-idx_K)*np.log(1-a)+betaln(idx_k+gamma+1,idx_K+gamma)
-    denominator = gammaln(k+1)-gammaln(idx_k+1)-gammaln(k-idx_k+1)+gammaln(K-k+1)-gammaln(idx_K+1)-gammaln(K-k-idx_K+1)+(idx_k+idx_K)*np.log(a-b)+(k-idx_k)*np.log(b)+(K-k-idx_K)*np.log(1-a)+betaln(idx_k+gamma,idx_K+gamma)
+    numerator   = (
+        gammaln(k+1) - gammaln(idx_k+1) - gammaln(k-idx_k+1) + gammaln(K-k+1) -
+        gammaln(idx_K+1) - gammaln(K-k-idx_K+1) + (idx_k+idx_K)*np.log(a-b) +
+        (k-idx_k)*np.log(b) + (K-k-idx_K)*np.log(1-a) +
+        betaln(idx_k+gamma+1,idx_K+gamma)
+    )
+    denominator = (
+        gammaln(k+1) - gammaln(idx_k+1) - gammaln(k-idx_k+1) + gammaln(K-k+1) -
+        gammaln(idx_K+1) - gammaln(K-k-idx_K+1) + (idx_k+idx_K)*np.log(a-b) +
+        (k-idx_k)*np.log(b) + (K-k-idx_K)*np.log(1-a) +
+        betaln(idx_k+gamma,idx_K+gamma)
+    )
     bme = np.sum(np.exp(numerator))/np.sum(np.exp(denominator))
         
-    var = np.sum(np.exp(numerator-betaln(idx_k+gamma+1,idx_K+gamma)+betaln(idx_k+gamma+2,idx_K+gamma)))/np.sum(np.exp(denominator)) - bme**2
+    var = np.sum(np.exp(
+            numerator - betaln(idx_k+gamma+1,idx_K+gamma) +
+            betaln(idx_k + gamma + 2, idx_K + gamma)
+        )) / np.sum(np.exp(denominator)) - bme ** 2
     
     return bme, var
 
@@ -100,6 +114,9 @@ if __name__ == "__main__":
     
     do_smc      = bool(args["--smc"])
     do_ale      = bool(args["--smcale"])
+    
+    do_plot     = bool(args["--plot"])
+    
     if not (do_smc or do_ale):
         raise ValueError("At least one of SMC or SMC-ALE must be enabled.")
             
@@ -244,26 +261,34 @@ if __name__ == "__main__":
     if save_fname is not None:
         np.savez(save_fname, **performance_hist)
             
-    # TODO: Fix the plotting code. 
-            
-    fig = plt.figure()
-    avg_error = {
-        name: np.average(hist['true_err'], 0)
-        for name, hist in performance_hist.iteritems()
-    }
-    avg_error['BME'] = np.average(bme_err, 0)
-
+    # Now, if we've been asked to plot, go on and make a figure.
+    if do_plot:
     
-    asympt = 1/6/(alpha-beta)**2/(np.arange(n_exp)+1) - 1/6/(alpha-beta)**2/(np.arange(n_exp)+1)**2
-    
-    if do_smc:
-        plt.loglog(avg_error['SMC'], c='blue', label='SMC')
-    if do_ale:
-        plt.loglog(avg_error['SMC_ALE'], c='purple', label='SMC-ALE')
+        # We'll only need the one figure window.
+        fig = plt.figure()
         
-    plt.loglog(avg_error['BME'], c='red', label='Analytic BME')
-    plt.loglog(asympt, c='black', label='Asymptotic Optimum')
-    plt.legend()
+        # Calculate the average error over all trials for each updater.
+        avg_error = {
+            name: np.average(hist['true_err'], 0)
+            for name, hist in performance_hist.iteritems()
+        }
+        # Also compare to the average error for the Bayesian mean estimator.
+        avg_error['BME'] = np.average(bme_err, 0)
 
-    plt.show()
+        # Plot that against the asymptotic optimum.
+        arr_exp = np.arange(n_exp) + 1
+        asympt = (1/6) / (alpha-beta)**2 / arr_exp - (1/6) / (alpha-beta)**2 / arr_exp**2
+        
+        # Now actually plot everything on a loglog scale.
+        if do_smc:
+            plt.loglog(avg_error['SMC'], c='blue', label='SMC')
+        if do_ale:
+            plt.loglog(avg_error['SMC_ALE'], c='purple', label='SMC-ALE')
+            
+        plt.loglog(avg_error['BME'], c='red', label='Analytic BME')
+        plt.loglog(asympt, c='black', label='Asymptotic Optimum')
+        plt.legend()
+
+        # Finally, show the plot.
+        plt.show()
     
