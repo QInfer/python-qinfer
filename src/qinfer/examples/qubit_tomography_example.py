@@ -26,7 +26,7 @@
 ## DOCUMENTATION ###############################################################
 
 """
-Usage: noisycoin.py <n-particles> <n-exp> [options]
+Usage: qubit_tomography_example.py <n-particles> <n-exp> [options]
 
 Arguments:
     n_particles    Number of SMC particles to use.
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     # Possibly prepare a dialog.
     if dialogs is not None:
         progress = dialogs.ProgressDialog(
-            task_title="Noisy Coin Demo",
+            task_title="Qubit Demo",
             task_status="0 / {n_sim} runs completed.".format(n_sim=n_sim),
             maxprog=n_sim)
     else:

@@ -152,11 +152,11 @@ class HTCircuitModel(Model):
             F0  = f[:2**m]        
             F1  = f[-2**m:]
             
-            outcomes = np.zeros([modelparams.shape[0],repeat])
+            outcomes = np.zeros([repeat,modelparams.shape[0],expparams.shape[0]])
             #select |0> or |1> with probability given by lambda
-            idx_zeros = np.random.random([modelparams.shape[0],repeat]) > 0.5*(1-modelparams)
+            idx_zeros = np.random.random([repeat,modelparams.shape[0],expparams.shape[0]]) > 0.5*(1-modelparams)
             num_zeros = np.sum(idx_zeros)
-            num_ones  = modelparams.shape[0]*repeat - num_zeros 
+            num_ones  = modelparams.shape[0]*repeat*expparams.shape[0] - num_zeros 
 
             # for the |0> state set the outcomes to be the last bit of F0(x)
             x = np.random.randint(0,2**m,num_zeros)            

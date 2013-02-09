@@ -37,8 +37,8 @@ Options:
     --smc          Enable SMC performance measurements.
     --smcale       Enable SMC-ALE performance measurements.
     --n-sim=N      Number of simulated runs to average over. [default: 1000]
-    --err_tol=e    Error tolerance for ALE
-    --hedge=h      Hedging parameter for ALE
+    --err_tol=e    Error tolerance for ALE [default: 0.1]
+    --hedge=h      Hedging parameter for ALE [default: 0.5]
     --alpha=A      Value of alpha to assume during experiments. [default: 0.95]
     --beta=B       Value of beta to assume during experiments. [default: 0.05]
 """
