@@ -96,7 +96,7 @@ class ALEApproximateModel(Model):
     
     def __init__(self, simulator,
         error_tol=1e-2, min_samp=10, samp_step=10,
-        est_hedge=float(0), adapt_hedge=0.509
+        est_hedge=0.509, adapt_hedge=0.509
     ):
         
         ## INPUT VALIDATION ##

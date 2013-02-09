@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##
-# qubit_tomography_example.py: qubit tomography performance module
+# noisycoin_example.py: noisy coin model performance testing module
 ##
-# © 2012 Chris Ferrie (csferrie@gmail.com) and
+# © 2013 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
 #     
 # This file is a part of the Qinfer project.
@@ -23,8 +23,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## DOCUMENTATION ###############################################################
-
 """
 Usage: noisycoin.py <n-particles> <n-exp> [options]
 
@@ -38,8 +36,10 @@ Options:
     --smc          Enable SMC performance measurements.
     --smcale       Enable SMC-ALE performance measurements.
     --n-sim=N      Number of simulated runs to average over. [default: 1000]
-    --err_tol=e    Error tolerance for ALE [default: 0.1]
-    --hedge=h      Hedging parameter for ALE [default: 0.5]
+    --err_tol=e    Error tolerance for ALE
+    --hedge=h      Hedging parameter for ALE
+    --alpha=A      Value of alpha to assume during experiments. [default: 0.95]
+    --beta=B       Value of beta to assume during experiments. [default: 0.05]
 """
 
 ## FEATURES ####################################################################
@@ -50,12 +50,13 @@ from __future__ import division
 
 import numpy as np
 import time
+from scipy.special import gammaln, betaln
 import sys
 
 ## Imports from within QInfer. ##
 from .. import distributions, ale
 from ..smc import SMCUpdater
-from ..tomography import QubitStatePauliModel
+from ..test_models import NoisyCoinModel
 from .._lib import docopt
 
 try:
@@ -64,10 +65,23 @@ except ImportError:
     print "[WARN] Could not import dialogs."
     dialogs = None
 
+## Exact ######################################################################
+
+def exactBME(k, K, a, b, gamma=1):
+    idx_k = np.arange(k+1)    
+    idx_K = np.arange(K-k+1)[np.newaxis].transpose()
+    
+    numerator   = gammaln(k+1)-gammaln(idx_k+1)-gammaln(k-idx_k+1)+gammaln(K-k+1)-gammaln(idx_K+1)-gammaln(K-k-idx_K+1)+(idx_k+idx_K)*np.log(a-b)+(k-idx_k)*np.log(b)+(K-k-idx_K)*np.log(1-a)+betaln(idx_k+gamma+1,idx_K+gamma)
+    denominator = gammaln(k+1)-gammaln(idx_k+1)-gammaln(k-idx_k+1)+gammaln(K-k+1)-gammaln(idx_K+1)-gammaln(K-k-idx_K+1)+(idx_k+idx_K)*np.log(a-b)+(k-idx_k)*np.log(b)+(K-k-idx_K)*np.log(1-a)+betaln(idx_k+gamma,idx_K+gamma)
+    bme = np.sum(np.exp(numerator))/np.sum(np.exp(denominator))
+        
+    var = np.sum(np.exp(numerator-betaln(idx_k+gamma+1,idx_K+gamma)+betaln(idx_k+gamma+2,idx_K+gamma)))/np.sum(np.exp(denominator)) - bme**2
+    
+    return bme, var
+
 ## SCRIPT ######################################################################
 
 if __name__ == "__main__":
-
     import matplotlib.pyplot as plt
     
     # Handle and unpack command-line arguments.
@@ -79,6 +93,8 @@ if __name__ == "__main__":
     n_particles = int(args["<n-particles>"])
     n_exp       = int(args["<n-exp>"])
     
+    alpha       = float(args["--alpha"])
+    beta        = float(args["--beta"])
     err_tol     = float(args["--err_tol"])    
     hedge       = float(args["--hedge"])    
     
@@ -87,15 +103,10 @@ if __name__ == "__main__":
     if not (do_smc or do_ale):
         raise ValueError("At least one of SMC or SMC-ALE must be enabled.")
             
-    # Model and prior initialization.
-    prior = distributions.HilbertSchmidtUniform()
-    model = QubitStatePauliModel()
-    expparams = np.array([
-        ([1, 0, 0], 1), # Records are indicated by tuples.
-        ([0, 1, 0], 1),
-        ([0, 0, 1], 1)
-    ], dtype=model.expparams_dtype)
-    
+    # Model and prior initialization
+    prior = distributions.UniformDistribution([0, 1])
+    model = NoisyCoinModel()
+
     # Make a dict of updater constructors. This will define what kinds
     # of perfomance data we care about.
     updater_ctors = dict()
@@ -112,6 +123,10 @@ if __name__ == "__main__":
         updater_ctors['SMC_ALE'] = lambda: SMCUpdater(
             ale_model, n_particles, prior
         )
+
+    # Store alpha and beta into the expparams array where the will
+    # remain for the rest of the program.
+    expparams = np.array([(alpha, beta)], dtype=model.expparams_dtype)
     
     # Make a dtype for holding performance data in a record array.
     # Note that we could do this with out record arrays, but it's easy to
@@ -124,7 +139,7 @@ if __name__ == "__main__":
     ]
     
     # Create arrays to hold the data that we obtain and the true models.
-    true_param = np.zeros([n_sim,3])
+    true_param = np.zeros(n_sim)
     outcomes = np.zeros([n_sim, n_exp], dtype=int)
     
     # Create arrays to hold performance histories and store them
@@ -133,6 +148,11 @@ if __name__ == "__main__":
         updater_name: np.zeros((n_sim, n_exp), dtype=performance_dtype)
         for updater_name in updater_ctors
     }
+
+    # Create arrays to compare to the ideal known-best BMEs.
+    bme = np.zeros([n_sim, n_exp])
+    var = np.zeros([n_sim, n_exp])
+    bme_err = np.zeros([n_sim, n_exp])
      
     # Possibly prepare a dialog.
     if dialogs is not None:
@@ -154,9 +174,8 @@ if __name__ == "__main__":
         }        
         
         # Sample true set of modelparams.
-        truemp = np.array([prior.sample()])
-        true_param[idx_sim,:] = truemp
-        
+        truemp = prior.sample()
+        true_param[idx_sim] = truemp
 
         # Now loop over experiments, updating each of the
         # updaters with the same data, so that we can compare
@@ -168,10 +187,7 @@ if __name__ == "__main__":
             idxs = np.s_[idx_sim, idx_exp]
             
             # Start by simulating and recording the data.
-            thisexp = expparams[np.newaxis, np.random.randint(0, 3)]
-            print thisexp
-            outcome = model.simulate_experiment(truemp, thisexp)
-            print outcome
+            outcome = model.simulate_experiment(truemp, expparams)
             outcomes[idxs] = outcome
             
             # Next, feed this data into each updater in turn.
@@ -196,7 +212,7 @@ if __name__ == "__main__":
                 performance_hist[name][idxs]['est_mean'] = \
                     est_mean
                 performance_hist[name][idxs]['true_err'] = \
-                    np.sum(np.abs(est_mean - truemp) ** 2)
+                    np.abs(est_mean - truemp) ** 2
                 performance_hist[name][idxs]['est_cov_mat'] = \
                     updater.est_covariance_mtx()
                 performance_hist[name][idxs]['resample_count'] = \
@@ -205,6 +221,13 @@ if __name__ == "__main__":
                     model.call_count
                 performance_hist[name][idxs]['sim_count'] = \
                     model.sim_count
+            
+            # Finally, record the ideal stats.
+            bme[idxs], var[idxs] = exactBME(
+                idx_exp + 1 - np.sum(outcomes[idx_sim]), idx_exp + 1,
+                alpha, beta
+            )
+            bme_err[idxs] = np.abs(bme[idx_sim, idx_exp] - truemp) ** 2
             
         # Notify the user of any progress.
         if progress is not None:
@@ -228,12 +251,19 @@ if __name__ == "__main__":
         name: np.average(hist['true_err'], 0)
         for name, hist in performance_hist.iteritems()
     }
+    avg_error['BME'] = np.average(bme_err, 0)
+
+    
+    asympt = 1/6/(alpha-beta)**2/(np.arange(n_exp)+1) - 1/6/(alpha-beta)**2/(np.arange(n_exp)+1)**2
     
     if do_smc:
         plt.loglog(avg_error['SMC'], c='blue', label='SMC')
     if do_ale:
         plt.loglog(avg_error['SMC_ALE'], c='purple', label='SMC-ALE')
         
+    plt.loglog(avg_error['BME'], c='red', label='Analytic BME')
+    plt.loglog(asympt, c='black', label='Asymptotic Optimum')
     plt.legend()
 
     plt.show()
+    
