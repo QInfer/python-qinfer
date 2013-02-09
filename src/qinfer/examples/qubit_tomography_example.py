@@ -169,9 +169,8 @@ if __name__ == "__main__":
             
             # Start by simulating and recording the data.
             thisexp = expparams[np.newaxis, np.random.randint(0, 3)]
-            print thisexp
             outcome = model.simulate_experiment(truemp, thisexp)
-            print outcome
+            #TODO: record expparams as well
             outcomes[idxs] = outcome
             
             # Next, feed this data into each updater in turn.
@@ -187,7 +186,7 @@ if __name__ == "__main__":
                 # Time the actual update.
                 tic = toc = None
                 tic = time.time()
-                updater.update(outcome, expparams)
+                updater.update(outcome, thisexp)
                 performance_hist[name]['elapsed_time'][idxs] = \
                     time.time() - tic
             
