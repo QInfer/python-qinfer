@@ -101,7 +101,8 @@ class ExperimentDesigner(object):
         
     def design_expparams_field(self,
             guess, field,
-            cost_scale_k=1.0, disp=False, maxiter=None, store_guess=False
+            cost_scale_k=1.0, disp=False, maxiter=None, store_guess=False,
+            grad_h=1e-10
         ):
         r"""
         Designs a new experiment by varying a single field of a shape ``(1,)``
@@ -133,6 +134,8 @@ class ExperimentDesigner(object):
         :param bool store_guess: If ``True``, will compare the outcome of this
             guess to previous guesses and then either store the optimization of
             this experiment, or the previous best-known experiment design.
+        :param float grad_h: Step size to use in estimating gradients. Used
+            only if ``opt_algo`` is NCG.
         :return: An array representing the best experiment design found so
             far for the current experiment.
         """
@@ -167,6 +170,11 @@ class ExperimentDesigner(object):
             ep[field] = x
             return up.bayes_risk(ep) + cost_scale_k * m.experiment_cost(ep)
             
+        # Some optimizers require gradients of the objective function.
+        # Here, we create a FiniteDifference object to compute that for
+        # us.
+        d_dx_objective = FiniteDifference(objective_function, len(ep[field]))
+        
         # Allocate a variable to hold the local optimum value found.
         # This way, if an optimization algorithm doesn't support returning
         # the value as well as the location, we can find it manually.
@@ -192,8 +200,16 @@ class ExperimentDesigner(object):
             )
             
         elif self._opt_algo == OptimizationAlgorithms.NCG:
-            raise NotImplementedError(
-                "NCG optimization algorithm not yet implemented."
+            # Prepare any additional options.
+            opt_options = {}
+            if maxiter is not None:
+                opt_options['maxiter'] = maxiter
+                
+            # Actually call fmin_cg, gathering all outputs we can.
+            x_opt, f_opt, func_calls, grad_calls, h_calls, warnflag = opt.fmin_ncg(
+                objective_function, guess[0][field],
+                d_dx_objective,
+                disp=disp, full_output=True, **opt_options
             )
             
         # Optionally compare the result to previous guesses.            
