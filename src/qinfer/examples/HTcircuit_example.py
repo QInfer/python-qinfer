@@ -91,7 +91,13 @@ if __name__ == "__main__":
             
     # Model and prior initialization
     prior = distributions.UniformDistribution([0, 1])
-    model = HTCircuitModel()
+
+    # A random invertible function
+    #TODO: this could be useful to record?    
+    f = np.arange(2**n_qubits)
+    np.random.shuffle(f)
+
+    model = HTCircuitModel(n_qubits,n_Had,f)
 
     # Make a dict of updater constructors. This will define what kinds
     # of perfomance data we care about.
@@ -110,12 +116,7 @@ if __name__ == "__main__":
             ale_model, n_particles, prior
         )
    
-    # A random invertible function
-    #TODO: this could be useful to record?    
-    f = np.arange(2**n_qubits)
-    np.random.shuffle(f)
-    
-    expparams = np.array([(n_Had, f)], dtype=model.expparams_dtype)
+    expparams = np.array([1])
     
     # Make a dtype for holding performance data in a record array.
     # Note that we could do this with out record arrays, but it's easy to
@@ -222,7 +223,7 @@ if __name__ == "__main__":
         np.savez(save_fname, **performance_hist)
             
     # TODO: Fix the plotting code. 
-            
+          
     fig = plt.figure()
     avg_error = {
         name: np.average(hist['true_err'], 0)
@@ -236,19 +237,28 @@ if __name__ == "__main__":
         
     plt.legend()
 
-    fig = plt.figure()
+    
     avg_time = {
-        name: np.average(hist['elapsed_time'], 0)
+        name: np.average(hist['elapsed_time'])
+        for name, hist in performance_hist.iteritems()
+    }
+
+    print "Average time per update for SMC: {}".format(avg_time['SMC'])
+    print "Average time per update for SMCALE: {}".format(avg_time['SMC_ALE'])
+
+    fig = plt.figure()
+    avg_risktime = {
+        name: np.average(hist['true_err']*np.cumsum(hist['elapsed_time'],1), 0)
         for name, hist in performance_hist.iteritems()
     }
         
     if do_smc:
-        plt.loglog(avg_time['SMC'], c='blue', label='SMC')
+        plt.loglog(avg_risktime['SMC'], c='blue', label='SMC')
     if do_ale:
-        plt.loglog(avg_time['SMC_ALE'], c='purple', label='SMC-ALE')
+        plt.loglog(avg_risktime['SMC_ALE'], c='purple', label='SMC-ALE')
         
     plt.legend()
-
+    
 
     plt.show()
     
