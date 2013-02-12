@@ -98,7 +98,12 @@ class QubitStatePauliModel(Model):
         return Model.pr0_to_likelihood_array(outcomes, pr0)        
 
 class HTCircuitModel(Model):
-        
+    
+    def __init__(self, n_qubits, n_had, f):
+        self.n_qubits = n_qubits
+        self.n_had    = n_had
+        self.f        = f
+    
     ## PROPERTIES ##
     
     @property
@@ -107,7 +112,7 @@ class HTCircuitModel(Model):
         
     @property
     def expparams_dtype(self):
-        return [('nqubits', 'int'), ('boolf', 'object')]
+        return [('null', 'int')]
     
     @property
     def is_n_outcomes_constant(self):
@@ -123,13 +128,11 @@ class HTCircuitModel(Model):
         return 2
     
     def likelihood(self, outcomes, modelparams, expparams):
-        #unpack m and f
-        m = expparams['nqubits']
-        f = expparams['boolf'][0]
+        m = self.n_had
         
         #the first and last m bits     
-        F0  = f[:2**m]        
-        F1  = f[-2**m:]        
+        F0  = self.f[:2**m]        
+        F1  = self.f[-2**m:]        
 
         # count the number of times the last bit of F is 0
         count0 = np.sum((F0+1) % 2)      
@@ -145,13 +148,12 @@ class HTCircuitModel(Model):
         if use_like:
             return super(HTCircuitModel,self).simulate_experiment(modelparams, expparams, repeat)
         else:
-            #unpack m and f
-            m = expparams['nqubits']
-            f = expparams['boolf'][0]
-            #the first and last m bits     
-            F0  = f[:2**m]        
-            F1  = f[-2**m:]
+            m = self.n_had
             
+            #the first and last m bits     
+            F0  = self.f[:2**m]        
+            F1  = self.f[-2**m:]        
+                
             outcomes = np.zeros([repeat,modelparams.shape[0],expparams.shape[0]])
             #select |0> or |1> with probability given by lambda
             idx_zeros = np.random.random([repeat,modelparams.shape[0],expparams.shape[0]]) > 0.5*(1-modelparams)
@@ -172,25 +174,6 @@ class HTCircuitModel(Model):
 
 # TODO: move to examples/.
 if __name__ == "__main__":
-    m = 2
-    n = 4
-    fn = np.arange(2**n)
-    
-    param = np.array([[0],[1]])
-    expp = {'nqubits':m,'boolf':fn} 
-    
-
-    model = HTCircuitModel()
-
-
-    data = model.simulate_experiment(param,expp,repeat = 4,use_like=False)
-    
-    L = model.likelihood(
-        np.array([0,1,0,1]),
-        np.array([[0]]),
-        expp
-    )
-    print L
 
 #### TEST PRIORS #############################################################        
 #    from mpl_toolkits.mplot3d import Axes3D
@@ -214,3 +197,4 @@ if __name__ == "__main__":
 #    
 #    ax.scatter(x,y,z)
 #    plt.show()
+    pass
