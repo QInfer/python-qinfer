@@ -27,15 +27,122 @@
 
 from __future__ import division # Ensures that a/b is always a float.
 
+## ALL #########################################################################
+
+# We use __all__ to restrict what globals are visible to external modules.
+__all__ = [
+    'PoisonedModel',
+    'BinomialModel'
+]
 ## IMPORTS #####################################################################
 
 import numpy as np
 
 from utils import binomial_pdf
-
 from abstract_model import Model
+from _lib import enum
+from ale import binom_est_error
     
 ## CLASSES #####################################################################
+
+PoisonModes = enum.enum("ALE", "MLE")
+
+class PoisonedModel(Model):
+    r"""
+    Model that simulates sampling error incurred by the MLE or ALE methods of
+    reconstructing likelihoods from sample data. The true likelihood given by an
+    underlying model is perturbed by a normally distributed random variable
+    :math:`\epsilon`, and then truncated to the interval :math:`[0, 1]`.
+    
+    The variance of :math:`\epsilon` can be specified either as a constant,
+    to simulate ALE (in which samples are collected until a given threshold is
+    met), or as proportional to the variance of a possibly-hedged binomial
+    estimator, to simulate MLE.
+    
+    :param Model underlying_model: The "true" model to be poisoned.
+    :param float tol: For ALE, specifies the given error tolerance to simulate.
+    :param int n_samples: For MLE, specifies the number of samples collected.
+    :param float hedge: For MLE, specifies the hedging used in estimating the
+        true likelihood.
+    """
+    def __init__(self, underlying_model,
+        tol=None, n_samples=None, hedge=None
+    ):
+        self._model = underlying_model
+        
+        if epsilon is None != n_samples is None:
+            raise ValueError(
+                "Exactly one of epsilon and n_samples must be specified"
+            )
+        
+        if epsilon is not None:
+            self._mode = PoisonModes.ALE
+            self._tol = tol
+        else:
+            self._mode = PoisonModes.MLE
+            self._n_samples = n_samples
+            self._hedge = hedge if hedge is not None else 0.0
+            
+    ## PROPERTIES ##
+    
+    @property
+    def n_modelparams(self):
+        # We have as many modelparameters as the underlying model.
+        return self._model.n_modelparams
+        
+    @property
+    def expparams_dtype(self):
+        return self._model.expparams_dtype
+    
+    @property
+    def is_n_outcomes_constant(self):
+        """
+        Returns ``True`` if and only if the number of outcomes for each
+        experiment is independent of the experiment being performed.
+        
+        This property is assumed by inference engines to be constant for
+        the lifetime of a Model instance.
+        """
+        return self._model.is_n_outcomes_constant
+    
+    ## METHODS ##
+    
+    def are_models_valid(self, modelparams):
+        return self._model.are_models_valid(modelparams)
+    
+    def n_outcomes(self, expparams):
+        """
+        Returns an array of dtype ``uint`` describing the number of outcomes
+        for each experiment specified by ``expparams``.
+        
+        :param numpy.ndarray expparams: Array of experimental parameters. This
+            array must be of dtype agreeing with the ``expparams_dtype``
+            property.
+        """
+        return self._model.n_outcomes(expparams)
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        
+        # Get the original, undisturbed likelihoods.
+        super(PoisonedModel, self).likelihood(outcomes, modelparams, expparams)
+        L = self._model.likelihood(
+            outcomes, modelparams, expparams)
+            
+        # Now get the random variates from a standard normal [N(0, 1)]
+        # distribution; we'll rescale them soon.
+        epsilon = np.random.normal(size=L.shape)
+        
+        # If ALE, rescale by a constant tolerance.
+        if self._mode == PoisonModes.ALE:
+            epsilon *= self._tol
+        # Otherwise, rescale by the estimated error in the binomial estimator.
+        elif self._mode == PoisonModes.MLE:
+            epsilon *= binom_est_error(p=L, N=self._n_samples, hedge=self._hedge)
+        
+        # Now we truncate and return.
+        return np.max(0, np.min(1, L + epsilon))
 
 class BinomialModel(Model):
     """
