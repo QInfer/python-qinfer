@@ -129,14 +129,15 @@ class HTCircuitModel(Model):
     
     def likelihood(self, outcomes, modelparams, expparams):
         m = self.n_had
-        
+        n = self.n_qubits        
+
         #the first and last m bits     
-        F0  = self.f[:2**m]        
-        F1  = self.f[-2**m:]        
+        F0  = xrange(0,self.f[2**m])        
+        F1  = xrange(self.f[2**n-2**m], 2**n)       
 
         # count the number of times the last bit of F is 0
-        count0 = np.sum((F0+1) % 2)      
-        count1 = np.sum((F1+1) % 2)      
+        count0 = np.sum((y+1) % 2 for y in F0)      
+        count1 = np.sum((y+1) % 2 for y in F1)      
         
         #probability of getting 0
         pr0 = modelparams*count0/(2**m)+(1-modelparams)*count1/(2**m)
@@ -149,10 +150,12 @@ class HTCircuitModel(Model):
             return super(HTCircuitModel,self).simulate_experiment(modelparams, expparams, repeat)
         else:
             m = self.n_had
+            n = self.n_qubits
             
             #the first and last m bits     
-            F0  = self.f[:2**m]        
-            F1  = self.f[-2**m:]        
+            F0  = xrange(0,self.f[2**m])        
+            F1  = xrange(self.f[2**n-2**m], 2**n)
+            
                 
             outcomes = np.zeros([repeat,modelparams.shape[0],expparams.shape[0]])
             #select |0> or |1> with probability given by lambda
@@ -162,11 +165,11 @@ class HTCircuitModel(Model):
 
             # for the |0> state set the outcomes to be the last bit of F0(x)
             x = np.random.randint(0,2**m,num_zeros)            
-            outcomes[idx_zeros] = np.mod(F0[x],2)
+            outcomes[idx_zeros] = np.array([np.mod(F0[y],2) for y in x])
             
             # for the |1> state set the outcomes to be the last bit of F1(x)
             x = np.random.randint(0,2**m,num_ones)
-            outcomes[np.logical_not(idx_zeros)] = np.mod(F1[x],2)
+            outcomes[np.logical_not(idx_zeros)] = np.array([np.mod(F1[y],2) for y in x])
             
             return outcomes
         
