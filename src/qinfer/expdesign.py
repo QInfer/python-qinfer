@@ -46,6 +46,8 @@ from ._lib import enum
 
 from abc import ABCMeta, abstractmethod
 
+from qinfer.finite_difference import *
+
 ## CLASSES #####################################################################
 
 OptimizationAlgorithms = enum.enum("NULL", "CG", "NCG")
