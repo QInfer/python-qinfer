@@ -235,6 +235,8 @@ class SMCUpdater(object):
 
         if check_for_resample:
             self._maybe_resample()
+            
+        assert np.all(self.particle_weights >= 0)
 
     def batch_update(self, outcomes, expparams, resample_interval=5):
         r"""
@@ -413,9 +415,10 @@ class SMCUpdater(object):
         return np.dot(tot_like.T, rescale_var)
         
     def est_entropy(self):
-        return -np.sum(np.log(self.particle_weights) * self.particle_weights)
+        nz_weights = self.particle_weights[self.particle_weights > 0]
+        return -np.sum(np.log(nz_weights) * nz_weights)
         
-    def est_kl_divergence(self, other, kernel=None, epsilon=1e-6):
+    def est_kl_divergence(self, other, kernel=None, epsilon=1e-2):
         # TODO: document.
         if kernel is None:
             kernel = scipy.stats.norm(loc=0, scale=1).pdf

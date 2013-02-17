@@ -103,6 +103,7 @@ class HTCircuitModel(Model):
         self.n_qubits = n_qubits
         self.n_had    = n_had
         self.f        = f
+        super(HTCircuitModel, self).__init__()
     
     ## PROPERTIES ##
     
@@ -122,7 +123,7 @@ class HTCircuitModel(Model):
     
     @staticmethod
     def are_models_valid(modelparams):
-        return np.logical_and(modelparams.all(axis=1) >= 0,modelparams.all(axis=1) <= 1)
+        return np.logical_and(modelparams >= 0, modelparams <= 1).all(axis=1)
     
     def n_outcomes(self, expparams):
         return 2

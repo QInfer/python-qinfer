@@ -75,7 +75,7 @@ def rescaled_distance_mtx(p, q):
     
     # Because the modelparam axis is last in each of the three cases, we're
     # good as far as broadcasting goes.
-    delta = la.sqrt(p.model.Q) * (
+    delta = np.sqrt(p.model.Q) * (
         p.particle_locations[:, np.newaxis, :] -
         q.particle_locations[np.newaxis, :, :]
     )
