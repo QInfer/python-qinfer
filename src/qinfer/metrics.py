@@ -52,6 +52,36 @@ except ImportError:
 
 ## FUNCTIONS ###################################################################
 
+def rescaled_distance_mtx(p, q):
+    r"""
+    Given two particle updaters for the same model, returns a matrix
+    :math:`\matr{d}` with elements
+    
+    .. math::
+        \matr{d}_{i,j} = \left\Vert \sqrt{\matr{Q}} \cdot
+            (\vec{x}_{p, i} - \vec{x}_{q, j}) \right\Vert_2,
+            
+    where :math:`\matr{Q}` is the scale matrix of the model,
+    :math:`\vec{x}_{p,i}` is the :math:`i`th particle of ``p``, and where
+    :math:`\vec{x}_{q,i}` is the :math:`i`th particle of ``q`.
+    
+    :param qinfer.smc.SMCUpdater p: SMC updater for the distribution
+        :math:`p(\vec{x})`.
+    :param qinfer.smc.SMCUpdater q: SMC updater for the distribution
+        :math:`q(\vec{x})`.
+    """
+    
+    # TODO: check that models are actually the same!
+    
+    # Because the modelparam axis is last in each of the three cases, we're
+    # good as far as broadcasting goes.
+    delta = la.sqrt(p.model.Q) * (
+        p.particle_locations[:, np.newaxis, :] -
+        q.particle_locations[np.newaxis, :, :]
+    )
+    
+    return np.sqrt(np.sum(delta**2, axis=-1))
+
 def weighted_pairwise_distances(X, w, metric='euclidean', w_pow=0.5):
     r"""
     Given a feature matrix ``X`` with weights ``w``, calculates the modified

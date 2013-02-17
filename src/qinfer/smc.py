@@ -40,6 +40,7 @@ import numpy as np
 import warnings
 
 from abstract_model import DifferentiableModel
+from qinfer.metrics import rescaled_distance_mtx
 
 from resamplers import LiuWestResampler
 
@@ -48,6 +49,7 @@ from scipy.spatial import Delaunay
 import scipy.linalg as la
 from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
 from _exceptions import ApproximationWarning
+import scipy.stats
 from scipy.stats.distributions import binom
 
 ## CLASSES #####################################################################
@@ -409,6 +411,29 @@ class SMCUpdater(object):
         # therefore <- has shape (n_outcomes,)
         tot_like = np.sum(L, axis=1)
         return np.dot(tot_like.T, rescale_var)
+        
+    def est_entropy(self):
+        return -np.sum(np.log(self.particle_weights) * self.particle_weights)
+        
+    def est_kl_divergence(self, other, kernel=None, epsilon=1e-6):
+        # TODO: document.
+        if kernel is None:
+            kernel = scipy.stats.norm(loc=0, scale=1).pdf
+        
+        dist = rescaled_distance_mtx(self, other) / epsilon
+        K = kernel(dist)
+        
+        
+        return -self.est_entropy() - (1 / epsilon) * np.sum(
+            np.log(
+                self.particle_weights *
+                np.sum(
+                    other.particle_weights * K,
+                    axis=1 # Sum over the particles of ``other``.
+                )
+            ),
+            axis=0  # Sum over the particles of ``self``.
+        )
 
     ## REGION ESTIMATION METHODS ###############################################
 
