@@ -45,6 +45,7 @@ import scipy.optimize as opt
 from ._lib import enum
 
 from abc import ABCMeta, abstractmethod
+import warnings
 
 from qinfer.finite_difference import *
 
@@ -103,8 +104,9 @@ class ExperimentDesigner(object):
         
     def design_expparams_field(self,
             guess, field,
-            cost_scale_k=1.0, disp=False, maxiter=None, store_guess=False,
-            grad_h=1e-10
+            cost_scale_k=1.0, disp=False,
+            maxiter=None, maxfun=None,
+            store_guess=False, grad_h=None
         ):
         r"""
         Designs a new experiment by varying a single field of a shape ``(1,)``
@@ -131,8 +133,11 @@ class ExperimentDesigner(object):
         :param bool disp: If `True`, the optimization will print additional
             information as it proceeds.
         :param int maxiter: For those optimization algorithms which support
-            it, limits the number of optimization iterations used for each
-            guess.
+            it (currently, only CG), limits the number of optimization
+            iterations used for each guess.
+        :param int maxfun: For those optimization algorithms which support it
+            (currently, only NCG), limits the number of objective calls that
+            can be made.
         :param bool store_guess: If ``True``, will compare the outcome of this
             guess to previous guesses and then either store the optimization of
             this experiment, or the previous best-known experiment design.
@@ -175,7 +180,7 @@ class ExperimentDesigner(object):
         # Some optimizers require gradients of the objective function.
         # Here, we create a FiniteDifference object to compute that for
         # us.
-        d_dx_objective = FiniteDifference(objective_function, len(ep[field]))
+        d_dx_objective = FiniteDifference(objective_function, ep[field].size)
         
         # Allocate a variable to hold the local optimum value found.
         # This way, if an optimization algorithm doesn't support returning
@@ -204,15 +209,35 @@ class ExperimentDesigner(object):
         elif self._opt_algo == OptimizationAlgorithms.NCG:
             # Prepare any additional options.
             opt_options = {}
-            if maxiter is not None:
-                opt_options['maxiter'] = maxiter
+            if maxfun is not None:
+                opt_options['maxfun'] = maxfun
+            if grad_h is not None:
+                opt_options['epsilon'] = grad_h
                 
-            # Actually call fmin_cg, gathering all outputs we can.
-            x_opt, f_opt, func_calls, grad_calls, h_calls, warnflag = opt.fmin_ncg(
-                objective_function, guess[0][field],
-                d_dx_objective,
-                disp=disp, full_output=True, **opt_options
-            )
+            # Actually call fmin_tnc, gathering all outputs we can.
+            # We use fmin_tnc in preference to fmin_ncg, as they implement the
+            # same algorithm, but fmin_tnc seems better behaved with respect
+            # to very flat gradient regions, due to respecting maxfun.
+            # By contrast, fmin_ncg can get stuck in an infinite loop in
+            # versions of SciPy < 0.11.
+            #
+            # Note that in some versions of SciPy, there was a bug in
+            # fmin_ncg and fmin_tnc that can propagate outward if the gradient
+            # is too flat. We catch it here and return the initial guess in that
+            # case, since by hypothesis, it's too flat to make much difference
+            # anyway.
+            try:
+                x_opt, f_opt, func_calls, grad_calls, h_calls, warnflag = opt.fmin_tnc(
+                    objective_function, guess[0][field],
+                    fprime=None, bounds=None, approx_grad=True,
+                    disp=disp, full_output=True, **opt_options
+                )
+            except TypeError:
+                warnings.warn(
+                    "Gradient function too flat for NCG.",
+                    RuntimeWarning)
+                x_opt = guess[0][field]
+                f_opt = None
             
         # Optionally compare the result to previous guesses.            
         if store_guess:
