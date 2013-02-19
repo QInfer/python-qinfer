@@ -426,8 +426,8 @@ class SMCUpdater(object):
         
         
         return -self.est_entropy() - (1 / epsilon) * np.sum(
+            self.particle_weights * 
             np.log(
-                self.particle_weights *
                 np.sum(
                     other.particle_weights * K,
                     axis=1 # Sum over the particles of ``other``.
