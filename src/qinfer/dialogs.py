@@ -56,6 +56,18 @@ from ._lib import enum
 
 ## FUNCTIONS ###################################################################
 
+def pretty_time(secs, force_h=False, force_m=False):
+    if secs > 86400:
+        return "{d} days, ".format(int(secs//86400)) + pretty_time(secs % 86400, force_h=True)
+    elif force_h or secs > 3600:
+        return "{h}:".format(h=int(secs//3600)) + pretty_time(secs % 3600, force_m=True)
+    elif force_m or secs > 60:
+        return (
+            "{m:0>2}:{s:0>2}" if force_m else "{m}:{s:0>2}"
+        ).format(m=int(secs//60), s=int(secs%60))
+    else:
+        return "{s} seconds".format(s=int(secs))
+
 def _get_conn():
     for port in count(10000):
         try:
@@ -89,13 +101,14 @@ class ProgressDialog(object):
             task_title="Progress",
             task_status="Waiting...",
             maxprog=100,
-            on_cancel=None
+            on_cancel=None,
+            eta=False
         ):
         
         # Start the GUI in a new process.
         self._listener, self._port = _get_conn()
         self._process = subprocess.Popen(
-            (sys.executable, "-m", "qinfer.dialogs", str(self._port)),
+            (sys.executable, "-m", "qinfer.dialogs", str(self._port), str(eta)),
             stdout=subprocess.PIPE, stdin=subprocess.PIPE
         )
         
@@ -163,6 +176,8 @@ if __name__ == "__main__":
     # so hide them here.
     from .ui import progbar as ui_progbar
     from PySide import QtGui, QtCore
+    import numpy as np
+    import time
     
     ## CLASSES #################################################################
     
@@ -172,10 +187,20 @@ if __name__ == "__main__":
         isolated to a different process.
         """
         
-        def __init__(self, parent=None):
+        def __init__(self, parent=None, eta=False):
             super(_ProgressDialog, self).__init__(parent)
             self.ui = ui_progbar.Ui_ProgBarDialog()
             self.ui.setupUi(self)
+            
+            self._eta = eta
+            if eta:
+                self._eta_history_len = 100 # How many samples back to recall.
+                self._ts = np.zeros(self._eta_history_len)
+                self._ps = np.zeros(self._eta_history_len)
+                self._n_hist = 0
+                self.ui.lbl_eta.show()
+            else:
+                self.ui.lbl_eta.hide()
 
         @property
         def task_title(self):
@@ -207,6 +232,41 @@ if __name__ == "__main__":
         @task_progress.setter
         def task_progress(self, newval):
             self.ui.prog_bar.setValue(int(newval))
+            if self._eta:
+                self._record_time()
+                
+        def _record_time(self):
+            t = time.time()
+            p = self.task_progress
+            
+            if self._n_hist < self._eta_history_len:
+                self._ts[self._n_hist] = t
+                self._ps[self._n_hist] = p
+            else:
+                # Cycle back the buffer.
+                self._ts[:-1] = self._ts[1:]
+                self._ps[:-1] = self._ps[1:]
+                self._ts[-1] = t
+                self._ps[-1] = p
+                
+            self._n_hist += 1
+            
+            # Re-estimate the ETA.
+            n = min(self._eta_history_len, self._n_hist)
+            if n >= 2:
+                dp_dt = (self._ps[1:n] - self._ps[:n-1]) / (self._ts[1:n] - self._ts[:n-1])
+                rate = np.mean(dp_dt)
+                eta = (self.max_progress - self.task_progress) / rate
+                self.ui.lbl_eta.setText(
+                    "Estimated time remaining: {}".format(
+                        pretty_time(eta)
+                    )
+                )
+            else:
+                self.ui.lbl_eta.setText(
+                    "Estimated time remaining: computing..."
+                )
+                
 
     ## FUNCTIONS ###############################################################
 
@@ -258,6 +318,7 @@ if __name__ == "__main__":
     # Make a new conn, since we're emulating multiprocessing
     # in a forkless way.
     port = int(sys.argv[1])
+    eta  = bool(sys.argv[2])
     conn = multiprocessing.connection.Client(('localhost', port),
         authkey='notreallysecret'
     )
@@ -269,7 +330,7 @@ if __name__ == "__main__":
     app.setApplicationName("Progress")
     
     # TODO: Change which dialog based on other command line arguments.
-    dialog = _ProgressDialog()
+    dialog = _ProgressDialog(eta=eta)
     dialog.show()
     
     idle_timer = QtCore.QTimer()
