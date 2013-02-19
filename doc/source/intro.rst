@@ -65,6 +65,39 @@ Alternatively,
 `Enthought Python Distribution`_ has been tested with **QInfer**, and may be
 used on Windows, Mac OS X or Linux.
 
+Citing QInfer
+-------------
+
+If you use **QInfer** in your publication or presentation, we would appreciate it
+if you cited our work. We recommend citing **QInfer** by using the BibTeX
+entry::
+
+    @Misc{,
+      author = {Christopher Ferrie and Christopher Granade and others},
+      title =  {{QInfer}: Library for Statistical Inference in Quantum Information},
+      year =   {2012--},
+      url =    "https://github.com/csferrie/python-qinfer"
+    }
+
+To indicate which version of **QInfer** you used in your work, it may be helpful
+to cite a given SHA hash as listed on
+`GitHub <https://github.com/csferrie/python-qinfer/commits/master>`_ (the
+hashes of each commit are listed on the right hand side of the page).
+A recommended BibTeX entry for citing a particular version is::
+
+    @Misc{,
+      author = {Christopher Ferrie and Christopher Granade and others},
+      title =  {{QInfer}: Library for Statistical Inference in Quantum Information},
+      year =   {2013},
+      month =  {2},
+      day =    {18},
+      url =    "https://github.com/csferrie/python-qinfer/commit/d04bc1d53933f13065917c15ccb0e2f127de3b8a",
+      note =   {Version \texttt{d04bc1d53933f13065917c15ccb0e2f127de3b8a}.}
+    }
+    
+In this example, ``d04bc1d53933f13065917c15ccb0e2f127de3b8a`` should be replaced by the
+particular version being cited.
+
 Getting Started
 ---------------
 
