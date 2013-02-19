@@ -416,16 +416,16 @@ class SMCUpdater(object):
         nz_weights = self.particle_weights[self.particle_weights > 0]
         return -np.sum(np.log(nz_weights) * nz_weights)
         
-    def est_kl_divergence(self, other, kernel=None, epsilon=1e-2):
+    def est_kl_divergence(self, other, kernel=None, delta=1e-2):
         # TODO: document.
         if kernel is None:
             kernel = scipy.stats.norm(loc=0, scale=1).pdf
         
-        dist = rescaled_distance_mtx(self, other) / epsilon
+        dist = rescaled_distance_mtx(self, other) / delta
         K = kernel(dist)
         
         
-        return -self.est_entropy() - (1 / epsilon) * np.sum(
+        return -self.est_entropy() - (1 / delta) * np.sum(
             self.particle_weights * 
             np.log(
                 np.sum(
