@@ -105,11 +105,23 @@ class ProgressDialog(object):
             eta=False
         ):
         
+        # Make environment variables including the path to qinfer.
+        env = dict(os.environ) # Copy so we don't make changes.
+        try:
+            import qinfer
+            qinfer_path = os.path.split(qinfer.__file__)[0]
+            if "PYTHONPATH" in env:
+                env["PYTHONPATH"] += os.pathsep + qinfer_path
+            else:
+                env["PYTHONPATH"] = qinfer_path
+        except ImportError:
+            print "[WARN] Importing qinfer didn't work... progress tracking may fail."
+        
         # Start the GUI in a new process.
         self._listener, self._port = _get_conn()
         self._process = subprocess.Popen(
             (sys.executable, "-m", "qinfer.dialogs", str(self._port), str(eta)),
-            stdout=subprocess.PIPE, stdin=subprocess.PIPE
+            stdout=subprocess.PIPE, stdin=subprocess.PIPE, env=env
         )
         
         self._conn = self._listener.accept()
