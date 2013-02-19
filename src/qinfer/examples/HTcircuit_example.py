@@ -50,7 +50,6 @@ from __future__ import division
 
 import numpy as np
 import time
-from scipy.special import gammaln, betaln
 import sys
 
 ## Imports from within QInfer. ##
@@ -225,19 +224,20 @@ if __name__ == "__main__":
     # TODO: Fix the plotting code. 
           
     fig = plt.figure()
-    avg_error = {
-        name: np.average(hist['true_err'], 0)
+    ax = fig.add_subplot(111)
+    ax.set_yscale('log')
+    ax.set_xscale('log')
+    error = {
+        name: hist['true_err']
         for name, hist in performance_hist.iteritems()
     }
         
     if do_smc:
-        plt.loglog(avg_error['SMC'], c='blue', label='SMC')
+        plt.boxplot(error['SMC'])
     if do_ale:
-        plt.loglog(avg_error['SMC_ALE'], c='purple', label='SMC-ALE')
-        
-    plt.legend()
-
-    
+        r = plt.boxplot(error['SMC_ALE'])
+        plt.setp(r['boxes'], color='green')         
+            
     avg_time = {
         name: np.average(hist['elapsed_time'])
         for name, hist in performance_hist.iteritems()
@@ -246,18 +246,6 @@ if __name__ == "__main__":
     print "Average time per update for SMC: {}".format(avg_time['SMC'])
     print "Average time per update for SMCALE: {}".format(avg_time['SMC_ALE'])
 
-    fig = plt.figure()
-    avg_risktime = {
-        name: np.average(hist['true_err']*np.cumsum(hist['elapsed_time'],1), 0)
-        for name, hist in performance_hist.iteritems()
-    }
-        
-    if do_smc:
-        plt.loglog(avg_risktime['SMC'], c='blue', label='SMC')
-    if do_ale:
-        plt.loglog(avg_risktime['SMC_ALE'], c='purple', label='SMC-ALE')
-        
-    plt.legend()
     
 
     plt.show()
