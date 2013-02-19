@@ -157,7 +157,7 @@ if __name__ == "__main__":
         updater.update(outcome, thisexp)
         
         # Optionally plot the data so far.
-        if np.mod(4*idx_exp, n_exp) == 0:
+        if np.mod(idx_exp*idx_exp, n_exp) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             ax.set_xlabel('X')

@@ -36,10 +36,10 @@ Options:
     --plot         Plots the results.
     --smc          Enable SMC performance measurements.
     --smcale       Enable SMC-ALE performance measurements.
-    --n-sim=N      Number of simulated runs to average over. [default: 1000]
+    --n-sim=N      Number of simulated runs to average over. [default: 100]
     --err_tol=e    Error tolerance for ALE [default: 0.1]
     --hedge=h      Hedging parameter for ALE [default: 0.5]
-    --alpha=A      Value of alpha to assume during experiments. [default: 0.95]
+    --alpha=A      Value of alpha to assume during experiments. [default: 0.85]
     --beta=B       Value of beta to assume during experiments. [default: 0.05]
 """
 
