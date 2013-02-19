@@ -119,184 +119,46 @@ if __name__ == "__main__":
 
 
 #============ SMC ============================================== 
-#    N_PARTICLES = 10
-#    
-#    prior = UniformDistribution([0,1])
-#    model = SimpleCoinModel()
-#    updater = smc.SMCUpdater(model, N_PARTICLES, prior)
-#
-#    res = 100
-#    p = np.linspace(0,1,res)
-#    
-#    n_exp = 10
-#    
-#    L = np.zeros((n_exp, res))
-#    
-#    outcomes = np.array([[0],[0],[1],[0],[1],[0],[0],[0],[1],[0]])
-#    
-#    for idx_exp in range(n_exp):
-#        thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
-#        outcome = outcomes[idx_exp]        
-#        temp = np.log(model.likelihood(outcome,p,thisexp))
-#        L[idx_exp,:] = temp        
-#        Ls = np.cumsum(L,0)
-#        updater.update(outcome,thisexp)
-#        if (idx_exp) % 1 == 0:
-#            particles = updater.particle_locations
-#            weights = updater.particle_weights
-#            Lm = np.exp(Ls[idx_exp,:])
-#            norm = np.sum(Lm)/res
-#            fig = plt.figure()
-#            plt.plot(p,Lm/norm, c = 'black')
-#            bme = np.sum(p * Lm) / norm / res
-#            plt.axvline(bme, c = 'red', linewidth = 2)
-#            print updater.est_mean()[0]
-#            plt.axvline(updater.est_mean()[0], linestyle = '--', c = 'blue', linewidth = 2)
-#            plt.scatter(particles[:,0],np.zeros((N_PARTICLES,)),s = 50*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
-##            temp = copy(updater)
-##            temp.resample
-##            
-##            pdf = gaussian_kde(temp.particle_locations[:,0])
-##            plt.plot(p,pdf(p),'b')
-#            plt.axis([0,1,0,3])
-
-
-#============== ABC ============================================
-
-#    N_PARTICLES = 10
-#    
-#    prior = UniformDistribution([0,1])
-#    model = SimpleCoinModel()
-#
-## To test ABC
-#    updaterEXACT = smc.SMCUpdater(model, N_PARTICLES, prior)
-#    updaterABC = smc.SMCUpdaterABC(model, N_PARTICLES, prior, abc_tol = 0, abc_sim = 1e4)
-#
-#    res = 100
-#    p = np.linspace(0,1,res)
-#    
-#    n_exp = 10
-#    
-#    L = np.zeros((n_exp, res))
-#    
-#    outcomes = np.array([[0],[0],[1],[0],[1],[0],[0],[0],[1],[0]])
-#        
-#    for idx_exp in xrange(n_exp):
-#        thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
-#        outcome = outcomes[idx_exp]        
-#        temp = np.log(model.likelihood(outcome,p,thisexp))
-#        L[idx_exp,:] = temp        
-#        Ls = np.cumsum(L,0)
-#               
-#        updaterEXACT.update(outcome, thisexp)
-#        updaterABC.update(outcome, thisexp)
-#        
-#        if (idx_exp) % 1 == 0:
-#            particles = updaterEXACT.particle_locations
-#            weights = updaterEXACT.particle_weights      
-#            particlesABC = updaterABC.particle_locations
-#            weightsABC = updaterABC.particle_weights
-#            Lm = np.exp(Ls[idx_exp,:])
-#            norm = np.sum(Lm)/res
-#            fig = plt.figure()
-#            plt.plot(p,Lm/norm, c = 'black')
-#            bme = np.sum(p * Lm) / norm / res
-#            plt.axvline(bme, c = 'red', linewidth = 2)
-#            plt.axvline(updaterEXACT.est_mean()[0], linestyle = '--', c = 'blue', linewidth = 2)
-#            plt.axvline(updaterABC.est_mean()[0], linestyle = '--', c = 'green', linewidth = 2)
-#            plt.scatter(particles[:,0],np.zeros((N_PARTICLES,)),s = 50*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
-#            plt.scatter(particlesABC[:,0],np.zeros((N_PARTICLES,)),s = 50*(1+(weightsABC-1/N_PARTICLES)*N_PARTICLES), c = 'green')
-#            plt.axis([0,1,0,3])
-
-
-#============== ABC ============================================
-
-    N_PARTICLES = 100
+    N_PARTICLES = 10
     
     prior = UniformDistribution([0,1])
     model = SimpleCoinModel()
+    updater = smc.SMCUpdater(model, N_PARTICLES, prior)
 
-        
-# To test ABC
-    updaterEXACT = smc.SMCUpdater(model, N_PARTICLES, prior)
-    updaterABC = smc.SMCUpdaterABC(model, N_PARTICLES, prior, abc_tol = 0, abc_sim = 1e4)
-
-    # Sample true set of modelparams
-    truemp = prior.sample()
-    
-    # Plot true state and prior
-#    fig = plt.figure()
-#    
-#    particles = updaterEXACT.particle_locations
-#    weights = updaterEXACT.particle_weights      
-#    particlesABC = updaterABC.particle_locations
-#    weightsABC = updaterABC.particle_weights
-#    
-#    #this is shameful hack to get the Kernal estimate
-#    temp = copy(updaterEXACT)
-#    temp.resample
-#    
-#    pdf = gaussian_kde(temp.particle_locations[:,0])
-#    
-#    x = np.linspace(0,1,1000)
-#    plt.plot(particles[:,0],weights, '.')
-#    plt.plot(x,pdf(x),'b')
-#
-#    temp = copy(updaterABC)
-#    temp.resample
-#    
-#    pdf = gaussian_kde(temp.particle_locations[:,0])
-#    plt.plot(x,pdf(x),'r')
-#
-#    plt.plot(particlesABC[:,0],weightsABC, '.r')
-#    plt.plot(truemp,0,'g')
-
-    res = 1000
+    res = 100
     p = np.linspace(0,1,res)
     
-    n_exp = 100
+    n_exp = 10
     
     L = np.zeros((n_exp, res))
     
     outcomes = np.array([[0],[0],[1],[0],[1],[0],[0],[0],[1],[0]])
-        
-    for idx_exp in xrange(n_exp):
+    
+    for idx_exp in range(n_exp):
         thisexp = np.array([np.random.random()],dtype=model.expparams_dtype)
-        outcome = np.array([model.simulate_experiment(truemp,thisexp)])       
+        outcome = outcomes[idx_exp]        
         temp = np.log(model.likelihood(outcome,p,thisexp))
         L[idx_exp,:] = temp        
         Ls = np.cumsum(L,0)
-               
-        updaterEXACT.update(outcome, thisexp)
-        updaterABC.update(outcome, thisexp)
-        
-        if (idx_exp) % 20 == 0:
-            particles = updaterEXACT.particle_locations
-            weights = updaterEXACT.particle_weights      
-            particlesABC = updaterABC.particle_locations
-            weightsABC = updaterABC.particle_weights
+        updater.update(outcome,thisexp)
+        if (idx_exp) % 1 == 0:
+            particles = updater.particle_locations
+            weights = updater.particle_weights
             Lm = np.exp(Ls[idx_exp,:])
             norm = np.sum(Lm)/res
             fig = plt.figure()
             plt.plot(p,Lm/norm, c = 'black')
             bme = np.sum(p * Lm) / norm / res
             plt.axvline(bme, c = 'red', linewidth = 2)
-            plt.axvline(updaterEXACT.est_mean()[0], linestyle = '--', c = 'blue', linewidth = 2)
-            plt.axvline(updaterABC.est_mean()[0], linestyle = ':', c = 'green', linewidth = 2)
+            print updater.est_mean()[0]
+            plt.axvline(updater.est_mean()[0], linestyle = '--', c = 'blue', linewidth = 2)
             plt.scatter(particles[:,0],np.zeros((N_PARTICLES,)),s = 50*(1+(weights-1/N_PARTICLES)*N_PARTICLES))
-            plt.scatter(particlesABC[:,0],np.zeros((N_PARTICLES,)),s = 50*(1+(weightsABC-1/N_PARTICLES)*N_PARTICLES), c = 'green')
-            temp = copy(updaterEXACT)
-            temp.resample()            
-            pdf = gaussian_kde(temp.particle_locations[:,0])
-            plt.plot(p,pdf(p),'b--')
-            temp = copy(updaterABC)
-            temp.resample()            
-            pdf = gaussian_kde(temp.particle_locations[:,0])
-            plt.plot(p,pdf(p),'g:')
-            
-            plt.axis([0,1,0,12])
+#            temp = copy(updater)
+#            temp.resample
+#            
+#            pdf = gaussian_kde(temp.particle_locations[:,0])
+#            plt.plot(p,pdf(p),'b')
+            plt.axis([0,1,0,3])
 
-            
-        
-    
-    plt.show()  
+    plt.show()
+

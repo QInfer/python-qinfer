@@ -40,17 +40,15 @@ import numpy as np
 import warnings
 
 from abstract_model import DifferentiableModel
-from qinfer.metrics import rescaled_distance_mtx
+from metrics import rescaled_distance_mtx
 
 from resamplers import LiuWestResampler
 
-# for BCRB and BED classes
 from scipy.spatial import Delaunay
 import scipy.linalg as la
-from utils import outer_product, particle_meanfn, particle_covariance_mtx, mvee, uniquify
+from utils import outer_product, mvee, uniquify
 from _exceptions import ApproximationWarning
 import scipy.stats
-from scipy.stats.distributions import binom
 
 ## CLASSES #####################################################################
 
