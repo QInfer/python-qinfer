@@ -143,7 +143,7 @@ class NoisyCoinModel(Model):
     
     @staticmethod
     def are_models_valid(modelparams):
-        return np.logical_and(modelparams.all(axis=1) >= 0,modelparams.all(axis=1) <= 1)
+        return np.logical_and(modelparams >= 0, modelparams <= 1).all(axis=1)
     
     def n_outcomes(self, expparams):
         return 2
