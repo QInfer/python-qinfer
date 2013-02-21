@@ -58,7 +58,7 @@ from ._lib import enum
 
 def pretty_time(secs, force_h=False, force_m=False):
     if secs > 86400:
-        return "{d} days, ".format(int(secs//86400)) + pretty_time(secs % 86400, force_h=True)
+        return "{d} days, ".format(d=int(secs//86400)) + pretty_time(secs % 86400, force_h=True)
     elif force_h or secs > 3600:
         return "{h}:".format(h=int(secs//3600)) + pretty_time(secs % 3600, force_m=True)
     elif force_m or secs > 60:
