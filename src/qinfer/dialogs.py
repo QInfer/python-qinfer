@@ -121,7 +121,7 @@ class ProgressDialog(object):
         self._listener, self._port = _get_conn()
         self._process = subprocess.Popen(
             (sys.executable, "-m", "qinfer.dialogs", str(self._port), str(eta)),
-            stdout=subprocess.PIPE, stdin=subprocess.PIPE, env=env
+            stdout=None, stdin=subprocess.PIPE, env=env
         )
         
         self._conn = self._listener.accept()
@@ -191,6 +191,15 @@ if __name__ == "__main__":
     import numpy as np
     import time
     
+    # Try and import and configure the tskmon client; if it's not possible
+    # then don't use it.
+    try:
+        import tskmon
+        tskmon_client = tskmon.TskmonClient()
+    except Exception as ex:
+        print "[WARN] Exception {} occured while configuring tskmon.".format(ex)
+        tskmon_client = None
+    
     ## CLASSES #################################################################
     
     class _ProgressDialog(QtGui.QDialog):
@@ -213,6 +222,18 @@ if __name__ == "__main__":
                 self.ui.lbl_eta.show()
             else:
                 self.ui.lbl_eta.hide()
+                
+            if tskmon_client is not None:
+                try:
+                    self._tskmon = tskmon_client.new_task(
+                        title="QInfer Task",
+                        status="status",
+                        progress=0,
+                        max_progress=100
+                    )
+                except Exception as ex:
+                    print "[WARN] Problem creating remote task: " + str(ex)
+                    self._tskmon = None
 
         @property
         def task_title(self):
@@ -222,6 +243,11 @@ if __name__ == "__main__":
             newval = str(newval)
             self.setWindowTitle(newval)
             self.ui.lbl_task_title.setText(newval)
+            if self._tskmon is not None:
+                try:
+                    self._tskmon.set_title(newval)
+                except Exception as ex:
+                    print "[WARN] Problem updating remote task: " + str(ex)
             
         @property
         def task_status(self):
@@ -230,6 +256,11 @@ if __name__ == "__main__":
         def task_status(self, newval):
             newval = str(newval)
             self.ui.lbl_task_status.setText(newval)
+            if self._tskmon is not None:
+                try:
+                    self._tskmon.set_status(newval)
+                except Exception as ex:
+                    print "[WARN] Problem updating remote task: " + str(ex)
          
         @property
         def max_progress(self):
@@ -237,6 +268,11 @@ if __name__ == "__main__":
         @max_progress.setter
         def max_progress(self, newval):
             self.ui.prog_bar.setMaximum(int(newval))
+            if self._tskmon is not None:
+                try:
+                    self._tskmon.set_max(newval)
+                except Exception as ex:
+                    print "[WARN] Problem updating remote task: " + str(ex)
             
         @property
         def task_progress(self):
@@ -246,6 +282,11 @@ if __name__ == "__main__":
             self.ui.prog_bar.setValue(int(newval))
             if self._eta:
                 self._record_time()
+            if self._tskmon is not None:
+                try:
+                    self._tskmon.set_progress(newval)
+                except Exception as ex:
+                    print "[WARN] Problem updating remote task: " + str(ex)
                 
         def _record_time(self):
             t = time.time()
