@@ -51,7 +51,7 @@ from qinfer.finite_difference import *
 
 ## CLASSES #####################################################################
 
-OptimizationAlgorithms = enum.enum("NULL", "CG", "NCG")
+OptimizationAlgorithms = enum.enum("NULL", "CG", "NCG", "NELDER_MEAD")
 
 class Heuristic(object):
     r"""
@@ -133,11 +133,11 @@ class ExperimentDesigner(object):
         :param bool disp: If `True`, the optimization will print additional
             information as it proceeds.
         :param int maxiter: For those optimization algorithms which support
-            it (currently, only CG), limits the number of optimization
-            iterations used for each guess.
+            it (currently, only CG and NELDER_MEAD), limits the number of
+            optimization iterations used for each guess.
         :param int maxfun: For those optimization algorithms which support it
-            (currently, only NCG), limits the number of objective calls that
-            can be made.
+            (currently, only NCG and NELDER_MEAD), limits the number of
+            objective calls that can be made.
         :param bool store_guess: If ``True``, will compare the outcome of this
             guess to previous guesses and then either store the optimization of
             this experiment, or the previous best-known experiment design.
@@ -238,6 +238,18 @@ class ExperimentDesigner(object):
                     RuntimeWarning)
                 x_opt = guess[0][field]
                 f_opt = None
+                
+        elif self._opt_algo == OptimizationAlgorithms.NELDER_MEAD:
+            opt_options = {}
+            if maxfun is not None:
+                opt_options['maxfun'] = maxfun
+            if maxiter is not None:
+                opt_options['maxiter'] = maxiter
+                
+            x_opt, f_opt, iters, func_calls, warnflag = opt.fmin(
+                objective_function, guess[0][field],
+                disp=disp, full_output=True, **opt_options
+            )
             
         # Optionally compare the result to previous guesses.            
         if store_guess:
