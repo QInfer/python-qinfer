@@ -41,19 +41,8 @@ import scipy.linalg as la
 import warnings
 
 from utils import outer_product, particle_meanfn, particle_covariance_mtx
-from _exceptions import ResamplerWarning
-import metrics
 
-## CLASSES #####################################################################
-
-try:
-    import sklearn
-    import sklearn.cluster
-    import sklearn.metrics
-    import sklearn.metrics.pairwise
-except ImportError:
-    warnings.warn("Could not import scikit-learn. Some features may not work.", ImportWarning)
-    sklearn = None
+from qinfer import clustering
 
 ## CLASSES #####################################################################
 
@@ -89,41 +78,17 @@ class ClusteringResampler(object):
         new_weights = np.empty(particle_weights.shape)
         new_locs    = np.empty(particle_locations.shape)
         
-        # Calculate and possibly reweight the metric.
-        M = sklearn.metrics.pairwise.pairwise_distances(particle_locations, metric=self.metric)
-        if self.weighted:
-            M = metrics.weighted_pairwise_distances(M, particle_weights, w_pow=self.w_pow)
-        
-        # Create and run a SciKit-Learn DBSCAN clusterer.
-        clusterer = sklearn.cluster.DBSCAN(min_samples=self.min_particles, eps=self.eps, metric='precomputed')
-        cluster_labels = clusterer.fit_predict(M)
-        
-        # Find out how many clusters were identified.
-        # Cluster counting logic from:
-        # [http://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html].
-        is_noise = -1 in cluster_labels
-        n_clusters = len(set(cluster_labels)) - (1 if is_noise else 0)
-        
-        # If more than 10% of the particles were labeled as NOISE,
-        # warn.
-        n_noise = np.sum(cluster_labels == -1)
-        if n_noise / particle_weights.shape[0] >= 0.1:
-            warnings.warn("More than 10% of the particles were classified as NOISE. Consider increasing the neighborhood size ``eps``.", ResamplerWarning)
-        
-        # Print debugging info.
-        if not self.quiet:
-            print "[Resampling] DBSCAN identified {} cluster{}. {} particles identified as NOISE.".format(n_clusters, "s" if n_clusters > 1 else "", n_noise)
-        
-        
         # Loop over clusters, calling the secondary resampler for each.
         # The loop should include -1 if noise was found.
-        for idx_cluster in xrange(-1 if is_noise else 0, n_clusters):
-            # Grab a boolean array identifying the particles in a  particular
-            # cluster.
-            this_cluster = cluster_labels == idx_cluster
-            
+        for cluster_label, cluster_particles in clustering.particle_clusters(
+                particle_locations, particle_weights,
+                eps=self.eps, min_particles=self.min_particles, metric=self.metric,
+                weighted=self.weighted, w_pow=self.w_pow,
+                quiet=self.quiet
+        ):
+        
             # If we are resampling the NOISE label, we must use the global moments.
-            if is_noise:
+            if cluster_label == clustering.NOISE:
                 extra_args = {
                     "precomputed_mean": particle_meanfn(particle_weights, particle_locations, lambda x: x),
                     "precomputed_cov":  particle_covariance_mtx(particle_weights, particle_locations)
@@ -134,18 +99,18 @@ class ClusteringResampler(object):
             # Pass the particles in that cluster to the secondary resampler
             # and record the new weights and locations.
             cluster_ws, cluster_locs = self.secondary_resampler(model,
-                particle_weights[this_cluster],
-                particle_locations[this_cluster],
+                particle_weights[cluster_particles],
+                particle_locations[cluster_particles],
                 **extra_args
             )
             
             # Renormalize the weights of each resampled particle by the total
             # weight of the cluster to which it belongs.
-            cluster_ws /= np.sum(particle_weights[this_cluster])
+            cluster_ws /= np.sum(particle_weights[cluster_particles])
             
             # Store the updated cluster.
-            new_weights[this_cluster] = cluster_ws
-            new_locs[this_cluster]    = cluster_locs
+            new_weights[cluster_particles] = cluster_ws
+            new_locs[cluster_particles]    = cluster_locs
 
         # Assert that we have not introduced any NaNs or Infs by resampling.
         assert np.all(np.logical_not(np.logical_or(
