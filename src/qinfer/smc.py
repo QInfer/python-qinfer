@@ -325,25 +325,19 @@ class SMCUpdater(object):
             # This sum is a reduction over the particle index, chosen to be
             # axis=2. Thus, the sum represents an expectation value over the
             # outer product $x . x^T$.
-            np.sum(
-                # All three factors have the particle index as the rightmost
-                # index, axis=2, and so broadcasting normalizes the outer
-                # product by the particle weights.
-                #
-                # Next, note that xs[:, newaxis, :] * xs[newaxis, :, :] is a
-                # multiplication between arrays of shapes
-                #     (n_modelparams, 1, n_particles)
-                # and
-                #     (1, n_modelparams, n_particles),
-                # such that the product has the desired shape
-                #     (n_modelparams, n_modelparams, n_particles),
-                # and is compatible with the weights array.
-                ws * xs[:, np.newaxis, :] * xs[np.newaxis, :, :],
-                axis=2
-                )
-                # We finish by subracting from the above expectation value
-                # the outer product $mu . mu^T$.
-                - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
+            #
+            # All three factors have the particle index as the rightmost
+            # index, axis=2. Using the Einstein summation convention (ESC),
+            # we can reduce over the particle index easily while leaving
+            # the model parameter index to vary between the two factors
+            # of xs.
+            #
+            # This corresponds to evaluating A_{m,n} = w_{i} x_{m,i} x_{n,i}
+            # using the ESC, where A_{m,n} is the temporary array created.
+            np.einsum('i,mi,ni', ws, xs, xs)
+            # We finish by subracting from the above expectation value
+            # the outer product $mu . mu^T$.
+            - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
             )
 
         # The SMC approximation is not guaranteed to produce a
