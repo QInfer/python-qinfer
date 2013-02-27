@@ -47,6 +47,7 @@ Usage: qubit_tomography_example.py [options]
 --wdbscan-pow=POW           Power by which the weight is to be raised in the
                             WDBSCAN weighting step. [default: 0.5]
                             step. [default: 10000]
+--no-plot                   Suppresses plotting when passed.
 -v, --verbose               Prints additional debugging information.
 """
 
@@ -85,7 +86,8 @@ if __name__ == "__main__":
     lw_a        = float(args['--lw-a'])
     dbscan_eps  = float(args['--dbscan-eps'])
     dbscan_min  = float(args['--dbscan-minparticles'])
-    wdbscan_pow = float(args['--wdbscan-pow'])   
+    wdbscan_pow = float(args['--wdbscan-pow'])
+    do_plot     = not bool(args['--no-plot'])
             
     # Model and prior initialization.
     prior = HilbertSchmidtUniform()
@@ -126,20 +128,21 @@ if __name__ == "__main__":
     truemp = np.array([prior.sample()])
     
     # Plot true state and prior
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    particles = updater.particle_locations
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')        
-    u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-    x = np.cos(u) * np.sin(v)
-    y = np.sin(u) * np.sin(v)
-    z = np.cos(v)
-    ax.plot_wireframe(x, y, z, color="gray")
+    if do_plot:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        particles = updater.particle_locations
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')        
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        x = np.cos(u) * np.sin(v)
+        y = np.sin(u) * np.sin(v)
+        z = np.cos(v)
+        ax.plot_wireframe(x, y, z, color="gray")
 
-    ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], s=10)
-    ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=25)
+        ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], s=10)
+        ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=25)
  
     # Record the start time.
     tic = time.time()
@@ -157,7 +160,7 @@ if __name__ == "__main__":
         updater.update(outcome, thisexp)
         
         # Optionally plot the data so far.
-        if np.mod(idx_exp*idx_exp, n_exp) == 0:
+        if do_plot and np.mod(idx_exp*idx_exp, n_exp) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             ax.set_xlabel('X')
@@ -193,98 +196,99 @@ if __name__ == "__main__":
     
 
     est_mean = updater.est_mean()
-    ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)    
-    
-    faces, vertices = updater.region_est_hull()
-    
-    items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
-    ax.add_collection(items)
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-    x = np.cos(u) * np.sin(v)
-    y = np.sin(u) * np.sin(v)
-    z = np.cos(v)
-    ax.plot_wireframe(x, y, z, color="gray")            
-
-    particles = updater.particle_locations
-    weights = updater.particle_weights      
-    maxweight = np.max(weights)
-
-    ax.scatter(
-        particles[:, 0], particles[:, 1], particles[:, 2],
-        s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
-    )
-    
-    temp = thisexp['axis'][0]*(-1)**outcome
-    ax.scatter(temp[0], temp[1], temp[2], c='green', s=50)
-    ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=50)
-    est_mean = updater.est_mean()
-    ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)    
-    
-    faces, vertices = updater.region_est_hull()
-    
-    items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
-    ax.add_collection(items)
-
-    A, centroid = updater.region_est_ellipsoid(tol=0.0001)
-
-    # Plot covariance ellipse.
-    U, D, V = la.svd(A)
-    
-    
-    rx, ry, rz = [1 / np.sqrt(d) for d in D]
-    u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
-
-    
-    x = rx * np.cos(u) * np.cos(v)
-    y = ry * np.sin(u) * np.cos(v)
-    z = rz * np.sin(v)
+    if do_plot:
+        ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)    
         
-    for idx in xrange(x.shape[0]):
-        for idy in xrange(y.shape[1]):
-            x[idx, idy], y[idx, idy], z[idx, idy] = \
-                np.dot(
-                    np.transpose(V),
-                    np.array([x[idx,idy],y[idx,idy],z[idx,idy]])
-                ) + centroid
-            
-            
-    ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-    x = np.cos(u) * np.sin(v)
-    y = np.sin(u) * np.sin(v)
-    z = np.cos(v)
-    ax.plot_wireframe(x, y, z, color="gray")            
-    rx, ry, rz = [1 / np.sqrt(d) for d in D]
-    u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
-
-    
-    x = rx * np.cos(u) * np.cos(v)
-    y = ry * np.sin(u) * np.cos(v)
-    z = rz * np.sin(v)
+        faces, vertices = updater.region_est_hull()
         
-    for idx in xrange(x.shape[0]):
-        for idy in xrange(y.shape[1]):
-            x[idx, idy], y[idx, idy], z[idx, idy] = \
-                np.dot(
-                    np.transpose(V),
-                    np.array([x[idx,idy],y[idx,idy],z[idx,idy]])
-                ) + centroid
-            
-            
-    ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
-    
+        items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
+        ax.add_collection(items)
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        x = np.cos(u) * np.sin(v)
+        y = np.sin(u) * np.sin(v)
+        z = np.cos(v)
+        ax.plot_wireframe(x, y, z, color="gray")            
 
-    plt.show()
+        particles = updater.particle_locations
+        weights = updater.particle_weights      
+        maxweight = np.max(weights)
+
+        ax.scatter(
+            particles[:, 0], particles[:, 1], particles[:, 2],
+            s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
+        )
+        
+        temp = thisexp['axis'][0]*(-1)**outcome
+        ax.scatter(temp[0], temp[1], temp[2], c='green', s=50)
+        ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=50)
+        est_mean = updater.est_mean()
+        ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)    
+        
+        faces, vertices = updater.region_est_hull()
+        
+        items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
+        ax.add_collection(items)
+
+        A, centroid = updater.region_est_ellipsoid(tol=0.0001)
+
+        # Plot covariance ellipse.
+        U, D, V = la.svd(A)
+        
+        
+        rx, ry, rz = [1 / np.sqrt(d) for d in D]
+        u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
+
+        
+        x = rx * np.cos(u) * np.cos(v)
+        y = ry * np.sin(u) * np.cos(v)
+        z = rz * np.sin(v)
+            
+        for idx in xrange(x.shape[0]):
+            for idy in xrange(y.shape[1]):
+                x[idx, idy], y[idx, idy], z[idx, idy] = \
+                    np.dot(
+                        np.transpose(V),
+                        np.array([x[idx,idy],y[idx,idy],z[idx,idy]])
+                    ) + centroid
+                
+                
+        ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        x = np.cos(u) * np.sin(v)
+        y = np.sin(u) * np.sin(v)
+        z = np.cos(v)
+        ax.plot_wireframe(x, y, z, color="gray")            
+        rx, ry, rz = [1 / np.sqrt(d) for d in D]
+        u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
+
+        
+        x = rx * np.cos(u) * np.cos(v)
+        y = ry * np.sin(u) * np.cos(v)
+        z = rz * np.sin(v)
+            
+        for idx in xrange(x.shape[0]):
+            for idy in xrange(y.shape[1]):
+                x[idx, idy], y[idx, idy], z[idx, idy] = \
+                    np.dot(
+                        np.transpose(V),
+                        np.array([x[idx,idy],y[idx,idy],z[idx,idy]])
+                    ) + centroid
+                
+                
+        ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
+        
+
+        plt.show()
         
