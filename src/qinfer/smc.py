@@ -46,7 +46,8 @@ from resamplers import LiuWestResampler
 
 from scipy.spatial import Delaunay
 import scipy.linalg as la
-from utils import outer_product, mvee, uniquify
+from utils import outer_product, mvee, uniquify, particle_meanfn, \
+        particle_covariance_mtx
 from _exceptions import ApproximationWarning
 import scipy.stats
 
@@ -435,6 +436,55 @@ class SMCUpdater(object):
             ),
             axis=0  # Sum over the particles of ``self``.
         )
+        
+    def est_cluster_moments(self, cluster_opts=None):
+        # TODO: document
+        
+        if cluster_opts is None:
+            cluster_opts = {}
+        
+        for cluster_label, cluster_particles in clustering.cluster(
+                self.particle_locations, self.particle_weights,
+                **cluster_opts
+            ):
+            
+            w = self.particle_weights[cluster_particles]
+            l = self.particle_locations[cluster_particles]
+            yield (
+                cluster_label,
+                sum(w), # The zeroth moment is very useful here!
+                particle_meanfn(w, l, lambda x: x),
+                particle_covariance_mtx(w, l)
+            )
+            
+    def est_cluster_covs(self, cluster_opts=None):
+        # TODO: document
+        
+        cluster_moments = np.array(
+            list(self.est_cluster_moments(cluster_opts)),
+            dtype=[
+                ('label', 'int'),
+                ('weight', 'float64'),
+                ('mean', '{}float64'.format(self.model.n_modelparams)),
+                ('cov', '{0},{0}float64'.format(self.model.n_modelparams)),
+            ])
+            
+        ws = cluster_moments['weight'][:, np.newaxis, np.newaxis]
+            
+        within_cluster_var = np.sum(ws * cluster_moments['cov'], axis=0)
+        between_cluster_var = particle_covariance_mtx(
+            # Treat the cluster means as a new very small particle cloud.
+            cluster_moments['weight'], cluster_moments['mean']
+        )
+        total_var = within_cluster_var + between_cluster_var
+        
+        return within_cluster_var, between_cluster_var, total_var
+        
+    def est_cluster_metric(self, cluster_opts=None):
+        # TODO: document
+        wcv, bcv, tv = self.est_cluster_covs(cluster_opts)
+        return wcv / tv
+        
 
     ## REGION ESTIMATION METHODS ###############################################
 
