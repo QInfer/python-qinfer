@@ -106,7 +106,7 @@ class ExperimentDesigner(object):
             guess, field,
             cost_scale_k=1.0, disp=False,
             maxiter=None, maxfun=None,
-            store_guess=False, grad_h=None
+            store_guess=False, grad_h=None, cost_mult=False
         ):
         r"""
         Designs a new experiment by varying a single field of a shape ``(1,)``
@@ -169,13 +169,23 @@ class ExperimentDesigner(object):
         
         # Define an objective function that wraps a vector of scalars into
         # an appropriate record array.
-        def objective_function(x):
-            """
-            Used internally by design_expparams_field.
-            If you see this, something probably went wrong.
-            """
-            ep[field] = x
-            return up.bayes_risk(ep) + cost_scale_k * m.experiment_cost(ep)
+        if (cost_mult==False):
+            def objective_function(x):
+                """
+                Used internally by design_expparams_field.
+                If you see this, something probably went wrong.
+                """
+                ep[field] = x
+                return up.bayes_risk(ep) + cost_scale_k * m.experiment_cost(ep)
+        else:
+            def objective_function(x):
+                """
+                Used internally by design_expparams_field.
+                If you see this, something probably went wrong.
+                """
+                ep[field] = x
+                return up.bayes_risk(ep)* m.experiment_cost(ep)**cost_scale_k
+        
             
         # Some optimizers require gradients of the objective function.
         # Here, we create a FiniteDifference object to compute that for
