@@ -33,6 +33,7 @@ from scipy.linalg import sqrtm
 
 import numpy.linalg as la
 
+from qinfer._exceptions import ApproximationWarning
 
 ###############################################################################
 
@@ -49,26 +50,62 @@ def outer_product(vec):
         np.dot(vec, vec.T)
         )
         
-def particle_meanfn(weights, locations, fn):
-    fn_vals = fn(locations)
+def particle_meanfn(weights, locations, fn=None):
+    fn_vals = fn(locations) if fn is not None else locations
     return np.sum(weights * fn_vals.transpose([1, 0]),
         axis=1)
 
     
 def particle_covariance_mtx(weights,locations):
+    """
+    Returns an estimate of the covariance of a distribution
+    represented by a given set of SMC particle.
         
-        xs = locations.transpose([1, 0])
-        ws = weights
+    :param weights: An array containing the weights of each
+        particle.
+    :param location: An array containing the locations of
+        each particle.
+    :rtype: :class:`numpy.ndarray`, shape
+        ``(n_modelparams, n_modelparams)``.
+    :returns: An array containing the estimated covariance matrix.
+    """
+    # TODO: add shapes to docstring.        
         
-        mu = np.sum(ws * xs, axis = 1)
-        
-        return (
-            np.sum(
-                ws * xs[:, np.newaxis, :] * xs[np.newaxis, :, :],
-                axis=2
-                )
-            ) - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
-            
+    # Find the mean model vector, shape (n_modelparams, ).
+    mu = particle_meanfn(weights, locations)
+    
+    # Transpose the particle locations to have shape
+    # (n_modelparams, n_particles).
+    xs = locations.transpose([1, 0])
+    # Give a shorter name to the particle weights, shape (n_particles, ).
+    ws = weights
+
+    cov = (
+        # This sum is a reduction over the particle index, chosen to be
+        # axis=2. Thus, the sum represents an expectation value over the
+        # outer product $x . x^T$.
+        #
+        # All three factors have the particle index as the rightmost
+        # index, axis=2. Using the Einstein summation convention (ESC),
+        # we can reduce over the particle index easily while leaving
+        # the model parameter index to vary between the two factors
+        # of xs.
+        #
+        # This corresponds to evaluating A_{m,n} = w_{i} x_{m,i} x_{n,i}
+        # using the ESC, where A_{m,n} is the temporary array created.
+        np.einsum('i,mi,ni', ws, xs, xs)
+        # We finish by subracting from the above expectation value
+        # the outer product $mu . mu^T$.
+        - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
+    )
+    
+    # The SMC approximation is not guaranteed to produce a
+    # positive-semidefinite covariance matrix. If a negative eigenvalue
+    # is produced, we should warn the caller of this.
+    if not np.all(la.eig(cov)[0] >= 0):
+        warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.', ApproximationWarning)
+
+    return cov            
 
 
 def ellipsoid_volume(A=None, invA=None):

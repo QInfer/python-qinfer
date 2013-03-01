@@ -313,40 +313,9 @@ class SMCUpdater(object):
             ``(n_modelparams, n_modelparams)``.
         :returns: An array containing the estimated covariance matrix.
         """
-        # Find the mean model vector, shape (n_modelparams, ).
-        mu = self.est_mean()
-        # Transpose the particle locations to have shape
-        # (n_modelparams, n_particles).
-        xs = self.particle_locations.transpose([1, 0])
-        # Give a shorter name to the particle weights, shape (n_particles, ).
-        ws = self.particle_weights
-
-        cov = (
-            # This sum is a reduction over the particle index, chosen to be
-            # axis=2. Thus, the sum represents an expectation value over the
-            # outer product $x . x^T$.
-            #
-            # All three factors have the particle index as the rightmost
-            # index, axis=2. Using the Einstein summation convention (ESC),
-            # we can reduce over the particle index easily while leaving
-            # the model parameter index to vary between the two factors
-            # of xs.
-            #
-            # This corresponds to evaluating A_{m,n} = w_{i} x_{m,i} x_{n,i}
-            # using the ESC, where A_{m,n} is the temporary array created.
-            np.einsum('i,mi,ni', ws, xs, xs)
-            # We finish by subracting from the above expectation value
-            # the outer product $mu . mu^T$.
-            - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
-            )
-
-        # The SMC approximation is not guaranteed to produce a
-        # positive-semidefinite covariance matrix. If a negative eigenvalue
-        # is produced, we should warn the caller of this.
-        if not np.all(la.eig(cov)[0] >= 0):
-            warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.', ApproximationWarning)
-
-        return cov
+        return particle_covariance_mtx(
+            self.particle_weights,
+            self.particle_locations)
 
     def bayes_risk(self, expparams):
         r"""
