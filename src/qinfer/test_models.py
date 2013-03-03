@@ -159,3 +159,52 @@ class NoisyCoinModel(Model):
         # Concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)
         
+class NDieModel(Model):
+    
+    ## PROPERTIES ##
+    
+    @property
+    def n_modelparams(self):
+        return self.n
+        
+    @property
+    def expparams_dtype(self):
+        return [('exp_num', 'int')]
+    
+    @property
+    def is_n_outcomes_constant(self):
+        """
+        Returns ``True`` if and only if the number of outcomes for each
+        experiment is independent of the experiment being performed.
+        
+        This property is assumed by inference engines to be constant for
+        the lifetime of a Model instance.
+        """
+        return True
+    
+    ## METHODS ##
+    def __init__(self, n = 6):
+	self.n = n
+	Model.__init__(self)
+	
+    @staticmethod
+    def are_models_valid(modelparams):
+        return np.logical_and(modelparams >= 0, modelparams <= 1).all(axis=1)
+    
+    def n_outcomes(self, expparams):
+        """
+        Returns an array of dtype ``uint`` describing the number of outcomes
+        for each experiment specified by ``expparams``.
+        
+        :param numpy.ndarray expparams: Array of experimental parameters. This
+            array must be of dtype agreeing with the ``expparams_dtype``
+            property.
+        """
+        return self.n
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(NDieModel, self).likelihood(outcomes, modelparams, expparams)
+        L = np.concatenate([np.array([modelparams[idx][outcomes]]) for idx in xrange(modelparams.shape[0])])
+        return L[...,np.newaxis].transpose([1,0,2])
