@@ -167,7 +167,7 @@ class SMCUpdater(object):
         """
 
         # It's "hypothetical", don't want to overwrite old weights yet!
-        weights = np.copy(self.particle_weights)
+        weights = self.particle_weights
         locs = self.particle_locations
 
         # Check if we have a single outcome or an array. If we only have one
@@ -180,10 +180,10 @@ class SMCUpdater(object):
         # This makes the multiplication with weights (shape (models,)) make sense,
         # since NumPy broadcasting rules align on the right-most index.
         L = self.model.likelihood(outcomes, locs, expparams).transpose([0, 2, 1])
-        weights = weights * L
+        hyp_weights = weights * L
         
         # Sum up the weights to find the renormalization scale.
-        norm_scale = np.sum(weights, axis=2)[..., np.newaxis]
+        norm_scale = np.sum(hyp_weights, axis=2)[..., np.newaxis]
         
         # As a special case, check whether any entries of the norm_scale
         # are zero. If this happens, that implies that all of the weights are
@@ -195,7 +195,7 @@ class SMCUpdater(object):
         norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
         
         # normalize
-        norm_weights = weights / norm_scale
+        norm_weights = hyp_weights / norm_scale
             # Note that newaxis is needed to align the two matrices.
             # This introduces a length-1 axis for the particle number,
             # so that the normalization is broadcast over all particles.
@@ -230,7 +230,7 @@ class SMCUpdater(object):
         # Since hypothetical_update returns an array indexed by
         # [outcome, experiment, particle], we need to strip off those two
         # indices first.
-        self.particle_weights = self.hypothetical_update(outcome, expparams)[0, 0, :]
+        self.particle_weights[:] = self.hypothetical_update(outcome, expparams)[0, 0, :]
 
         if check_for_resample:
             self._maybe_resample()
@@ -347,32 +347,24 @@ class SMCUpdater(object):
 
         xs = self.particle_locations.transpose([1, 0]) # shape (n_mp, n_particles).
         
-        mu = np.sum(
-            # We need the particle index to be the rightmost index, so that
-            # the two arrays align on the particle index as opposed to the
-            # modelparam index.
-            w[:, np.newaxis, :] * xs[np.newaxis, ...],
-            # The argument now has shape (n_outcomes, n_modelparams, n_particles),
-            # so that the sum should collapse the particle index, 2.
-            axis=2
-        ) # <- has shape (n_outcomes, n_np).
+        # In the following, we will use the subscript convention that
+        # "o" refers to an outcome, "p" to a particle, and
+        # "i" to a model parameter.
+        # Thus, mu[o,i] is the sum over all particles of w[o,p] * x[i,p].
+        mu = np.einsum('op,ip', w, xs)
         
         var = (
-            # This sum is a reduction over the particle index, chosen to be
-            # axis=2. Thus, the sum represents an expectation value over the
+            # This sum is a reduction over the particle index and thus
+            # represents an expectation value over the diagonal of the
             # outer product $x . x^T$.
-
-            np.sum(w[:, np.newaxis, :] * xs[np.newaxis, ...]**2,
-                    axis=2
-                ) # <- has shape (n_outcomes, n_mp).
-                # We finish by subracting from the above expectation value
-                # the outer product $mu . mu^T$.
-                - mu**2)
+            np.einsum('op,ip', w, xs**2)
+            # We finish by subracting from the above expectation value
+            # the diagonal of the outer product $mu . mu^T$.
+            - mu**2).T
 
 
         rescale_var = np.sum(self.model.Q * var, axis=1)
-        # Q has shape (n_mp,),
-        # therefore <- has shape (n_outcomes,)
+        # Q has shape (n_mp,), therefore rescale_var has shape (n_outcomes,).
         tot_like = np.sum(L, axis=1)
         return np.dot(tot_like.T, rescale_var)
         
