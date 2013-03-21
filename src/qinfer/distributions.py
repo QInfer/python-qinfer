@@ -92,6 +92,14 @@ class UniformDistribution(Distribution):
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
 
+class MVUniformDistribution(object):
+    
+    def __init__(self, dim = 6):
+        self.dim = dim
+                    
+    def sample(self, n = 1):
+        return np.random.mtrand.dirichlet(np.ones(self.dim),n)
+
 class DiscreteUniformDistribution(Distribution):
     def __init__(self, num_bits):
         self._num_bits = num_bits
