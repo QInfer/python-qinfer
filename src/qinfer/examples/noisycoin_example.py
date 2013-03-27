@@ -283,10 +283,10 @@ if __name__ == "__main__":
         if do_smc:
             plt.loglog(avg_error['SMC'], c='blue', label='SMC')
         if do_ale:
-            plt.loglog(avg_error['SMC_ALE'], c='purple', label='SMC-ALE')
+            plt.loglog(avg_error['SMC_ALE'], c='green', label='LFQIA')
             
-        plt.loglog(avg_error['BME'], c='red', label='Analytic BME')
-        plt.loglog(asympt, c='black', label='Asymptotic Optimum')
+        plt.loglog(avg_error['BME'], c='red', label='Exact')
+        plt.loglog(asympt, c='black', label='Asymptotic')
         plt.legend()
 
         # Finally, show the plot.
