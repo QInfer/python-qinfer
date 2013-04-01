@@ -92,6 +92,39 @@ class UniformDistribution(Distribution):
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
 
+
+class SlantedNormalDistribution(Distribution):
+    """
+    Uniform distribution on a given rectangular region.
+    
+    :param numpy.ndarray ranges: Array of shape ``(n_rvs, 2)``, where ``n_rvs``
+        is the number of random variables, specifying the upper and lower limits
+        for each variable.
+    """
+    
+    def __init__(self, ranges=_DEFAULT_RANGES, weight=0.01):
+        if not isinstance(ranges, np.ndarray):
+            ranges = np.array(ranges)
+            
+        if len(ranges.shape) == 1:
+            ranges = ranges[np.newaxis, ...]
+    
+        self._ranges = ranges
+        self._n_rvs = ranges.shape[0]
+        #self._delta = ranges[:, 1] - ranges[:, 0]
+        self._weight = weight
+        
+        
+        
+    @property
+    def n_rvs(self):
+        return self._n_rvs
+        
+    def sample(self, n=1):
+        shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
+        z = np.random.randn(n,self._n_rvs)
+        return self._ranges[:, 0] +self._weight*z+np.random.rand(n)*self._ranges[:, 1];
+
 class MVUniformDistribution(object):
     
     def __init__(self, dim = 6):
