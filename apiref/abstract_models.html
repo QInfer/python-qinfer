@@ -1,0 +1,349 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Abstract Model Classes &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="../index.html" />
+    <link rel="up" title="API Reference" href="index.html" />
+    <link rel="next" title="Probability Distributions" href="distributions.html" />
+    <link rel="prev" title="API Reference" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="distributions.html" title="Probability Distributions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="API Reference"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="abstract-model-classes">
+<h1>Abstract Model Classes<a class="headerlink" href="#abstract-model-classes" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>A <em>model</em> in QInfer is a class that describes the probabilities of observing
+data, given a particular experiment and given a particular set of model
+parameters. The observation probabilities may be given implicitly or explicitly,
+in that the class may only allow for sampling observations, rather than finding
+the a distribution explicitly. In the former case, a model is represented by
+a subclass of <a class="reference internal" href="#qinfer.abstract_model.Simulatable" title="qinfer.abstract_model.Simulatable"><tt class="xref py py-class docutils literal"><span class="pre">Simulatable</span></tt></a>, while in the latter, the model is
+represented by a subclass of <a class="reference internal" href="#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a>.</p>
+</div>
+<div class="section" id="simulatable-base-class-for-implicit-simulatable-models">
+<h2><a class="reference internal" href="#qinfer.abstract_model.Simulatable" title="qinfer.abstract_model.Simulatable"><tt class="xref py py-class docutils literal"><span class="pre">Simulatable</span></tt></a> - Base Class for Implicit (Simulatable) Models<a class="headerlink" href="#simulatable-base-class-for-implicit-simulatable-models" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="class-reference">
+<h3>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="qinfer.abstract_model.Simulatable">
+<em class="property">class </em><tt class="descclassname">qinfer.abstract_model.</tt><tt class="descname">Simulatable</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="attribute">
+<dt id="qinfer.abstract_model.Simulatable.n_modelparams">
+<tt class="descname">n_modelparams</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.n_modelparams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.n_modelparams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of real model parameters admitted by this model.</p>
+<p>This property is assumed by inference engines to be constant for
+the lifetime of a <a class="reference internal" href="#qinfer.abstract_model.Simulatable" title="qinfer.abstract_model.Simulatable"><tt class="xref py py-class docutils literal"><span class="pre">Simulatable</span></tt></a> instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qinfer.abstract_model.Simulatable.expparams_dtype">
+<tt class="descname">expparams_dtype</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.expparams_dtype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.expparams_dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the dtype of an experiment parameter array. For a
+model with single-parameter control, this will likely be a scalar dtype,
+such as <tt class="docutils literal"><span class="pre">&quot;float64&quot;</span></tt>. More generally, this can be an example of a
+record type, such as <tt class="docutils literal"><span class="pre">[('time',</span> <span class="pre">'float64'),</span> <span class="pre">('axis',</span> <span class="pre">'uint8')]</span></tt>.</p>
+<p>This property is assumed by inference engines to be constant for
+the lifetime of a Model instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qinfer.abstract_model.Simulatable.is_n_outcomes_constant">
+<tt class="descname">is_n_outcomes_constant</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.is_n_outcomes_constant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.is_n_outcomes_constant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <tt class="docutils literal"><span class="pre">True</span></tt> if and only if the number of outcomes for each
+experiment is independent of the experiment being performed.</p>
+<p>This property is assumed by inference engines to be constant for
+the lifetime of a Simulatable instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qinfer.abstract_model.Simulatable.sim_count">
+<tt class="descname">sim_count</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.sim_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.sim_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qinfer.abstract_model.Simulatable.Q">
+<tt class="descname">Q</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.Q"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.Q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the diagonal of the scale matrix <img class="math" src="../_images/math/b6c8766b62e07d6002be813692be01fb6ce9d2d8.png" alt="\matr{Q}"/> that
+relates the scales of each of the model parameters. In particular,
+the quadratic loss for this Simulatable is defined as:</p>
+<div class="math">
+<p><img src="../_images/math/1294e5b1c0bd54fff1ab7d187d9dd965363ca517.png" alt="L_{\matr{Q}}(\vec{x}, \hat{\vec{x}}) = (\vec{x} - \hat{\vec{x}})^\T \matr{Q} (\vec{x} - \hat{\vec{x}})"/></p>
+</div><p>If a subclass does not explicitly define the scale matrix, it is taken
+to be the identity matrix of appropriate dimension.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The diagonal elements of <img class="math" src="../_images/math/b6c8766b62e07d6002be813692be01fb6ce9d2d8.png" alt="\matr{Q}"/>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><tt class="xref py py-class docutils literal"><span class="pre">ndarray</span></tt></a> of shape <tt class="docutils literal"><span class="pre">(n_modelparams,</span> <span class="pre">)</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.abstract_model.Simulatable.n_outcomes">
+<tt class="descname">n_outcomes</tt><big>(</big><em>expparams</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.n_outcomes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.n_outcomes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array of dtype <tt class="docutils literal"><span class="pre">uint</span></tt> describing the number of outcomes
+for each experiment specified by <tt class="docutils literal"><span class="pre">expparams</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>expparams</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><em>numpy.ndarray</em></a>) &#8211; Array of experimental parameters. This
+array must be of dtype agreeing with the <tt class="docutils literal"><span class="pre">expparams_dtype</span></tt>
+property.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.abstract_model.Simulatable.are_models_valid">
+<tt class="descname">are_models_valid</tt><big>(</big><em>modelparams</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.are_models_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.are_models_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a shape <tt class="docutils literal"><span class="pre">(n_models,</span> <span class="pre">n_modelparams)</span></tt> array of model parameters,
+returns a boolean array of shape <tt class="docutils literal"><span class="pre">(n_models)</span></tt> specifying whether
+each set of model parameters represents is valid under this model.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.abstract_model.Simulatable.simulate_experiment">
+<tt class="descname">simulate_experiment</tt><big>(</big><em>modelparams</em>, <em>expparams</em>, <em>repeat=1</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.simulate_experiment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.simulate_experiment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.abstract_model.Simulatable.experiment_cost">
+<tt class="descname">experiment_cost</tt><big>(</big><em>expparams</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Simulatable.experiment_cost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Simulatable.experiment_cost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an array of experimental parameters, returns the cost associated
+with performing each experiment. By default, this cost is constant
+(one) for every experiment.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>expparams</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><tt class="xref py py-class docutils literal"><span class="pre">ndarray</span></tt></a> of <tt class="docutils literal"><span class="pre">dtype</span></tt> given by
+<a class="reference internal" href="#qinfer.abstract_model.Simulatable.expparams_dtype" title="qinfer.abstract_model.Simulatable.expparams_dtype"><tt class="xref py py-attr docutils literal"><span class="pre">expparams_dtype</span></tt></a>) &#8211; An array of experimental parameters for which the cost
+is to be evaluated.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An array of costs corresponding to the specified experiments.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><tt class="xref py py-class docutils literal"><span class="pre">ndarray</span></tt></a> of <tt class="docutils literal"><span class="pre">dtype</span></tt> <tt class="docutils literal"><span class="pre">float</span></tt> and of the
+same shape as <tt class="docutils literal"><span class="pre">expparams</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="model-base-class-for-explicit-likelihood-models">
+<h2><a class="reference internal" href="#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> - Base Class for Explicit (Likelihood) Models<a class="headerlink" href="#model-base-class-for-explicit-likelihood-models" title="Permalink to this headline">¶</a></h2>
+<p>If a model supports explicit calculation of the likelihood function, then this
+is represented by subclassing from <a class="reference internal" href="#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a>. The likelihood function
+provided by a subclass is then used to implement
+<a class="reference internal" href="#qinfer.abstract_model.Simulatable.simulate_experiment" title="qinfer.abstract_model.Simulatable.simulate_experiment"><tt class="xref py py-meth docutils literal"><span class="pre">Simulatable.simulate_experiment()</span></tt></a>, so that the primary method to be defined
+by a <a class="reference internal" href="#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> subclass is <a class="reference internal" href="#qinfer.abstract_model.Model.likelihood" title="qinfer.abstract_model.Model.likelihood"><tt class="xref py py-meth docutils literal"><span class="pre">Model.likelihood()</span></tt></a>.</p>
+<div class="section" id="id1">
+<h3>Class Reference<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="qinfer.abstract_model.Model">
+<em class="property">class </em><tt class="descclassname">qinfer.abstract_model.</tt><tt class="descname">Model</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#qinfer.abstract_model.Simulatable" title="qinfer.abstract_model.Simulatable"><tt class="xref py py-class docutils literal"><span class="pre">qinfer.abstract_model.Simulatable</span></tt></a></p>
+<dl class="attribute">
+<dt id="qinfer.abstract_model.Model.call_count">
+<tt class="descname">call_count</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Model.call_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Model.call_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.abstract_model.Model.likelihood">
+<tt class="descname">likelihood</tt><big>(</big><em>outcomes</em>, <em>modelparams</em>, <em>expparams</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Model.likelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Model.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.abstract_model.Model.is_model_valid">
+<tt class="descname">is_model_valid</tt><big>(</big><em>modelparams</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Model.is_model_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Model.is_model_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if and only if the model parameters given are valid for
+this model.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.abstract_model.Model.simulate_experiment">
+<tt class="descname">simulate_experiment</tt><big>(</big><em>modelparams</em>, <em>expparams</em>, <em>repeat=1</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Model.simulate_experiment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Model.simulate_experiment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="qinfer.abstract_model.Model.pr0_to_likelihood_array">
+<em class="property">static </em><tt class="descname">pr0_to_likelihood_array</tt><big>(</big><em>outcomes</em>, <em>pr0</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#Model.pr0_to_likelihood_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.Model.pr0_to_likelihood_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assuming a two-outcome measurement with probabilities given by the
+array <tt class="docutils literal"><span class="pre">pr0</span></tt>, returns an array of the form expected to be returned by
+<tt class="docutils literal"><span class="pre">likelihood</span></tt> method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>outcomes</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><em>numpy.ndarray</em></a>) &#8211; Array of integers indexing outcomes.</li>
+<li><strong>pr0</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><em>numpy.ndarray</em></a>) &#8211; Array of shape <tt class="docutils literal"><span class="pre">(n_models,</span> <span class="pre">n_experiments)</span></tt>
+describing the probability of obtaining outcome <tt class="docutils literal"><span class="pre">0</span></tt> from each
+set of model parameters and experiment parameters.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="differentiablemodel-base-class-for-explicit-models-with-differentiable-likelihoods">
+<h2><a class="reference internal" href="#qinfer.abstract_model.DifferentiableModel" title="qinfer.abstract_model.DifferentiableModel"><tt class="xref py py-class docutils literal"><span class="pre">DifferentiableModel</span></tt></a> - Base Class for Explicit Models with Differentiable Likelihoods<a class="headerlink" href="#differentiablemodel-base-class-for-explicit-models-with-differentiable-likelihoods" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h3>Class Reference<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="qinfer.abstract_model.DifferentiableModel">
+<em class="property">class </em><tt class="descclassname">qinfer.abstract_model.</tt><tt class="descname">DifferentiableModel</tt><a class="reference internal" href="../_modules/qinfer/abstract_model.html#DifferentiableModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.DifferentiableModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><tt class="xref py py-class docutils literal"><span class="pre">qinfer.abstract_model.Model</span></tt></a></p>
+<dl class="method">
+<dt id="qinfer.abstract_model.DifferentiableModel.grad_log_likelihood">
+<tt class="descname">grad_log_likelihood</tt><big>(</big><em>outcome</em>, <em>modelparams</em>, <em>expparams</em><big>)</big><a class="reference internal" href="../_modules/qinfer/abstract_model.html#DifferentiableModel.grad_log_likelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.abstract_model.DifferentiableModel.grad_log_likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Abstract Model Classes</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#simulatable-base-class-for-implicit-simulatable-models"><tt class="docutils literal"><span class="pre">Simulatable</span></tt> - Base Class for Implicit (Simulatable) Models</a><ul>
+<li><a class="reference internal" href="#class-reference">Class Reference</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#model-base-class-for-explicit-likelihood-models"><tt class="docutils literal"><span class="pre">Model</span></tt> - Base Class for Explicit (Likelihood) Models</a><ul>
+<li><a class="reference internal" href="#id1">Class Reference</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#differentiablemodel-base-class-for-explicit-models-with-differentiable-likelihoods"><tt class="docutils literal"><span class="pre">DifferentiableModel</span></tt> - Base Class for Explicit Models with Differentiable Likelihoods</a><ul>
+<li><a class="reference internal" href="#id2">Class Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">API Reference</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="distributions.html"
+                        title="next chapter">Probability Distributions</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/apiref/abstract_models.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="distributions.html" title="Probability Distributions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="API Reference"
+             >previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

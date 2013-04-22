@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qinfer.resamplers &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qinfer.resamplers</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c">##</span>
+<span class="c"># resamplers.py: Implementations of various resampling algorithms.</span>
+<span class="c">##</span>
+<span class="c"># © 2012 Chris Ferrie (csferrie@gmail.com) and</span>
+<span class="c">#        Christopher E. Granade (cgranade@gmail.com)</span>
+<span class="c">#     </span>
+<span class="c"># This file is a part of the Qinfer project.</span>
+<span class="c"># Licensed under the AGPL version 3.</span>
+<span class="c">##</span>
+<span class="c"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU Affero General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># This program is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU Affero General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU Affero General Public License</span>
+<span class="c"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">##</span>
+
+<span class="c">## FEATURES ####################################################################</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+
+<span class="c">## ALL #########################################################################</span>
+
+<span class="c"># We use __all__ to restrict what globals are visible to external modules.</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s">&#39;LiuWestResampler&#39;</span>
+<span class="p">]</span>
+
+<span class="c">## IMPORTS #####################################################################</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.linalg</span> <span class="kn">as</span> <span class="nn">la</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">outer_product</span><span class="p">,</span> <span class="n">particle_meanfn</span><span class="p">,</span> <span class="n">particle_covariance_mtx</span>
+
+<span class="kn">from</span> <span class="nn">qinfer</span> <span class="kn">import</span> <span class="n">clustering</span>
+
+<span class="c">## CLASSES #####################################################################</span>
+
+<span class="k">class</span> <span class="nc">ClusteringResampler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">    Creates a resampler that breaks the particles into clusters, then applies</span>
+<span class="sd">    a secondary resampling algorithm to each cluster independently.</span>
+<span class="sd">    </span>
+<span class="sd">    :param secondary_resampler: Resampling algorithm to be applied to each</span>
+<span class="sd">        cluster. If ``None``, defaults to ``LiuWestResampler()``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">secondary_resampler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">min_particles</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s">&#39;euclidean&#39;</span><span class="p">,</span> <span class="n">weighted</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">w_pow</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secondary_resampler</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">secondary_resampler</span>
+            <span class="k">if</span> <span class="n">secondary_resampler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+            <span class="k">else</span> <span class="n">LiuWestResampler</span><span class="p">()</span>
+        <span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quiet</span> <span class="o">=</span> <span class="n">quiet</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_particles</span> <span class="o">=</span> <span class="n">min_particles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weighted</span> <span class="o">=</span> <span class="n">weighted</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_pow</span> <span class="o">=</span> <span class="n">w_pow</span>
+        
+    <span class="c">## METHODS ##</span>
+    
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">particle_weights</span><span class="p">,</span> <span class="n">particle_locations</span><span class="p">):</span>
+        <span class="c">## TODO: docstring.</span>
+        
+        <span class="c"># Allocate new arrays to hold the weights and locations.        </span>
+        <span class="n">new_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">particle_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">new_locs</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">particle_locations</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        
+        <span class="c"># Loop over clusters, calling the secondary resampler for each.</span>
+        <span class="c"># The loop should include -1 if noise was found.</span>
+        <span class="k">for</span> <span class="n">cluster_label</span><span class="p">,</span> <span class="n">cluster_particles</span> <span class="ow">in</span> <span class="n">clustering</span><span class="o">.</span><span class="n">particle_clusters</span><span class="p">(</span>
+                <span class="n">particle_locations</span><span class="p">,</span> <span class="n">particle_weights</span><span class="p">,</span>
+                <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="n">min_particles</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_particles</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
+                <span class="n">weighted</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">weighted</span><span class="p">,</span> <span class="n">w_pow</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">w_pow</span><span class="p">,</span>
+                <span class="n">quiet</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quiet</span>
+        <span class="p">):</span>
+        
+            <span class="c"># If we are resampling the NOISE label, we must use the global moments.</span>
+            <span class="k">if</span> <span class="n">cluster_label</span> <span class="o">==</span> <span class="n">clustering</span><span class="o">.</span><span class="n">NOISE</span><span class="p">:</span>
+                <span class="n">extra_args</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s">&quot;precomputed_mean&quot;</span><span class="p">:</span> <span class="n">particle_meanfn</span><span class="p">(</span><span class="n">particle_weights</span><span class="p">,</span> <span class="n">particle_locations</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">),</span>
+                    <span class="s">&quot;precomputed_cov&quot;</span><span class="p">:</span>  <span class="n">particle_covariance_mtx</span><span class="p">(</span><span class="n">particle_weights</span><span class="p">,</span> <span class="n">particle_locations</span><span class="p">)</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">extra_args</span> <span class="o">=</span> <span class="p">{}</span>
+            
+            <span class="c"># Pass the particles in that cluster to the secondary resampler</span>
+            <span class="c"># and record the new weights and locations.</span>
+            <span class="n">cluster_ws</span><span class="p">,</span> <span class="n">cluster_locs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">secondary_resampler</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">particle_weights</span><span class="p">[</span><span class="n">cluster_particles</span><span class="p">],</span>
+                <span class="n">particle_locations</span><span class="p">[</span><span class="n">cluster_particles</span><span class="p">],</span>
+                <span class="o">**</span><span class="n">extra_args</span>
+            <span class="p">)</span>
+            
+            <span class="c"># Renormalize the weights of each resampled particle by the total</span>
+            <span class="c"># weight of the cluster to which it belongs.</span>
+            <span class="n">cluster_ws</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">particle_weights</span><span class="p">[</span><span class="n">cluster_particles</span><span class="p">])</span>
+            
+            <span class="c"># Store the updated cluster.</span>
+            <span class="n">new_weights</span><span class="p">[</span><span class="n">cluster_particles</span><span class="p">]</span> <span class="o">=</span> <span class="n">cluster_ws</span>
+            <span class="n">new_locs</span><span class="p">[</span><span class="n">cluster_particles</span><span class="p">]</span>    <span class="o">=</span> <span class="n">cluster_locs</span>
+
+        <span class="c"># Assert that we have not introduced any NaNs or Infs by resampling.</span>
+        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">new_locs</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">new_locs</span><span class="p">)</span>
+            <span class="p">)))</span>
+            
+        <span class="k">return</span> <span class="n">new_weights</span><span class="p">,</span> <span class="n">new_locs</span>
+
+<div class="viewcode-block" id="LiuWestResampler"><a class="viewcode-back" href="../../apiref/resamplers.html#qinfer.resamplers.LiuWestResampler">[docs]</a><span class="k">class</span> <span class="nc">LiuWestResampler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">    Creates a resampler instance that applies the algorithm of</span>
+<span class="sd">    [LW01]_ to redistribute the particles.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">0.98</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="c"># Implicitly calls the property setter below to set _h.</span>
+
+    <span class="c">## PROPERTIES ##</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_a</span>
+        
+    <span class="nd">@a.setter</span>
+<div class="viewcode-block" id="LiuWestResampler.a"><a class="viewcode-back" href="../../apiref/resamplers.html#qinfer.resamplers.LiuWestResampler.a">[docs]</a>    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_a</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">=</span> <span class="n">new_a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">new_a</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c">## METHODS ##</span>
+    </div>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">particle_weights</span><span class="p">,</span> <span class="n">particle_locations</span><span class="p">,</span> <span class="n">precomputed_mean</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">precomputed_cov</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resample the particles according to algorithm given in </span>
+<span class="sd">        [LW01]_.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c"># Give shorter names to weights and locations.</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">particle_weights</span><span class="p">,</span> <span class="n">particle_locations</span>
+        
+        <span class="c"># Possibly recompute moments, if not provided.</span>
+        <span class="k">if</span> <span class="n">precomputed_mean</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">particle_meanfn</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">precomputed_mean</span>
+        <span class="k">if</span> <span class="n">precomputed_cov</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">cov</span> <span class="o">=</span> <span class="n">particle_covariance_mtx</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cov</span> <span class="o">=</span> <span class="n">precomputed_cov</span>
+        
+        <span class="c"># parameters in the Liu and West algorithm            </span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_h</span>
+        <span class="n">S</span><span class="p">,</span> <span class="n">S_err</span> <span class="o">=</span> <span class="n">la</span><span class="o">.</span><span class="n">sqrtm</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    	<span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">h</span> <span class="o">*</span> <span class="n">S</span><span class="p">)</span>
+        <span class="n">n_ms</span><span class="p">,</span> <span class="n">n_mp</span> <span class="o">=</span> <span class="n">l</span><span class="o">.</span><span class="n">shape</span>
+        
+        <span class="n">new_locs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>        
+        <span class="n">cumsum_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">w</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        
+        <span class="n">idxs_to_resample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_ms</span><span class="p">)</span>
+        
+        <span class="c"># Loop as long as there are any particles left to resample.</span>
+        <span class="k">while</span> <span class="n">idxs_to_resample</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="c"># Draw j with probability self.particle_weights[j].</span>
+            <span class="n">js</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">idxs_to_resample</span><span class="o">.</span><span class="n">size</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">cumsum_weights</span><span class="p">[</span><span class="n">idxs_to_resample</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            
+            <span class="c"># Set mu_i to a x_j + (1 - a) mu.</span>
+            <span class="n">mus</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">l</span><span class="p">[</span><span class="n">js</span><span class="p">,:]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean</span>
+            
+            <span class="c"># Draw x_i from N(mu_i, S).</span>
+            <span class="n">new_locs</span><span class="p">[</span><span class="n">idxs_to_resample</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">mus</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_mp</span><span class="p">,</span> <span class="n">mus</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">.</span><span class="n">T</span>
+            
+            <span class="c"># Now we remove from the list any valid models.</span>
+            <span class="n">idxs_to_resample</span> <span class="o">=</span> <span class="n">idxs_to_resample</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">are_models_valid</span><span class="p">(</span><span class="n">new_locs</span><span class="p">[</span><span class="n">idxs_to_resample</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="p">))[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="c"># Now we reset the weights to be uniform, letting the density of</span>
+        <span class="c"># particles represent the information that used to be stored in the</span>
+        <span class="c"># weights. This is done by SMCUpdater, and so we simply need to return</span>
+        <span class="c"># the new locations here.</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],))</span> <span class="o">/</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_locs</span>
+        
+    </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

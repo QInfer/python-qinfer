@@ -1,0 +1,209 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="index.html" />
+    <link rel="next" title="QInfer Examples" href="examples/index.html" />
+    <link rel="prev" title="QInfer - Library for Statistical Inference in Quantum Information" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples/index.html" title="QInfer Examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="QInfer - Library for Statistical Inference in Quantum Information"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">QInfer 0.1a1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="introduction">
+<span id="intro"></span><h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>TODO</p>
+<div class="section" id="obtaining-qinfer">
+<h2>Obtaining QInfer<a class="headerlink" href="#obtaining-qinfer" title="Permalink to this headline">¶</a></h2>
+<p>A stable version of <strong>QInfer</strong> has not yet been released. Until then,
+the latest version may always be obtained by cloning into the GitHub
+repository:</p>
+<div class="highlight-python"><pre>$ git clone git@github.com:csferrie/python-qinfer.git</pre>
+</div>
+<p>Once obtained in this way, <strong>QInfer</strong> may be updated by pulling from GitHub:</p>
+<div class="highlight-python"><pre>$ git pull</pre>
+</div>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p><strong>QInfer</strong> provides a setup script, <tt class="docutils literal"><span class="pre">setup.py</span></tt>, for installing from source.
+On Unix-like systems, <strong>QInfer</strong> can be made available globally by running:</p>
+<div class="highlight-python"><pre>$ cd /path/to/qinfer/
+$ sudo python setup.py install</pre>
+</div>
+<p>On Windows, run <tt class="docutils literal"><span class="pre">cmd.exe</span></tt>, then run the setup script:</p>
+<div class="highlight-python"><pre>C:\&gt; cd C:\path\to\qinfer\
+C:\path\to\qinfer\&gt; python setup.py install</pre>
+</div>
+<p>Note that you may be prompted for permission by User Access Control.</p>
+</div>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p><strong>QInfer</strong> depends on only a very few packages:</p>
+<ul class="simple">
+<li>Python 2.7 (may work with earlier, but not tested).</li>
+<li>NumPy and SciPy.</li>
+<li>[Optional] <a class="reference external" href="http://scikit-learn.org/stable/">SciKit-Learn</a> required for some advanced features.</li>
+<li>[Optional] <a class="reference external" href="http://sphinx-doc.org/">Sphinx</a> required to rebuild documentation.</li>
+</ul>
+<p>On Windows, these packages can be provided by <a class="reference external" href="http://code.google.com/p/pythonxy/">Python(x,y)</a>. Linux users may
+obtain the needed dependencies. Under Ubuntu:</p>
+<div class="highlight-python"><pre>$ sudo apt-get install python2.7 python-numpy python-scipy python-scikits-learn python-sphinx</pre>
+</div>
+<p>On Fedora:</p>
+<div class="highlight-python"><pre>$ sudo yum install python numpy scipy python-sphinx
+$ sudo easy_install -U scikit-learn</pre>
+</div>
+<p>Alternatively,
+<a class="reference external" href="http://www.enthought.com/products/epd.php">Enthought Python Distribution</a> has been tested with <strong>QInfer</strong>, and may be
+used on Windows, Mac OS X or Linux.</p>
+</div>
+<div class="section" id="citing-qinfer">
+<h2>Citing QInfer<a class="headerlink" href="#citing-qinfer" title="Permalink to this headline">¶</a></h2>
+<p>If you use <strong>QInfer</strong> in your publication or presentation, we would appreciate it
+if you cited our work. We recommend citing <strong>QInfer</strong> by using the BibTeX
+entry:</p>
+<div class="highlight-python"><pre>@Misc{,
+  author = {Christopher Ferrie and Christopher Granade and others},
+  title =  {{QInfer}: Library for Statistical Inference in Quantum Information},
+  year =   {2012--},
+  url =    "https://github.com/csferrie/python-qinfer"
+}</pre>
+</div>
+<p>To indicate which version of <strong>QInfer</strong> you used in your work, it may be helpful
+to cite a given SHA hash as listed on
+<a class="reference external" href="https://github.com/csferrie/python-qinfer/commits/master">GitHub</a> (the
+hashes of each commit are listed on the right hand side of the page).
+A recommended BibTeX entry for citing a particular version is:</p>
+<div class="highlight-python"><pre>@Misc{,
+  author = {Christopher Ferrie and Christopher Granade and others},
+  title =  {{QInfer}: Library for Statistical Inference in Quantum Information},
+  year =   {2013},
+  month =  {2},
+  day =    {18},
+  url =    "https://github.com/csferrie/python-qinfer/commit/d04bc1d53933f13065917c15ccb0e2f127de3b8a",
+  note =   {Version \texttt{d04bc1d53933f13065917c15ccb0e2f127de3b8a}.}
+}</pre>
+</div>
+<p>In this example, <tt class="docutils literal"><span class="pre">d04bc1d53933f13065917c15ccb0e2f127de3b8a</span></tt> should be replaced by the
+particular version being cited.</p>
+</div>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#obtaining-qinfer">Obtaining QInfer</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#citing-qinfer">Citing QInfer</a></li>
+<li><a class="reference internal" href="#getting-started">Getting Started</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">QInfer - Library for Statistical Inference in Quantum Information</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="examples/index.html"
+                        title="next chapter">QInfer Examples</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/intro.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples/index.html" title="QInfer Examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="QInfer - Library for Statistical Inference in Quantum Information"
+             >previous</a> |</li>
+        <li><a href="index.html">QInfer 0.1a1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

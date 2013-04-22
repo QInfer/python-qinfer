@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Designing and Using Models &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="../index.html" />
+    <link rel="up" title="User’s Guide" href="index.html" />
+    <link rel="next" title="API Reference" href="../apiref/index.html" />
+    <link rel="prev" title="User’s Guide" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../apiref/index.html" title="API Reference"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="User’s Guide"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">User&#8217;s Guide</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="designing-and-using-models">
+<span id="models-guide"></span><h1>Designing and Using Models<a class="headerlink" href="#designing-and-using-models" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The concept of a <strong>model</strong> is key to the use of QInfer. TODO: fill this out.</p>
+</div>
+<div class="section" id="using-models-and-simulations">
+<h2>Using Models and Simulations<a class="headerlink" href="#using-models-and-simulations" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="basic-functionality">
+<h3>Basic Functionality<a class="headerlink" href="#basic-functionality" title="Permalink to this headline">¶</a></h3>
+<p>Both <a class="reference internal" href="../apiref/abstract_models.html#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> and <a class="reference internal" href="../apiref/abstract_models.html#qinfer.abstract_model.Simulatable" title="qinfer.abstract_model.Simulatable"><tt class="xref py py-class docutils literal"><span class="pre">Simulatable</span></tt></a> offer
+basic functionality to describe how they are parameterized, what outcomes are
+possible, etc. For this example, we will use a premade model from <tt class="xref py py-mod docutils literal"><span class="pre">test_models</span></tt>,
+<tt class="xref py py-class docutils literal"><span class="pre">SimplePrecessionModel</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">qinfer.test_models</span> <span class="kn">import</span> <span class="n">SimplePrecessionModel</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">SimplePrecessionModel</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Once a model or simulator has been created, you can query how many model
+parameters it admits and how many outcomes a given experiment can have.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">n_modelparams</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">is_n_outcomes_constant</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">n_outcomes</span><span class="p">(</span><span class="n">expparams</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="simulation">
+<h3>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h3>
+<p>Both models and simulators allow for simulated data to be drawn from the
+model distribution using the <a class="reference internal" href="../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.simulate_experiment" title="qinfer.abstract_model.Simulatable.simulate_experiment"><tt class="xref py py-meth docutils literal"><span class="pre">simulate_experiment()</span></tt></a>
+method. This method takes a vector of model parameters and a vector of experiment
+parameters, then returns an array of sample data.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">modelparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">D</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">simulate_experiment</span><span class="p">(</span><span class="n">modelparams</span><span class="p">,</span> <span class="n">expparams</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="nb">type</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+<span class="go">&lt;type &#39;numpy.ndarray&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">D</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(3, 100, 9)</span>
+</pre></div>
+</div>
+<p>If exactly one datum is requested, <a class="reference internal" href="../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.simulate_experiment" title="qinfer.abstract_model.Simulatable.simulate_experiment"><tt class="xref py py-meth docutils literal"><span class="pre">simulate_experiment()</span></tt></a>
+will return a scalar:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">simulate_experiment</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">3.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">]),</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">()</span>
+</pre></div>
+</div>
+<p>Note that in NumPy, a shape tuple of length zero indicates a scalar value,
+as such an array has no indices.</p>
+</div>
+<div class="section" id="likelihooods">
+<h3>Likelihooods<a class="headerlink" href="#likelihooods" title="Permalink to this headline">¶</a></h3>
+<p>The core functionality of <a class="reference internal" href="../apiref/abstract_models.html#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a>, however, is the
+<a class="reference internal" href="../apiref/abstract_models.html#qinfer.abstract_model.Model.likelihood" title="qinfer.abstract_model.Model.likelihood"><tt class="xref py py-meth docutils literal"><span class="pre">likelihood()</span></tt></a> method. This takes vectors of outcomes,
+model parameters and experiment parameters, then returns for each combination
+of the three the corresponding probability <img class="math" src="../_images/math/6414c66052f925e8acd3bf8d007ae4210d711164.png" alt="\Pr(D | \vec{x}; \vec{e})"/>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">modelparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expparams</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">outcomes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">L</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">outcomes</span><span class="p">,</span> <span class="n">modelparams</span><span class="p">,</span> <span class="n">expparams</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The return value of <a class="reference internal" href="../apiref/abstract_models.html#qinfer.abstract_model.Model.likelihood" title="qinfer.abstract_model.Model.likelihood"><tt class="xref py py-meth docutils literal"><span class="pre">likelihood()</span></tt></a> is a three-index
+array of probabilities whose shape is given by the lengths of <tt class="docutils literal"><span class="pre">outcomes</span></tt>,
+<tt class="docutils literal"><span class="pre">modelparams</span></tt> and <tt class="docutils literal"><span class="pre">expparams</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="nb">type</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="go">&lt;type &#39;numpy.ndarray&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">L</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(1, 100, 9)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="implementing-custom-models">
+<h2>Implementing Custom Models<a class="headerlink" href="#implementing-custom-models" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Designing and Using Models</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#using-models-and-simulations">Using Models and Simulations</a><ul>
+<li><a class="reference internal" href="#basic-functionality">Basic Functionality</a></li>
+<li><a class="reference internal" href="#simulation">Simulation</a></li>
+<li><a class="reference internal" href="#likelihooods">Likelihooods</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#implementing-custom-models">Implementing Custom Models</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">User&#8217;s Guide</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../apiref/index.html"
+                        title="next chapter">API Reference</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/guide/models.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../apiref/index.html" title="API Reference"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="User’s Guide"
+             >previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >User&#8217;s Guide</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

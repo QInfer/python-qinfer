@@ -1,0 +1,382 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qinfer.expdesign &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qinfer.expdesign</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c">##</span>
+<span class="c"># expdesign.py: Adaptive experimental design algorithms.</span>
+<span class="c">##</span>
+<span class="c"># © 2012 Chris Ferrie (csferrie@gmail.com) and</span>
+<span class="c">#        Christopher E. Granade (cgranade@gmail.com)</span>
+<span class="c">#</span>
+<span class="c"># This file is a part of the Qinfer project.</span>
+<span class="c"># Licensed under the AGPL version 3.</span>
+<span class="c">##</span>
+<span class="c"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU Affero General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># This program is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU Affero General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU Affero General Public License</span>
+<span class="c"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">##</span>
+
+<span class="c">## FEATURES ####################################################################</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+
+<span class="c">## ALL #########################################################################</span>
+
+<span class="c"># We use __all__ to restrict what globals are visible to external modules.</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s">&#39;ExperimentDesigner&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Heuristic&#39;</span><span class="p">,</span>
+    <span class="s">&#39;OptimizationAlgorithms&#39;</span>
+<span class="p">]</span>
+
+<span class="c">## IMPORTS #####################################################################</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c"># for BCRB and BED classes</span>
+<span class="kn">import</span> <span class="nn">scipy.optimize</span> <span class="kn">as</span> <span class="nn">opt</span>
+<span class="kn">from</span> <span class="nn">._lib</span> <span class="kn">import</span> <span class="n">enum</span>
+
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">qinfer.finite_difference</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c">## CLASSES #####################################################################</span>
+
+<span class="n">OptimizationAlgorithms</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">enum</span><span class="p">(</span><span class="s">&quot;NULL&quot;</span><span class="p">,</span> <span class="s">&quot;CG&quot;</span><span class="p">,</span> <span class="s">&quot;NCG&quot;</span><span class="p">,</span> <span class="s">&quot;NELDER_MEAD&quot;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Heuristic</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">    Defines a heuristic used for selecting new experiments without explicit</span>
+<span class="sd">    optimization of the risk. As an example, the :math:`t_k = (9/8)^k`</span>
+<span class="sd">    heuristic discussed by [FGC12]_ does not make explicit reference to the</span>
+<span class="sd">    risk, and so would be appropriate as a `Heuristic` subclass.</span>
+<span class="sd">    </span>
+<span class="sd">    Note that the design of this abstract base class is still being decided,</span>
+<span class="sd">    such that it is a placeholder for now.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Not yet implemented.&quot;</span><span class="p">)</span>
+    
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Not yet implemented.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExperimentDesigner"><a class="viewcode-back" href="../../apiref/expdesign.html#qinfer.expdesign.ExperimentDesigner">[docs]</a><span class="k">class</span> <span class="nc">ExperimentDesigner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Designs new experiments using the current best information provided by a</span>
+<span class="sd">    Bayesian updater.</span>
+<span class="sd">    </span>
+<span class="sd">    :param qinfer.smc.SMCUpdater updater: A Bayesian updater to design</span>
+<span class="sd">        experiments for.</span>
+<span class="sd">    :param OptimizationAlgorithms opt_algo: Algorithm to be used to perform</span>
+<span class="sd">        local optimization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">updater</span><span class="p">,</span> <span class="n">opt_algo</span><span class="o">=</span><span class="n">OptimizationAlgorithms</span><span class="o">.</span><span class="n">CG</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">opt_algo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">OptimizationAlgorithms</span><span class="o">.</span><span class="n">reverse_mapping</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Unsupported or unknown optimization algorithm.&quot;</span><span class="p">)</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">_updater</span> <span class="o">=</span> <span class="n">updater</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_opt_algo</span> <span class="o">=</span> <span class="n">opt_algo</span>
+        
+        <span class="c"># Set everything up for the first experiment.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_exp</span><span class="p">()</span>
+        
+    <span class="c">## METHODS #################################################################</span>
+<div class="viewcode-block" id="ExperimentDesigner.new_exp"><a class="viewcode-back" href="../../apiref/expdesign.html#qinfer.expdesign.ExperimentDesigner.new_exp">[docs]</a>    <span class="k">def</span> <span class="nf">new_exp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resets this `ExperimentDesigner` instance and prepares for designing</span>
+<span class="sd">        the next experiment.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__best_cost</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__best_ep</span> <span class="o">=</span> <span class="bp">None</span>
+        </div>
+<div class="viewcode-block" id="ExperimentDesigner.design_expparams_field"><a class="viewcode-back" href="../../apiref/expdesign.html#qinfer.expdesign.ExperimentDesigner.design_expparams_field">[docs]</a>    <span class="k">def</span> <span class="nf">design_expparams_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">guess</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span>
+            <span class="n">cost_scale_k</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+            <span class="n">maxiter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">maxfun</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+            <span class="n">store_guess</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">grad_h</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cost_mult</span><span class="o">=</span><span class="bp">False</span>
+        <span class="p">):</span>
+        <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">        Designs a new experiment by varying a single field of a shape ``(1,)``</span>
+<span class="sd">        record array and minimizing the objective function</span>
+<span class="sd">        </span>
+<span class="sd">        .. math::</span>
+<span class="sd">            O(\vec{e}) = r(\vec{e}) + k \$(\vec{e}),</span>
+<span class="sd">        </span>
+<span class="sd">        where :math:`r` is the Bayes risk as calculated by the updater, and</span>
+<span class="sd">        where :math:`\$` is the cost function specified by the model. Here,</span>
+<span class="sd">        :math:`k` is a parameter specified to relate the units of the risk and</span>
+<span class="sd">        the cost. See :ref:`expdesign` for more details.</span>
+<span class="sd">        </span>
+<span class="sd">        :param guess: Either a record array with a single guess, or</span>
+<span class="sd">            a callable function that generates guesses.</span>
+<span class="sd">        :type guess: Instance of :class:`~Heuristic`, `callable`</span>
+<span class="sd">            or :class:`~numpy.ndarray` of ``dtype``</span>
+<span class="sd">            :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype`</span>
+<span class="sd">        :param str field: The name of the ``expparams`` field to be optimized.</span>
+<span class="sd">            All other fields of ``guess`` will be held constant.</span>
+<span class="sd">        :param float cost_scale_k: A scale parameter :math:`k` relating the</span>
+<span class="sd">            Bayes risk to the experiment cost.</span>
+<span class="sd">            See :ref:`expdesign`.</span>
+<span class="sd">        :param bool disp: If `True`, the optimization will print additional</span>
+<span class="sd">            information as it proceeds.</span>
+<span class="sd">        :param int maxiter: For those optimization algorithms which support</span>
+<span class="sd">            it (currently, only CG and NELDER_MEAD), limits the number of</span>
+<span class="sd">            optimization iterations used for each guess.</span>
+<span class="sd">        :param int maxfun: For those optimization algorithms which support it</span>
+<span class="sd">            (currently, only NCG and NELDER_MEAD), limits the number of</span>
+<span class="sd">            objective calls that can be made.</span>
+<span class="sd">        :param bool store_guess: If ``True``, will compare the outcome of this</span>
+<span class="sd">            guess to previous guesses and then either store the optimization of</span>
+<span class="sd">            this experiment, or the previous best-known experiment design.</span>
+<span class="sd">        :param float grad_h: Step size to use in estimating gradients. Used</span>
+<span class="sd">            only if ``opt_algo`` is NCG.</span>
+<span class="sd">        :return: An array representing the best experiment design found so</span>
+<span class="sd">            far for the current experiment.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c"># Define some short names for commonly used properties.</span>
+        <span class="n">up</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_updater</span>
+        <span class="n">m</span>  <span class="o">=</span> <span class="n">up</span><span class="o">.</span><span class="n">model</span>
+        
+        <span class="c"># Generate a new guess or use a guess provided, depending on the</span>
+        <span class="c"># type of the guess argument.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">guess</span><span class="p">,</span> <span class="n">Heuristic</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Not yet implemented.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">guess</span><span class="p">):</span>
+            <span class="c"># Generate a new guess by calling the guess function provided.</span>
+            <span class="n">ep</span> <span class="o">=</span> <span class="n">guess</span><span class="p">(</span>
+                <span class="n">idx_exp</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">up</span><span class="o">.</span><span class="n">data_record</span><span class="p">),</span>
+                <span class="n">mean</span><span class="o">=</span><span class="n">up</span><span class="o">.</span><span class="n">est_mean</span><span class="p">(),</span>
+                <span class="n">cov</span><span class="o">=</span><span class="n">up</span><span class="o">.</span><span class="n">est_covariance_mtx</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Make a copy of the guess that we can manipulate, but otherwise</span>
+            <span class="c"># use it as-is.</span>
+            <span class="n">ep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span>
+        
+        <span class="c"># Define an objective function that wraps a vector of scalars into</span>
+        <span class="c"># an appropriate record array.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cost_mult</span><span class="o">==</span><span class="bp">False</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                Used internally by design_expparams_field.</span>
+<span class="sd">                If you see this, something probably went wrong.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">ep</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+                <span class="k">return</span> <span class="n">up</span><span class="o">.</span><span class="n">bayes_risk</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span> <span class="o">+</span> <span class="n">cost_scale_k</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">experiment_cost</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                Used internally by design_expparams_field.</span>
+<span class="sd">                If you see this, something probably went wrong.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">ep</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+                <span class="k">return</span> <span class="n">up</span><span class="o">.</span><span class="n">bayes_risk</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span><span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">experiment_cost</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span><span class="o">**</span><span class="n">cost_scale_k</span>
+        
+            
+        <span class="c"># Some optimizers require gradients of the objective function.</span>
+        <span class="c"># Here, we create a FiniteDifference object to compute that for</span>
+        <span class="c"># us.</span>
+        <span class="n">d_dx_objective</span> <span class="o">=</span> <span class="n">FiniteDifference</span><span class="p">(</span><span class="n">objective_function</span><span class="p">,</span> <span class="n">ep</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        
+        <span class="c"># Allocate a variable to hold the local optimum value found.</span>
+        <span class="c"># This way, if an optimization algorithm doesn&#39;t support returning</span>
+        <span class="c"># the value as well as the location, we can find it manually.</span>
+        <span class="n">f_opt</span> <span class="o">=</span> <span class="bp">None</span>
+            
+        <span class="c"># Here&#39;s the core, where we break out and call the various optimization</span>
+        <span class="c"># routines provided by SciPy.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opt_algo</span> <span class="o">==</span> <span class="n">OptimizationAlgorithms</span><span class="o">.</span><span class="n">NULL</span><span class="p">:</span>
+            <span class="c"># This optimization algorithm does nothing locally, but only</span>
+            <span class="c"># exists to leverage the store_guess functionality below.</span>
+            <span class="n">x_opt</span> <span class="o">=</span> <span class="n">guess</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">field</span><span class="p">]</span>
+            
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opt_algo</span> <span class="o">==</span> <span class="n">OptimizationAlgorithms</span><span class="o">.</span><span class="n">CG</span><span class="p">:</span>
+            <span class="c"># Prepare any additional options.</span>
+            <span class="n">opt_options</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">maxiter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">opt_options</span><span class="p">[</span><span class="s">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">maxiter</span>
+                
+            <span class="c"># Actually call fmin_cg, gathering all outputs we can.</span>
+            <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span><span class="p">,</span> <span class="n">func_calls</span><span class="p">,</span> <span class="n">grad_calls</span><span class="p">,</span> <span class="n">warnflag</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">fmin_cg</span><span class="p">(</span>
+                <span class="n">objective_function</span><span class="p">,</span> <span class="n">guess</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">field</span><span class="p">],</span>
+                <span class="n">disp</span><span class="o">=</span><span class="n">disp</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">opt_options</span>
+            <span class="p">)</span>
+            
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opt_algo</span> <span class="o">==</span> <span class="n">OptimizationAlgorithms</span><span class="o">.</span><span class="n">NCG</span><span class="p">:</span>
+            <span class="c"># Prepare any additional options.</span>
+            <span class="n">opt_options</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">maxfun</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">opt_options</span><span class="p">[</span><span class="s">&#39;maxfun&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">maxfun</span>
+            <span class="k">if</span> <span class="n">grad_h</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">opt_options</span><span class="p">[</span><span class="s">&#39;epsilon&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">grad_h</span>
+                
+            <span class="c"># Actually call fmin_tnc, gathering all outputs we can.</span>
+            <span class="c"># We use fmin_tnc in preference to fmin_ncg, as they implement the</span>
+            <span class="c"># same algorithm, but fmin_tnc seems better behaved with respect</span>
+            <span class="c"># to very flat gradient regions, due to respecting maxfun.</span>
+            <span class="c"># By contrast, fmin_ncg can get stuck in an infinite loop in</span>
+            <span class="c"># versions of SciPy &lt; 0.11.</span>
+            <span class="c">#</span>
+            <span class="c"># Note that in some versions of SciPy, there was a bug in</span>
+            <span class="c"># fmin_ncg and fmin_tnc that can propagate outward if the gradient</span>
+            <span class="c"># is too flat. We catch it here and return the initial guess in that</span>
+            <span class="c"># case, since by hypothesis, it&#39;s too flat to make much difference</span>
+            <span class="c"># anyway.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span><span class="p">,</span> <span class="n">func_calls</span><span class="p">,</span> <span class="n">grad_calls</span><span class="p">,</span> <span class="n">h_calls</span><span class="p">,</span> <span class="n">warnflag</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">fmin_tnc</span><span class="p">(</span>
+                    <span class="n">objective_function</span><span class="p">,</span> <span class="n">guess</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">field</span><span class="p">],</span>
+                    <span class="n">fprime</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">approx_grad</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                    <span class="n">disp</span><span class="o">=</span><span class="n">disp</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">opt_options</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s">&quot;Gradient function too flat for NCG.&quot;</span><span class="p">,</span>
+                    <span class="ne">RuntimeWarning</span><span class="p">)</span>
+                <span class="n">x_opt</span> <span class="o">=</span> <span class="n">guess</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">field</span><span class="p">]</span>
+                <span class="n">f_opt</span> <span class="o">=</span> <span class="bp">None</span>
+                
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opt_algo</span> <span class="o">==</span> <span class="n">OptimizationAlgorithms</span><span class="o">.</span><span class="n">NELDER_MEAD</span><span class="p">:</span>
+            <span class="n">opt_options</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">maxfun</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">opt_options</span><span class="p">[</span><span class="s">&#39;maxfun&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">maxfun</span>
+            <span class="k">if</span> <span class="n">maxiter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">opt_options</span><span class="p">[</span><span class="s">&#39;maxiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">maxiter</span>
+                
+            <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span><span class="p">,</span> <span class="n">iters</span><span class="p">,</span> <span class="n">func_calls</span><span class="p">,</span> <span class="n">warnflag</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">fmin</span><span class="p">(</span>
+                <span class="n">objective_function</span><span class="p">,</span> <span class="n">guess</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">field</span><span class="p">],</span>
+                <span class="n">disp</span><span class="o">=</span><span class="n">disp</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">opt_options</span>
+            <span class="p">)</span>
+            
+        <span class="c"># Optionally compare the result to previous guesses.            </span>
+        <span class="k">if</span> <span class="n">store_guess</span><span class="p">:</span>
+            <span class="c"># Possibly compute the objective function value at the local optimum</span>
+            <span class="c"># if we don&#39;t already know it.</span>
+            <span class="k">if</span> <span class="n">f_opt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">guess_qual</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">x_opt</span><span class="p">)</span>
+            
+            <span class="c"># Compare to the known best cost so far.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__best_cost</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__best_cost</span> <span class="o">&gt;</span> <span class="n">f_opt</span><span class="p">):</span>
+                <span class="c"># No known best yet, or we&#39;re better than the previous best,</span>
+                <span class="c"># so record this guess.</span>
+                <span class="n">ep</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_opt</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__best_cost</span> <span class="o">=</span> <span class="n">f_opt</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__best_ep</span> <span class="o">=</span> <span class="n">ep</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__best_ep</span> <span class="c"># Guess is bad, return current best guess</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># We aren&#39;t using guess recording, so just pack the local optima</span>
+            <span class="c"># into ep for returning.</span>
+            <span class="n">ep</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_opt</span>
+        
+        <span class="c"># In any case, return the optimized guess.</span>
+        <span class="k">return</span> <span class="n">ep</span>
+        
+    </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Single-Qubit State Tomography &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="../index.html" />
+    <link rel="up" title="QInfer Examples" href="index.html" />
+    <link rel="next" title="User’s Guide" href="../guide/index.html" />
+    <link rel="prev" title="QInfer Examples" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../guide/index.html" title="User’s Guide"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="QInfer Examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">QInfer Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="single-qubit-state-tomography">
+<span id="tomography-example"></span><h1>Single-Qubit State Tomography<a class="headerlink" href="#single-qubit-state-tomography" title="Permalink to this headline">¶</a></h1>
+<p>TODO: describe this example.</p>
+<div class="section" id="command-line-options">
+<h2>Command-Line Options<a class="headerlink" href="#command-line-options" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="basic-options">
+<h3>Basic Options<a class="headerlink" href="#basic-options" title="Permalink to this headline">¶</a></h3>
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example-n">
+<tt class="descname">-n</tt><tt class="descclassname"> NP</tt><tt class="descclassname">, </tt><tt class="descname">--n_particles</tt><tt class="descclassname">=NP</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example-n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies how many particles to use in the SMC
+approximation. [default: 5000]</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example-e">
+<tt class="descname">-e</tt><tt class="descclassname"> NE</tt><tt class="descclassname">, </tt><tt class="descname">--n_exp</tt><tt class="descclassname">=NE</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example-e" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies how many measurements are to be made. [default: 100]</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example-a">
+<tt class="descname">-a</tt><tt class="descclassname"> ALGO</tt><tt class="descclassname">, </tt><tt class="descname">--algorithm</tt><tt class="descclassname">=ALGO</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example-a" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies which algorithm to use; currently &#8216;SMC&#8217; and &#8216;SMC-ABC&#8217; are
+supported. [default: SMC]</p>
+</dd></dl>
+
+</div>
+<div class="section" id="resampling-options">
+<h3>Resampling Options<a class="headerlink" href="#resampling-options" title="Permalink to this headline">¶</a></h3>
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example-r">
+<tt class="descname">-r</tt><tt class="descclassname"> ALGO</tt><tt class="descclassname">, </tt><tt class="descname">--resampler</tt><tt class="descclassname">=ALGO</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example-r" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies which resampling algorithm to use; currently &#8216;LW&#8217;,
+&#8216;DBSCAN-LW&#8217; and &#8216;WDBSCAN-LW&#8217; are supported. [default: LW]</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example--lw-a">
+<tt class="descname">--lw-a</tt><tt class="descclassname">=A</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example--lw-a" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parameter <img class="math" src="../_images/math/c7d457e388298246adb06c587bccd419ea67f7e8.png" alt="a"/> of the <a class="reference internal" href="../biblo.html#lw01">[LW01]</a> resampling algorithm. [default: 0.98]</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example--dbscan-eps">
+<tt class="descname">--dbscan-eps</tt><tt class="descclassname">=EPS</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example--dbscan-eps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Epsilon parameter for the DBSCAN-based resamplers. [default: 0.5]</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example--dbscan-minparticles">
+<tt class="descname">--dbscan-minparticles</tt><tt class="descclassname">=N</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example--dbscan-minparticles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimum number of particles allowed in a cluster by the DBSCAN-based resamplers.
+[default: 5]</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example--wdbscan-pow">
+<tt class="descname">--wdbscan-pow</tt><tt class="descclassname">=POW</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example--wdbscan-pow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Power by which the weight is to be raised in the WDBSCAN weighting step.
+[default: 0.5]</p>
+</dd></dl>
+
+</div>
+<div class="section" id="abc-options">
+<h3>ABC Options<a class="headerlink" href="#abc-options" title="Permalink to this headline">¶</a></h3>
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example--abctol">
+<tt class="descname">--abctol</tt><tt class="descclassname">=TOL</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example--abctol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies the tolerance used by the SMC-ABC algorithm. [default: 8e-6]</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example--abcsim">
+<tt class="descname">--abcsim</tt><tt class="descclassname">=SIM</tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example--abcsim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies how many simulations are used by each ABC step. [default: 10000]</p>
+</dd></dl>
+
+</div>
+<div class="section" id="plotting-options">
+<h3>Plotting Options<a class="headerlink" href="#plotting-options" title="Permalink to this headline">¶</a></h3>
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example-p">
+<tt class="descname">-p</tt><tt class="descclassname"></tt><tt class="descclassname">, </tt><tt class="descname">--plot</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example-p" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enables plotting of data from this example.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="debugging-options">
+<h3>Debugging Options<a class="headerlink" href="#debugging-options" title="Permalink to this headline">¶</a></h3>
+<dl class="option">
+<dt id="cmdoption-python--m-qinfer.examples.qubit_tomography_example-v">
+<tt class="descname">-v</tt><tt class="descclassname"></tt><tt class="descclassname">, </tt><tt class="descname">--verbose</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption-python--m-qinfer.examples.qubit_tomography_example-v" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints additional debugging information.</p>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Single-Qubit State Tomography</a><ul>
+<li><a class="reference internal" href="#command-line-options">Command-Line Options</a><ul>
+<li><a class="reference internal" href="#basic-options">Basic Options</a></li>
+<li><a class="reference internal" href="#resampling-options">Resampling Options</a></li>
+<li><a class="reference internal" href="#abc-options">ABC Options</a></li>
+<li><a class="reference internal" href="#plotting-options">Plotting Options</a></li>
+<li><a class="reference internal" href="#debugging-options">Debugging Options</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">QInfer Examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../guide/index.html"
+                        title="next chapter">User&#8217;s Guide</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/examples/tomography.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../guide/index.html" title="User’s Guide"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="QInfer Examples"
+             >previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >QInfer Examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

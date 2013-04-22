@@ -1,0 +1,338 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qinfer.abstract_model &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qinfer.abstract_model</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c">##</span>
+<span class="c"># abstract_model.py: Abstract interfaces for models with different levels of</span>
+<span class="c">#     functionality.</span>
+<span class="c">##</span>
+<span class="c"># © 2012 Chris Ferrie (csferrie@gmail.com) and</span>
+<span class="c">#        Christopher E. Granade (cgranade@gmail.com)</span>
+<span class="c">#     </span>
+<span class="c"># This file is a part of the Qinfer project.</span>
+<span class="c"># Licensed under the AGPL version 3.</span>
+<span class="c">##</span>
+<span class="c"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU Affero General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># This program is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU Affero General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU Affero General Public License</span>
+<span class="c"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">##</span>
+
+<span class="c">## IMPORTS ##</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+    <span class="c"># Python standard library package for specifying abstract classes.</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+    
+<span class="c">## CLASSES ##</span>
+
+<div class="viewcode-block" id="Simulatable"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable">[docs]</a><span class="k">class</span> <span class="nc">Simulatable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span> <span class="c"># Needed in any class that has abstract methods.</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sim_count</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="c"># Initialize a default scale matrix.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_modelparams</span><span class="p">,))</span>
+        
+    <span class="c">## ABSTRACT PROPERTIES ##</span>
+    
+    <span class="nd">@abc.abstractproperty</span>
+<div class="viewcode-block" id="Simulatable.n_modelparams"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.n_modelparams">[docs]</a>    <span class="k">def</span> <span class="nf">n_modelparams</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the number of real model parameters admitted by this model.</span>
+<span class="sd">        </span>
+<span class="sd">        This property is assumed by inference engines to be constant for</span>
+<span class="sd">        the lifetime of a :class:`Simulatable` instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+        </div>
+    <span class="nd">@abc.abstractproperty</span>
+<div class="viewcode-block" id="Simulatable.expparams_dtype"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.expparams_dtype">[docs]</a>    <span class="k">def</span> <span class="nf">expparams_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the dtype of an experiment parameter array. For a</span>
+<span class="sd">        model with single-parameter control, this will likely be a scalar dtype,</span>
+<span class="sd">        such as ``&quot;float64&quot;``. More generally, this can be an example of a</span>
+<span class="sd">        record type, such as ``[(&#39;time&#39;, &#39;float64&#39;), (&#39;axis&#39;, &#39;uint8&#39;)]``.</span>
+<span class="sd">        </span>
+<span class="sd">        This property is assumed by inference engines to be constant for</span>
+<span class="sd">        the lifetime of a Model instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+        
+    <span class="c">## CONCRETE PROPERTIES ##</span>
+    </div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Simulatable.is_n_outcomes_constant"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.is_n_outcomes_constant">[docs]</a>    <span class="k">def</span> <span class="nf">is_n_outcomes_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns ``True`` if and only if the number of outcomes for each</span>
+<span class="sd">        experiment is independent of the experiment being performed.</span>
+<span class="sd">        </span>
+<span class="sd">        This property is assumed by inference engines to be constant for</span>
+<span class="sd">        the lifetime of a Simulatable instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">False</span>       
+    </div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Simulatable.sim_count"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.sim_count">[docs]</a>    <span class="k">def</span> <span class="nf">sim_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sim_count</span>
+        </div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Simulatable.Q"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.Q">[docs]</a>    <span class="k">def</span> <span class="nf">Q</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">        Returns the diagonal of the scale matrix :math:`\matr{Q}` that</span>
+<span class="sd">        relates the scales of each of the model parameters. In particular,</span>
+<span class="sd">        the quadratic loss for this Simulatable is defined as:</span>
+<span class="sd">        </span>
+<span class="sd">        .. math::</span>
+<span class="sd">            L_{\matr{Q}}(\vec{x}, \hat{\vec{x}}) = (\vec{x} - \hat{\vec{x}})^\T \matr{Q} (\vec{x} - \hat{\vec{x}})</span>
+<span class="sd">            </span>
+<span class="sd">        If a subclass does not explicitly define the scale matrix, it is taken</span>
+<span class="sd">        to be the identity matrix of appropriate dimension.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: The diagonal elements of :math:`\matr{Q}`.</span>
+<span class="sd">        :rtype: :class:`~numpy.ndarray` of shape ``(n_modelparams, )``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Q</span>
+    
+    <span class="c">## ABSTRACT METHODS ##</span>
+    </div>
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="Simulatable.n_outcomes"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.n_outcomes">[docs]</a>    <span class="k">def</span> <span class="nf">n_outcomes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expparams</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an array of dtype ``uint`` describing the number of outcomes</span>
+<span class="sd">        for each experiment specified by ``expparams``.</span>
+<span class="sd">        </span>
+<span class="sd">        :param numpy.ndarray expparams: Array of experimental parameters. This</span>
+<span class="sd">            array must be of dtype agreeing with the ``expparams_dtype``</span>
+<span class="sd">            property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+    </div>
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="Simulatable.are_models_valid"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.are_models_valid">[docs]</a>    <span class="k">def</span> <span class="nf">are_models_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modelparams</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a shape ``(n_models, n_modelparams)`` array of model parameters,</span>
+<span class="sd">        returns a boolean array of shape ``(n_models)`` specifying whether</span>
+<span class="sd">        each set of model parameters represents is valid under this model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+        </div>
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="Simulatable.simulate_experiment"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.simulate_experiment">[docs]</a>    <span class="k">def</span> <span class="nf">simulate_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modelparams</span><span class="p">,</span> <span class="n">expparams</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c"># TODO: document</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sim_count</span> <span class="o">+=</span> <span class="n">modelparams</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">expparams</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">repeat</span>
+        
+    <span class="c">## CONCRETE METHODS ##</span>
+    </div>
+<div class="viewcode-block" id="Simulatable.experiment_cost"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Simulatable.experiment_cost">[docs]</a>    <span class="k">def</span> <span class="nf">experiment_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expparams</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an array of experimental parameters, returns the cost associated</span>
+<span class="sd">        with performing each experiment. By default, this cost is constant</span>
+<span class="sd">        (one) for every experiment.</span>
+<span class="sd">        </span>
+<span class="sd">        :param expparams: An array of experimental parameters for which the cost</span>
+<span class="sd">            is to be evaluated.</span>
+<span class="sd">        :type expparams: :class:`~numpy.ndarray` of ``dtype`` given by</span>
+<span class="sd">            :attr:`~Simulatable.expparams_dtype`</span>
+<span class="sd">        :return: An array of costs corresponding to the specified experiments.</span>
+<span class="sd">        :rtype: :class:`~numpy.ndarray` of ``dtype`` ``float`` and of the</span>
+<span class="sd">            same shape as ``expparams``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">expparams</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        </div></div>
+<span class="k">class</span> <span class="nc">LinearCostModelMixin</span><span class="p">(</span><span class="n">Simulatable</span><span class="p">):</span>
+    <span class="c"># FIXME: move this mixin to a new module.</span>
+    <span class="c"># TODO: test this mixin.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This mixin implements :meth:`Simulatable.experiment_cost` by setting the</span>
+<span class="sd">    cost of an experiment equal to the value of a given field of each</span>
+<span class="sd">    ``expparams`` element (by default, ``t``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_field</span> <span class="o">=</span> <span class="s">&quot;t&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">experiment_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expparams</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">expparams</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Model"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Model">[docs]</a><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Simulatable</span><span class="p">):</span>
+    <span class="c"># TODO: now that Model is a subclass of Simulatable, Model may no longer</span>
+    <span class="c">#       be the best name. Maybe rename to SimulatableModel and</span>
+    <span class="c">#       ExplicitModel?</span>
+    
+    <span class="c">## INITIALIZERS ##</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_call_count</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="c">## CONCRETE PROPERTIES ##</span>
+    
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Model.call_count"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Model.call_count">[docs]</a>    <span class="k">def</span> <span class="nf">call_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># TODO: document</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_count</span>
+    
+    <span class="c">## ABSTRACT METHODS ##</span>
+    </div>
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="Model.likelihood"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Model.likelihood">[docs]</a>    <span class="k">def</span> <span class="nf">likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="p">,</span> <span class="n">modelparams</span><span class="p">,</span> <span class="n">expparams</span><span class="p">):</span>
+        <span class="c"># TODO: document</span>
+        
+        <span class="c"># Count the number of times the inner-most loop is called.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_call_count</span> <span class="o">+=</span> <span class="n">outcomes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">modelparams</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">expparams</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                
+    <span class="c">## CONCRETE METHODS ##</span>
+    <span class="c"># These methods depend on the abstract methods, and thus their behaviors</span>
+    <span class="c"># change in each inheriting class.</span>
+    </div>
+<div class="viewcode-block" id="Model.is_model_valid"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Model.is_model_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_model_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modelparams</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns True if and only if the model parameters given are valid for</span>
+<span class="sd">        this model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">are_models_valid</span><span class="p">(</span><span class="n">modelparams</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:])[</span><span class="mi">0</span><span class="p">]</span>
+    </div>
+<div class="viewcode-block" id="Model.simulate_experiment"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Model.simulate_experiment">[docs]</a>    <span class="k">def</span> <span class="nf">simulate_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modelparams</span><span class="p">,</span> <span class="n">expparams</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c"># NOTE: implements abstract method of Simulatable.</span>
+        <span class="c"># TODO: document</span>
+        
+        <span class="c"># Call the superclass simulate_experiment, not recording the result.</span>
+        <span class="c"># This is used to count simulation calls.</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">simulate_experiment</span><span class="p">(</span><span class="n">modelparams</span><span class="p">,</span> <span class="n">expparams</span><span class="p">,</span> <span class="n">repeat</span><span class="p">)</span>
+        
+        <span class="n">probabilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_outcomes</span><span class="p">(</span><span class="n">expparams</span><span class="p">)),</span> <span class="n">modelparams</span><span class="p">,</span> <span class="n">expparams</span><span class="p">)</span>
+        <span class="n">cdf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">probabilities</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">randnum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">repeat</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">modelparams</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">expparams</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">outcomes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">cdf</span> <span class="o">&gt;</span> <span class="n">randnum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outcomes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">repeat</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">expparams</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">modelparams</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">outcomes</span>
+                
+    <span class="c">## STATIC METHODS ##</span>
+    <span class="c"># These methods are provided as a convienence to make it easier to write</span>
+    <span class="c"># simple models.</span>
+    </div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Model.pr0_to_likelihood_array"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.Model.pr0_to_likelihood_array">[docs]</a>    <span class="k">def</span> <span class="nf">pr0_to_likelihood_array</span><span class="p">(</span><span class="n">outcomes</span><span class="p">,</span> <span class="n">pr0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assuming a two-outcome measurement with probabilities given by the</span>
+<span class="sd">        array ``pr0``, returns an array of the form expected to be returned by</span>
+<span class="sd">        ``likelihood`` method.</span>
+<span class="sd">        </span>
+<span class="sd">        :param numpy.ndarray outcomes: Array of integers indexing outcomes.</span>
+<span class="sd">        :param numpy.ndarray pr0: Array of shape ``(n_models, n_experiments)``</span>
+<span class="sd">            describing the probability of obtaining outcome ``0`` from each</span>
+<span class="sd">            set of model parameters and experiment parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pr0</span> <span class="o">=</span> <span class="n">pr0</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+        <span class="n">pr1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">pr0</span>
+        
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">pr0</span> <span class="k">if</span> <span class="n">outcomes</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">pr1</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">outcomes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">])</span> 
+        </div></div>
+<div class="viewcode-block" id="DifferentiableModel"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.DifferentiableModel">[docs]</a><span class="k">class</span> <span class="nc">DifferentiableModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span> <span class="c"># Needed in any class that has abstract methods.</span>
+    
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="DifferentiableModel.grad_log_likelihood"><a class="viewcode-back" href="../../apiref/abstract_models.html#qinfer.abstract_model.DifferentiableModel.grad_log_likelihood">[docs]</a>    <span class="k">def</span> <span class="nf">grad_log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome</span><span class="p">,</span> <span class="n">modelparams</span><span class="p">,</span> <span class="n">expparams</span><span class="p">):</span>
+        <span class="c">#TODO document</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

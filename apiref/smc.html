@@ -1,0 +1,426 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Sequential Monte Carlo &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="../index.html" />
+    <link rel="up" title="API Reference" href="index.html" />
+    <link rel="next" title="Biblography" href="../biblo.html" />
+    <link rel="prev" title="Resampling Algorithms" href="resamplers.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../biblo.html" title="Biblography"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="resamplers.html" title="Resampling Algorithms"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="sequential-monte-carlo">
+<span id="smc"></span><h1>Sequential Monte Carlo<a class="headerlink" href="#sequential-monte-carlo" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="smcupdater-smc-based-particle-updater">
+<h2><a class="reference internal" href="#qinfer.smc.SMCUpdater" title="qinfer.smc.SMCUpdater"><tt class="xref py py-class docutils literal"><span class="pre">SMCUpdater</span></tt></a> - SMC-Based Particle Updater<a class="headerlink" href="#smcupdater-smc-based-particle-updater" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="class-reference">
+<h3>Class Reference<a class="headerlink" href="#class-reference" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="qinfer.smc.SMCUpdater">
+<em class="property">class </em><tt class="descclassname">qinfer.smc.</tt><tt class="descname">SMCUpdater</tt><big>(</big><em>model</em>, <em>n_particles</em>, <em>prior</em>, <em>resample_a=None</em>, <em>resampler=None</em>, <em>resample_thresh=0.5</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Creates a new Sequential Monte carlo updater, using the algorithm of
+<a class="reference internal" href="../biblo.html#gfwc12">[GFWC12]</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model</strong> (<a class="reference internal" href="abstract_models.html#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><em>qinfer.abstract_model.Model</em></a>) &#8211; Model whose parameters are to be inferred.</li>
+<li><strong>n_particles</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; The number of particles to be used in the particle approximation.</li>
+<li><strong>prior</strong> (<a class="reference internal" href="distributions.html#qinfer.distributions.Distribution" title="qinfer.distributions.Distribution"><em>qinfer.distributions.Distribution</em></a>) &#8211; A representation of the prior distribution.</li>
+<li><strong>resampler</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; Specifies the resampling algorithm to be used. See <a class="reference internal" href="resamplers.html#resamplers"><em>Resampling Algorithms</em></a>
+for more details.</li>
+<li><strong>resample_thresh</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; Specifies the threshold for <img class="math" src="../_images/math/38b4116d997cb866e5597652ef6355be7e5544c2.png" alt="N_{\text{ess}}"/> to decide when to resample.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="qinfer.smc.SMCUpdater.resample_count">
+<tt class="descname">resample_count</tt><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.resample_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.resample_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of times that the updater has resampled the particle
+approximation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><tt class="xref py py-obj docutils literal"><span class="pre">int</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qinfer.smc.SMCUpdater.n_ess">
+<tt class="descname">n_ess</tt><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.n_ess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.n_ess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimates the effective sample size (ESS) of the current distribution
+over model parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return float:</th><td class="field-body">The effective sample size, given by <img class="math" src="../_images/math/6bdbb45da9bd922ef45fb7d542bbb0422377e73c.png" alt="1/\sum_i w_i^2"/>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qinfer.smc.SMCUpdater.data_record">
+<tt class="descname">data_record</tt><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.data_record"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.data_record" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.hypothetical_update">
+<tt class="descname">hypothetical_update</tt><big>(</big><em>outcomes</em>, <em>expparams</em>, <em>return_likelihood=False</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.hypothetical_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.hypothetical_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces the particle weights for the posterior of a hypothetical
+experiment.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>outcomes</strong> (<em>int or an ndarray of dtype int.</em>) &#8211; Integer index of the outcome of the hypothetical
+experiment.
+TODO: Fix this to take an array-like of ints as well.</li>
+<li><strong>expparams</strong> &#8211; TODO</li>
+<li><strong>weights</strong> (<em>ndarray, shape (n_outcomes, n_expparams, n_particles)</em>) &#8211; Weights assigned to each particle in the posterior
+distribution <img class="math" src="../_images/math/941267dd0916442746228e3b65158bb516201fa5.png" alt="\Pr(\omega | d)"/>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.update">
+<tt class="descname">update</tt><big>(</big><em>outcome</em>, <em>expparams</em>, <em>check_for_resample=True</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an experiment and an outcome of that experiment, updates the
+posterior distribution to reflect knowledge of that experiment.</p>
+<p>After updating, resamples the posterior distribution if necessary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>outcome</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Label for the outcome that was observed, as defined
+by the <a class="reference internal" href="abstract_models.html#qinfer.abstract_model.Model" title="qinfer.abstract_model.Model"><tt class="xref py py-class docutils literal"><span class="pre">Model</span></tt></a> instance under study.</li>
+<li><strong>expparams</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><tt class="xref py py-class docutils literal"><span class="pre">ndarray</span></tt></a> of dtype given by the
+<tt class="xref py py-attr docutils literal"><span class="pre">expparams_dtype</span></tt> property
+of the underlying model) &#8211; Parameters describing the experiment that was
+performed.</li>
+<li><strong>check_for_resample</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If <a class="reference external" href="http://docs.python.org/library/constants.html#True" title="(in Python v2.7)"><tt class="xref py py-obj docutils literal"><span class="pre">True</span></tt></a>, after performing the
+update, the effective sample size condition will be checked and
+a resampling step may be performed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.batch_update">
+<tt class="descname">batch_update</tt><big>(</big><em>outcomes</em>, <em>expparams</em>, <em>resample_interval=5</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.batch_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.batch_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates based on a batch of outcomes and experiments, rather than just
+one.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>outcomes</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><em>numpy.ndarray</em></a>) &#8211; An array of outcomes of the experiments that
+were performed.</li>
+<li><strong>expparams</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><em>numpy.ndarray</em></a>) &#8211; Either a scalar or record single-index
+array of experiments that were performed.</li>
+<li><strong>resample_interval</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Controls how often to check whether
+<img class="math" src="../_images/math/38b4116d997cb866e5597652ef6355be7e5544c2.png" alt="N_{\text{ess}}"/> falls below the resample threshold.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.resample">
+<tt class="descname">resample</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.resample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.resample" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.est_mean">
+<tt class="descname">est_mean</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.est_mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.est_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an estimate of the posterior mean model, given by the
+expectation value over the current SMC approximation of the posterior
+model distribution.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><tt class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></tt></a>, shape <tt class="docutils literal"><span class="pre">(n_modelparams,)</span></tt>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An array containing the an estimate of the mean model vector.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.est_covariance_mtx">
+<tt class="descname">est_covariance_mtx</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.est_covariance_mtx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.est_covariance_mtx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an estimate of the covariance of the current posterior model
+distribution, given by the covariance of the current SMC approximation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><tt class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></tt></a>, shape
+<tt class="docutils literal"><span class="pre">(n_modelparams,</span> <span class="pre">n_modelparams)</span></tt>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An array containing the estimated covariance matrix.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.bayes_risk">
+<tt class="descname">bayes_risk</tt><big>(</big><em>expparams</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.bayes_risk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.bayes_risk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Bayes risk for a hypothetical experiment, assuming the
+quadratic loss function defined by the current model&#8217;s scale matrix
+(see <a class="reference internal" href="abstract_models.html#qinfer.abstract_model.Simulatable.Q" title="qinfer.abstract_model.Simulatable.Q"><tt class="xref py py-attr docutils literal"><span class="pre">qinfer.abstract_model.Simulatable.Q</span></tt></a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>expparams</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><tt class="xref py py-class docutils literal"><span class="pre">ndarray</span></tt></a> of dtype given by the current
+model&#8217;s <a class="reference internal" href="abstract_models.html#qinfer.abstract_model.Simulatable.expparams_dtype" title="qinfer.abstract_model.Simulatable.expparams_dtype"><tt class="xref py py-attr docutils literal"><span class="pre">expparams_dtype</span></tt></a> property,
+and of shape <tt class="docutils literal"><span class="pre">(1,)</span></tt>) &#8211; The experiment at which to compute the Bayes risk.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return float:</th><td class="field-body">The Bayes risk for the current posterior distribution
+of the hypothetical experiment <tt class="docutils literal"><span class="pre">expparams</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.est_entropy">
+<tt class="descname">est_entropy</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.est_entropy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.est_entropy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.est_kl_divergence">
+<tt class="descname">est_kl_divergence</tt><big>(</big><em>other</em>, <em>kernel=None</em>, <em>delta=0.01</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.est_kl_divergence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.est_kl_divergence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.est_cluster_moments">
+<tt class="descname">est_cluster_moments</tt><big>(</big><em>cluster_opts=None</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.est_cluster_moments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.est_cluster_moments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.est_cluster_covs">
+<tt class="descname">est_cluster_covs</tt><big>(</big><em>cluster_opts=None</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.est_cluster_covs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.est_cluster_covs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.est_cluster_metric">
+<tt class="descname">est_cluster_metric</tt><big>(</big><em>cluster_opts=None</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.est_cluster_metric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.est_cluster_metric" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.est_credible_region">
+<tt class="descname">est_credible_region</tt><big>(</big><em>level=0.95</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.est_credible_region"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.est_credible_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array containing particles inside a credible region of a
+given level, such that the described region has probability mass
+no less than the desired level.</p>
+<p>Particles in the returned region are selected by including the highest-
+weight particles first until the desired credibility level is reached.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.7)"><tt class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></tt></a>, shape <tt class="docutils literal"><span class="pre">(n_credible,</span> <span class="pre">n_modelparams)</span></tt>,
+where <tt class="docutils literal"><span class="pre">n_credible</span></tt> is the number of particles in the credible
+region</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An array of particles inside the estimated credible region.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.region_est_hull">
+<tt class="descname">region_est_hull</tt><big>(</big><em>level=0.95</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.region_est_hull"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.region_est_hull" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimates a credible region over models by taking the convex hull of
+a credible subset of particles.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>level</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; The desired crediblity level (see
+<a class="reference internal" href="#qinfer.smc.SMCUpdater.est_credible_region" title="qinfer.smc.SMCUpdater.est_credible_region"><tt class="xref py py-meth docutils literal"><span class="pre">SMCUpdater.est_credible_region()</span></tt></a>).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.region_est_ellipsoid">
+<tt class="descname">region_est_ellipsoid</tt><big>(</big><em>level=0.95</em>, <em>tol=0.0001</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.region_est_ellipsoid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.region_est_ellipsoid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimates a credible region over models by finding the minimum volume
+enclosing ellipse (MVEE) of a credible subset of particles.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>level</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; The desired crediblity level (see
+<a class="reference internal" href="#qinfer.smc.SMCUpdater.est_credible_region" title="qinfer.smc.SMCUpdater.est_credible_region"><tt class="xref py py-meth docutils literal"><span class="pre">SMCUpdater.est_credible_region()</span></tt></a>).</li>
+<li><strong>tol</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; The allowed error tolerance in the MVEE optimization
+(see <tt class="xref py py-meth docutils literal"><span class="pre">mvee()</span></tt>).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qinfer.smc.SMCUpdater.risk">
+<tt class="descname">risk</tt><big>(</big><em>x0</em><big>)</big><a class="reference internal" href="../_modules/qinfer/smc.html#SMCUpdater.risk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qinfer.smc.SMCUpdater.risk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Sequential Monte Carlo</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#smcupdater-smc-based-particle-updater"><tt class="docutils literal"><span class="pre">SMCUpdater</span></tt> - SMC-Based Particle Updater</a><ul>
+<li><a class="reference internal" href="#class-reference">Class Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="resamplers.html"
+                        title="previous chapter">Resampling Algorithms</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../biblo.html"
+                        title="next chapter">Biblography</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/apiref/smc.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../biblo.html" title="Biblography"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="resamplers.html" title="Resampling Algorithms"
+             >previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,151 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API Reference &mdash; QInfer 0.1a1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="QInfer 0.1a1 documentation" href="../index.html" />
+    <link rel="next" title="Abstract Model Classes" href="abstract_models.html" />
+    <link rel="prev" title="Designing and Using Models" href="../guide/models.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="abstract_models.html" title="Abstract Model Classes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../guide/models.html" title="Designing and Using Models"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="api-reference">
+<span id="apiref"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="abstract_models.html">Abstract Model Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="abstract_models.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abstract_models.html#simulatable-base-class-for-implicit-simulatable-models"><tt class="docutils literal"><span class="pre">Simulatable</span></tt> - Base Class for Implicit (Simulatable) Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abstract_models.html#model-base-class-for-explicit-likelihood-models"><tt class="docutils literal"><span class="pre">Model</span></tt> - Base Class for Explicit (Likelihood) Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abstract_models.html#differentiablemodel-base-class-for-explicit-models-with-differentiable-likelihoods"><tt class="docutils literal"><span class="pre">DifferentiableModel</span></tt> - Base Class for Explicit Models with Differentiable Likelihoods</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html">Probability Distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#distribution-abstract-base-class-for-probability-distributions"><tt class="docutils literal"><span class="pre">Distribution</span></tt> - Abstract Base Class for Probability Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#specific-distributions">Specific Distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="expdesign.html">Experiment Design Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="expdesign.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expdesign.html#experimentdesigner-greedy-risk-minimization-algorithm"><tt class="docutils literal"><span class="pre">ExperimentDesigner</span></tt> - Greedy Risk Minimization Algorithm</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="resamplers.html">Resampling Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="resamplers.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="resamplers.html#liuwestresampler-liu-and-west-2000-resampling-algorithm"><tt class="docutils literal"><span class="pre">LiuWestResampler</span></tt> -  Liu and West (2000) Resampling Algorithm</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="smc.html">Sequential Monte Carlo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="smc.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="smc.html#smcupdater-smc-based-particle-updater"><tt class="docutils literal"><span class="pre">SMCUpdater</span></tt> - SMC-Based Particle Updater</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../guide/models.html"
+                        title="previous chapter">Designing and Using Models</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="abstract_models.html"
+                        title="next chapter">Abstract Model Classes</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/apiref/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="abstract_models.html" title="Abstract Model Classes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../guide/models.html" title="Designing and Using Models"
+             >previous</a> |</li>
+        <li><a href="../index.html">QInfer 0.1a1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Christopher Ferrie and Christopher Granade.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
