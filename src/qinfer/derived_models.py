@@ -69,13 +69,14 @@ class PoisonedModel(Model):
         tol=None, n_samples=None, hedge=None
     ):
         self._model = underlying_model
+        super(PoisonedModel, self).__init__()
         
-        if epsilon is None != n_samples is None:
+        if tol is None != n_samples is None:
             raise ValueError(
-                "Exactly one of epsilon and n_samples must be specified"
+                "Exactly one of tol and n_samples must be specified"
             )
         
-        if epsilon is not None:
+        if tol is not None:
             self._mode = PoisonModes.ALE
             self._tol = tol
         else:
