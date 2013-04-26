@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##
-# qubit_plotting_example.py: qubit tomography illustration module
+# rebit_plotting_example.py: rebit tomography illustration module
 ##
-# © 2012 Chris Ferrie (csferrie@gmail.com) and
+# © 2013 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
 #     
 # This file is a part of the Qinfer project.
@@ -26,7 +26,7 @@
 ## DOCUMENTATION ###############################################################
 
 """
-Usage: qubit_tomography_example.py [options]
+Usage: rebit_tomography_example.py [options]
 
 -h, --help                  Prints this help and returns.
 -n NP, --n_particles=NP     Specifies how many particles to use in the SMC
@@ -58,19 +58,55 @@ from __future__ import division
 ## IMPORTS #####################################################################
 
 import numpy as np
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
+
 import time
+
 import numpy.linalg as la
+from scipy.spatial import Delaunay
+
 import sys
 
 ## Imports from within QInfer. ##
 from .. import tomography, smc
 from ..resamplers import LiuWestResampler, ClusteringResampler
-from ..distributions import HilbertSchmidtUniform
+from ..utils import mvee, uniquify
 
 ## External libraries bundled with QInfer. ##
 from .._lib import docopt
+
+## CLASSES #####################################################################
+
+class HilbertSchmidtUniform(object):
+    """
+    Creates a new Hilber-Schmidt uniform prior on state space of dimension ``dim``.
+    See e.g. [Mez06]_ and [Mis12]_.
+    """
+    def __init__(self):
+        self.dim = 2
+        
+    def sample(self):
+        #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)        
+        g = (np.random.randn(self.dim,self.dim) + 1j*np.random.randn(self.dim,self.dim))/np.sqrt(2.0)
+        q,r = la.qr(g)
+        d = np.diag(r)
+        
+        ph = d/np.abs(d)
+        ph = np.diag(ph)
+        
+        U = np.dot(q,ph)
+
+        #Generate random matrix        
+        z = np.random.randn(self.dim,self.dim) + 1j*np.random.randn(self.dim,self.dim)
+        
+        rho = np.dot(np.dot(np.identity(self.dim)+U,np.dot(z,z.conj().transpose())),np.identity(self.dim)+U.conj().transpose())
+        rho = rho/np.trace(rho)
+        
+        # TODO: generalize to Heisenberg-Weyl groups.
+        y = np.real(np.trace(np.dot(rho,np.array([[0,-1j],[1j,0]]))))
+        x = np.real(np.trace(np.dot(rho,np.array([[0,1],[1,0]]))))
+        
+        return np.array([x,y])
 
 ## SCRIPT ######################################################################
 
@@ -91,11 +127,10 @@ if __name__ == "__main__":
             
     # Model and prior initialization.
     prior = HilbertSchmidtUniform()
-    model = tomography.QubitStatePauliModel()
+    model = tomography.RebitStatePauliModel()
     expparams = np.array([
-        ([1, 0, 0], 1), # Records are indicated by tuples.
-        ([0, 1, 0], 1),
-        ([0, 0, 1], 1)
+        ([1, 0], 1), # Records are indicated by tuples.
+        ([0, 1], 1)
     ], dtype=model.expparams_dtype)
     
     # Resampler initialization.
@@ -127,22 +162,25 @@ if __name__ == "__main__":
     # Sample true set of modelparams
     truemp = np.array([prior.sample()])
     
+    
     # Plot true state and prior
     if do_plot:
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = plt.gca()
         particles = updater.particle_locations
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_zlabel('Z')        
-        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-        x = np.cos(u) * np.sin(v)
-        y = np.sin(u) * np.sin(v)
-        z = np.cos(v)
-        ax.plot_wireframe(x, y, z, color="gray")
-
-        ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], s=10)
-        ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=25)
+        
+        u = np.linspace(0,2*np.pi,100)
+        x = np.cos(u)
+        y = np.sin(u)
+        
+        plt.plot(x,y)
+     
+        plt.scatter(particles[:, 0], particles[:, 1], s=10)
+        plt.scatter(truemp[:, 0], truemp[:, 1], c='red', s=50)
+        est_mean = updater.est_mean()
+        plt.scatter(est_mean[0], est_mean[1], c='cyan', s=50)
  
     # Record the start time.
     tic = time.time()
@@ -151,36 +189,13 @@ if __name__ == "__main__":
     for idx_exp in xrange(n_exp):
         # Randomly choose one of the three experiments from expparams and make
         # an array containing just that experiment.
-        thisexp = expparams[np.newaxis, np.random.randint(0, 3)]
+        thisexp = expparams[np.newaxis, np.random.randint(0, 2)]
         
         # Simulate an experiment according to the chosen expparams.
         outcome = model.simulate_experiment(truemp, thisexp)
        
         # Feed the data to the SMC particle updater.
         updater.update(outcome, thisexp)
-        
-        # Optionally plot the data so far.
-        if do_plot and np.mod(idx_exp*idx_exp, n_exp) == 0:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
-            ax.set_zlabel('Z')            
-            particles = updater.particle_locations
-            weights = updater.particle_weights      
-            maxweight = np.max(weights)
-            u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-            x = np.cos(u) * np.sin(v)
-            y = np.sin(u) * np.sin(v)
-            z = np.cos(v)
-            ax.plot_wireframe(x, y, z, color="gray")       
-            ax.scatter(
-                particles[:, 0], particles[:, 1], particles[:, 2],
-                s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
-            )
-            temp = thisexp['axis'][0]*(-1)**outcome
-            ax.scatter(temp[0], temp[1], temp[2], c='green', s=50)
-            ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=50)
             
     # Record how long it took us.
     toc = time.time() - tic
@@ -197,101 +212,124 @@ if __name__ == "__main__":
 
     est_mean = updater.est_mean()
     if do_plot:
-        ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)    
-        
-        faces, vertices = updater.region_est_hull()
-        
-        items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
-        ax.add_collection(items)
-        
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = plt.gca()
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-        x = np.cos(u) * np.sin(v)
-        y = np.sin(u) * np.sin(v)
-        z = np.cos(v)
-        ax.plot_wireframe(x, y, z, color="gray")            
 
         particles = updater.particle_locations
         weights = updater.particle_weights      
         maxweight = np.max(weights)
 
-        ax.scatter(
-            particles[:, 0], particles[:, 1], particles[:, 2],
+        u = np.linspace(0,2*np.pi,100)
+        x = np.cos(u)
+        y = np.sin(u)
+    
+        plt.plot(x,y) 
+    
+        plt.scatter(
+            particles[:, 0], particles[:, 1],
+            s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
+        )
+        temp = thisexp['axis'][0]*(-1)**outcome
+        #plt.scatter(temp[0], temp[1], c='green', s=50)
+        plt.scatter(truemp[:, 0], truemp[:, 1], c='red', s=50)
+        plt.scatter(est_mean[0], est_mean[1], c='cyan', s=50)    
+        
+        points = updater.est_credible_region(level = 0.95)
+        tri = Delaunay(points)
+        faces = []
+        hull = tri.convex_hull
+        
+        for ia, ib in hull:
+            faces.append(points[[ia, ib]])    
+
+        vertices = points[uniquify(hull.flatten())]
+        temp = vertices - np.mean(vertices, 0)
+        
+        idx_srt = np.argsort(np.arctan2(temp[:, 1], temp[:, 0]))
+        idx_srt = np.append(idx_srt,idx_srt[0])     
+        
+        fig = plt.figure()
+        ax = plt.gca()
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+
+        particles = updater.particle_locations
+        weights = updater.particle_weights      
+        maxweight = np.max(weights)
+
+        u = np.linspace(0,2*np.pi,100)
+        x = np.cos(u)
+        y = np.sin(u)
+        
+        plt.plot(x,y)
+
+        plt.scatter(
+            particles[:, 0], particles[:, 1],
             s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
         )
         
-        #temp = thisexp['axis'][0]*(-1)**outcome
-        #ax.scatter(temp[0], temp[1], temp[2], c='green', s=50)
-        ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=50)
-        est_mean = updater.est_mean()
-        ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)    
+        plt.scatter(truemp[:, 0], truemp[:, 1], c='red', s=50)
+        plt.scatter(est_mean[0], est_mean[1], c='cyan', s=25) 
         
-        faces, vertices = updater.region_est_hull()
         
-        items = Poly3DCollection(faces, facecolors=[(0, 0, 0, 0.1)])
-        ax.add_collection(items)
+        x = vertices[:,0][idx_srt]
+        y = vertices[:,1][idx_srt]
+        
+        plt.plot(x,y)
+        
+                   
+        fig = plt.figure()
+        ax = plt.gca()
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
 
-        A, centroid = updater.region_est_ellipsoid(tol=0.0001)
+        particles = updater.particle_locations
+        weights = updater.particle_weights      
+        maxweight = np.max(weights)
+
+        u = np.linspace(0,2*np.pi,100)
+        x = np.cos(u)
+        y = np.sin(u)
+        
+        plt.plot(x,y)
+
+        plt.scatter(
+            particles[:, 0], particles[:, 1],
+            s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
+        )
+        
+        plt.scatter(truemp[:, 0], truemp[:, 1], c='red', s=50)
+        plt.scatter(est_mean[0], est_mean[1], c='cyan', s=25) 
+        
+        
+        x = vertices[:,0][idx_srt]
+        y = vertices[:,1][idx_srt]
+        
+        plt.plot(x,y)        
+
+        A, centroid = mvee(vertices, 0.001)
 
         # Plot covariance ellipse.
         U, D, V = la.svd(A)
         
         
-        rx, ry, rz = [1 / np.sqrt(d) for d in D]
-        u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
+        rx, ry = [1 / np.sqrt(d) for d in D]
+        u = np.linspace(0,(2 * np.pi),100)
 
         
-        x = rx * np.cos(u) * np.cos(v)
-        y = ry * np.sin(u) * np.cos(v)
-        z = rz * np.sin(v)
-            
+        x = rx * np.cos(u)
+        y = ry * np.sin(u)
+
         for idx in xrange(x.shape[0]):
-            for idy in xrange(y.shape[1]):
-                x[idx, idy], y[idx, idy], z[idx, idy] = \
+                x[idx], y[idx] = \
                     np.dot(
                         np.transpose(V),
-                        np.array([x[idx,idy],y[idx,idy],z[idx,idy]])
+                        np.array([x[idx],y[idx]])
                     ) + centroid
-                
-                
-        ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-        x = np.cos(u) * np.sin(v)
-        y = np.sin(u) * np.sin(v)
-        z = np.cos(v)
-        ax.plot_wireframe(x, y, z, color="gray")            
-        rx, ry, rz = [1 / np.sqrt(d) for d in D]
-        u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
-
         
-        x = rx * np.cos(u) * np.cos(v)
-        y = ry * np.sin(u) * np.cos(v)
-        z = rz * np.sin(v)
-            
-        for idx in xrange(x.shape[0]):
-            for idy in xrange(y.shape[1]):
-                x[idx, idy], y[idx, idy], z[idx, idy] = \
-                    np.dot(
-                        np.transpose(V),
-                        np.array([x[idx,idy],y[idx,idy],z[idx,idy]])
-                    ) + centroid
-
-        ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=50)
-        est_mean = updater.est_mean()
-        ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)                   
-                
-        ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
-        
+        plt.plot(x,y)
 
         plt.show()
         

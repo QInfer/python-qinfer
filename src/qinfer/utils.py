@@ -34,7 +34,7 @@ from scipy.linalg import sqrtm
 import numpy.linalg as la
 
 from qinfer._exceptions import ApproximationWarning
-
+import warnings
 ###############################################################################
 
 #TODO: cases for p=0 or p=1

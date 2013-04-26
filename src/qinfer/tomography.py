@@ -97,6 +97,58 @@ class QubitStatePauliModel(Model):
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)        
 
+class RebitStatePauliModel(Model):
+    """
+    Represents an experimental system with unknown quantum state restricted
+    to the X-Y in the Bloch sphere.
+    """    
+    
+    @property
+    def n_modelparams(self):
+        return 2
+        
+    @property
+    def expparams_dtype(self):
+        return [('axis', '2f4'), ('vis', 'float')]
+
+    @staticmethod
+    def are_models_valid(modelparams):
+        return modelparams[:, 0]**2 + modelparams[:, 1]**2 <= 1
+    
+    def n_outcomes(self, expparams):
+        return 2
+        
+    def likelihood(self, outcomes, modelparams, expparams):
+        """
+        Calculates the likelihood function at the states specified 
+        by modelparams and measurement specified by expparams.
+        This is given by the Born rule and is the probability of
+        outcomes given the state and measurement operator.
+        
+        Parameters
+        ----------
+        outcomes = 
+            measurement outcome
+        expparams = 
+            Bloch vector of measurement axis
+        modelparams = 
+            quantum state Bloch vector
+        """
+        
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(RebitStatePauliModel, self).likelihood(outcomes, modelparams, expparams)
+        
+        pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
+        
+        # Note that expparams['axis'] has shape (n_exp, 3).
+        pr0 = 0.5*(1 + np.sum(modelparams*expparams['axis'],1))
+        
+        pr0 = pr0[:,np.newaxis]
+        
+        # Now we concatenate over outcomes.
+        return Model.pr0_to_likelihood_array(outcomes, pr0)       
+        
 class HTCircuitModel(Model):
     
     def __init__(self, n_qubits, n_had, f):
