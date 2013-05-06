@@ -544,23 +544,36 @@ class SMCUpdaterBCRB(SMCUpdater):
             outer_product(self.prior.grad_log_pdf(particle))
             for particle in self.particle_locations
             ]), axis=0) / self.n_particles
+    
         
     def hypothetical_bim(self, expparams):
         # E_{prior} E_{data | model, exp} [outer-product of grad-log-likelihood]
         like_bim = np.zeros(self.current_bim.shape)
-        
-        for idx_particle in xrange(self.n_particles):
-        
-            modelparams = self.prior.sample()
-
-            weight = 1 / self.n_particles
+  
+        # If there is only 1 model parameter, things can be more easily vectorized
+        if self.model.n_modelparams == 1:
+            outcomes = np.arange(self.model.n_outcomes(expparams))
+            modelparams = self.prior.sample(self.n_particles)
+            weights = np.ones((self.n_particles,)) / self.n_particles
+            grad = self.model.grad_log_likelihood(outcomes, modelparams, expparams)**2 
+            L = self.model.likelihood(outcomes, modelparams, expparams)
             
-            for outcome in np.arange(self.model.n_outcomes(expparams))[...,np.newaxis]:
-                 
-                grad = outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams)) 
-                L = self.model.likelihood(outcome, modelparams, expparams)[0]
-                like_bim += weight * grad * L
+            like_bim = np.sum(weights[:,np.newaxis] * np.sum(grad * L,0))
+            
+        else:
+            for idx_particle in xrange(self.n_particles):
+        
+                modelparams = self.prior.sample()
+    
+                weight = 1 / self.n_particles
                 
+                for outcome in np.arange(self.model.n_outcomes(expparams))[...,np.newaxis]:
+                     
+                    grad = outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams))[0] 
+                    L = self.model.likelihood(outcome, modelparams, expparams)
+                    
+                    like_bim += weight * grad * L
+                    
         return self.current_bim + like_bim
         
         

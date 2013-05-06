@@ -26,8 +26,10 @@
 ## IMPORTS #####################################################################
 
 import numpy as np
+import scipy.stats as st
 import scipy.linalg as la
 import abc
+
 
 ## CLASSES #####################################################################
 
@@ -91,8 +93,33 @@ class UniformDistribution(Distribution):
         shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
+        
+    def grad_log_pdf(self, var):
+        # THIS IS NOT TECHNICALLY LEGIT; BCRB doesn't technically work with a
+        # prior that doesn't go to 0 at its end points.  But we do it anyway.
+        if var.shape[0] == 1:
+            return 12/(self._delta)**2
+        else:
+            return np.zeros(var.shape)
 
 
+class NormalDistribution(Distribution):
+    def __init__(self, mean, var):
+        self.mean = mean
+        self.var = var
+        
+        self.dist = st.norm(mean,np.sqrt(var))        
+
+    @property
+    def n_rvs(self):
+        return 1
+
+    def sample(self, n = 1):
+        return self.dist.rvs(size=n)[:,np.newaxis]
+        
+    def grad_log_pdf(self, x):
+        return -(x - self.mean) / self.var
+        
 class SlantedNormalDistribution(Distribution):
     """
     Uniform distribution on a given rectangular region.
