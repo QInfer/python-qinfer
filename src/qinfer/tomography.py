@@ -148,6 +148,62 @@ class RebitStatePauliModel(Model):
         
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)       
+
+
+class MultiQubitStatePauliModel(Model):
+    """
+    Represents an experimental system with unknown quantum state,
+    and a limited visibility projective measurement.
+    
+    States are represented in the Pauli representation.
+    """    
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits
+        
+    @property
+    def n_modelparams(self):
+        return 4**self.n_qubits - 1
+        
+    @property
+    def expparams_dtype(self):
+        # return 'float' <---- This implies a two-index array of scalars,
+        #                      but we need a one-index array of records.
+        return [('pauli', 'int'), ('vis', 'float')]
+        #                 ^
+        #                 |
+        #                 3 floats, each four bytes wide
+
+    @staticmethod
+    def are_models_valid(modelparams):
+        return modelparams[:, 0]**2 + modelparams[:, 1]**2 + modelparams[:, 2]**2 <= 1
+    
+    def n_outcomes(self, expparams):
+        return 2
+        
+    def likelihood(self, outcomes, modelparams, expparams):
+        """
+        Calculates the likelihood function at the states specified 
+        by modelparams and measurement specified by expparams.
+        This is given by the Born rule and is the probability of
+        outcomes given the state and measurement operator.
+        """
+        
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(MultiQubitStatePauliModel, self).likelihood(outcomes, modelparams, expparams)
+        
+        pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
+        
+        # Note that expparams['axis'] has shape (n_exp, 3).
+        pr0 = 0.5*(1 + modelparams[expparams['pauli']])
+        
+        # Note that expparams['vis'] has shape (n_exp, ).
+        pr0 = expparams['vis'] * pr0 + (1 - expparams['vis']) * 0.5
+
+        pr0 = pr0[:,np.newaxis]
+        
+        # Now we concatenate over outcomes.
+        return Model.pr0_to_likelihood_array(outcomes, pr0)        
         
 class HTCircuitModel(Model):
     
