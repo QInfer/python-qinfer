@@ -145,6 +145,18 @@ class PoisonedModel(Model):
         # Now we truncate and return.
         np.clip(L + epsilon, 0, 1, out=L)
         return L
+        
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        """
+        Simulates experimental data according to the original (unpoisoned)
+        model. Note that this explicitly causes the simulated data and the
+        likelihood function to disagree. This is, strictly speaking, a violation
+        of the assumptions made about `~qinfer.abstract_model.Model` subclasses.
+        This violation is by intention, and allows for testing the robustness
+        of inference algorithms against errors in that assumption.
+        """
+        super(PoisonedModel, self).simulate_experiment(modelparams, expparams, repeat)
+        return self._model.simulate_experiment(modelparameters, expparams, repeat)
 
 class BinomialModel(Model):
     """
