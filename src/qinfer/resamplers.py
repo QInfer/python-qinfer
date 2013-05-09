@@ -165,15 +165,19 @@ class LiuWestResampler(object):
     	S = np.real(h * S)
         n_ms, n_mp = l.shape
         
-        new_locs = np.empty(l.shape)        
-        cumsum_weights = np.cumsum(w)[:, np.newaxis]
+        new_locs = np.empty(l.shape)
         
         idxs_to_resample = np.arange(n_ms)
         
         # Loop as long as there are any particles left to resample.
         while idxs_to_resample.size:
-            # Draw j with probability self.particle_weights[j].
-            js = np.argmax(np.random.random(size = (1, idxs_to_resample.size)) < cumsum_weights[idxs_to_resample], axis=0)
+            # Draw j with probability particle_weights[j].
+            js = np.random.choice(
+                a=n_ms,
+                size=(idxs_to_resample.size,),
+                replace=True,
+                p=w
+            )
             
             # Set mu_i to a x_j + (1 - a) mu.
             mus = a * l[js,:] + (1 - a) * mean
