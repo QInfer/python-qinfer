@@ -170,16 +170,23 @@ class LiuWestResampler(object):
         
         idxs_to_resample = np.arange(n_ms)
         
+        # Preallocate js and mus so that we don't have rapid allocation and
+        # deallocation.
+        js = np.empty(idxs_to_resample.shape, dtype=int)
+        mus = np.empty(l.shape, dtype=l.dtype)
+        
         # Loop as long as there are any particles left to resample.
         while idxs_to_resample.size:
             # Draw j with probability self.particle_weights[j].
             # We do this by drawing random variates uniformly on the interval
             # [0, 1], then see where they belong in the CDF.
-            uniform_samples = np.random.random((idxs_to_resample.size,))
-            js = cumsum_weights.searchsorted(uniform_samples, side='right')
+            js[:] = cumsum_weights.searchsorted(
+                np.random.random((idxs_to_resample.size,)),
+                side='right'
+            )
             
             # Set mu_i to a x_j + (1 - a) mu.
-            mus = a * l[js,:] + (1 - a) * mean
+            mus[...] = a * l[js,:] + (1 - a) * mean
             
             # Draw x_i from N(mu_i, S).
             new_locs[idxs_to_resample, :] = mus + np.dot(S, np.random.randn(n_mp, mus.shape[0])).T
@@ -188,6 +195,11 @@ class LiuWestResampler(object):
             idxs_to_resample = idxs_to_resample[np.nonzero(np.logical_not(
                 model.are_models_valid(new_locs[idxs_to_resample, :])
             ))[0]]
+
+            # This may look a little weird, but it should delete the unused
+            # elements of js, so that we don't need to reallocate.
+            js = js[:idxs_to_resample.size]
+            mus = mus[:idxs_to_resample.size, :]
 
         # Now we reset the weights to be uniform, letting the density of
         # particles represent the information that used to be stored in the
