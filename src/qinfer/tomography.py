@@ -84,8 +84,6 @@ class QubitStatePauliModel(Model):
         # call counting there.
         super(QubitStatePauliModel, self).likelihood(outcomes, modelparams, expparams)
         
-        pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
-        
         # Note that expparams['axis'] has shape (n_exp, 3).
         pr0 = 0.5*(1 + np.sum(modelparams*expparams['axis'],1))
         
@@ -93,7 +91,7 @@ class QubitStatePauliModel(Model):
         pr0 = expparams['vis'] * pr0 + (1 - expparams['vis']) * 0.5
 
         pr0 = pr0[:,np.newaxis]
-        
+
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)        
 
@@ -113,7 +111,7 @@ class RebitStatePauliModel(Model):
 
     @staticmethod
     def are_models_valid(modelparams):
-        return modelparams[:, 0]**2 + modelparams[:, 1]**2 <= 1
+        return True#modelparams[:, 0]**2 + modelparams[:, 1]**2 <= 1
     
     def n_outcomes(self, expparams):
         return 2
@@ -144,6 +142,10 @@ class RebitStatePauliModel(Model):
         # Note that expparams['axis'] has shape (n_exp, 3).
         pr0 = 0.5*(1 + np.sum(modelparams*expparams['axis'],1))
         
+        # Use the following hack if you don't want to ensure positive weights
+        pr0[pr0 < 0] = 0
+        pr0[pr0 > 1] = 1
+        
         pr0 = pr0[:,np.newaxis]
         
         # Now we concatenate over outcomes.
@@ -159,6 +161,8 @@ class MultiQubitStatePauliModel(Model):
     """    
     def __init__(self, n_qubits):
         self.n_qubits = n_qubits
+        super(MultiQubitStatePauliModel, self).__init__()
+
         
     @property
     def n_modelparams(self):
@@ -166,16 +170,11 @@ class MultiQubitStatePauliModel(Model):
         
     @property
     def expparams_dtype(self):
-        # return 'float' <---- This implies a two-index array of scalars,
-        #                      but we need a one-index array of records.
         return [('pauli', 'int'), ('vis', 'float')]
-        #                 ^
-        #                 |
-        #                 3 floats, each four bytes wide
 
     @staticmethod
     def are_models_valid(modelparams):
-        return modelparams[:, 0]**2 + modelparams[:, 1]**2 + modelparams[:, 2]**2 <= 1
+        return True
     
     def n_outcomes(self, expparams):
         return 2
@@ -192,16 +191,17 @@ class MultiQubitStatePauliModel(Model):
         # call counting there.
         super(MultiQubitStatePauliModel, self).likelihood(outcomes, modelparams, expparams)
         
-        pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
         
         # Note that expparams['axis'] has shape (n_exp, 3).
-        pr0 = 0.5*(1 + modelparams[expparams['pauli']])
+        pr0 = 0.5*(1 + modelparams[:,expparams['pauli']])
+
+        # Use the following hack if you don't want to ensure positive weights
+        pr0[pr0 < 0] = 0
+        pr0[pr0 > 1] = 1
         
         # Note that expparams['vis'] has shape (n_exp, ).
         pr0 = expparams['vis'] * pr0 + (1 - expparams['vis']) * 0.5
 
-        pr0 = pr0[:,np.newaxis]
-        
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)        
         

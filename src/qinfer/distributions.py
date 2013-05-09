@@ -179,7 +179,10 @@ class HilbertSchmidtUniform(object):
     """
     def __init__(self, dim=2):
         self.dim = dim
-
+        self.paulis1Q = np.array([[[1,0],[0,1]],[[1,0],[0,-1]],[[0,-1j],[1j,0]],[[0,1],[1,0]]])
+        
+        self.paulis = self.make_Paulis(self.paulis1Q, 4)
+        
     def sample(self):
         #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)        
         g = (np.random.randn(self.dim,self.dim) + 1j*np.random.randn(self.dim,self.dim))/np.sqrt(2.0)
@@ -197,13 +200,22 @@ class HilbertSchmidtUniform(object):
         rho = np.dot(np.dot(np.identity(self.dim)+U,np.dot(z,z.conj().transpose())),np.identity(self.dim)+U.conj().transpose())
         rho = rho/np.trace(rho)
         
-        # TODO: generalize to Heisenberg-Weyl groups.
-        z = np.real(np.trace(np.dot(rho,np.array([[1,0],[0,-1]]))))
-        y = np.real(np.trace(np.dot(rho,np.array([[0,-1j],[1j,0]]))))
-        x = np.real(np.trace(np.dot(rho,np.array([[0,1],[1,0]]))))
+        x = np.zeros([self.dim**2-1])
+        for idx in xrange(self.dim**2-1):
+            x[idx] = np.real(np.trace(np.dot(rho,self.paulis[idx+1])))
+              
+        return x
         
-        return np.array([x,y,z])
-
+    def make_Paulis(self,paulis,d):
+        if d == self.dim**2:
+            return paulis
+        else:
+            temp = np.zeros([d**2,d,d],dtype='complex128')
+            for idx in xrange(temp.shape[0]):
+                temp[idx,:] = np.kron(paulis[np.trunc(idx/d)], self.paulis1Q[idx % 4])
+            return self.make_Paulis(temp,d**2)
+            
+        
 class HaarUniform(object):
     """
     Creates a new Haar uniform prior on state space of dimension ``dim``.
