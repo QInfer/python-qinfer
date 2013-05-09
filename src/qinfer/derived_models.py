@@ -156,7 +156,7 @@ class PoisonedModel(Model):
         of inference algorithms against errors in that assumption.
         """
         super(PoisonedModel, self).simulate_experiment(modelparams, expparams, repeat)
-        return self._model.simulate_experiment(modelparameters, expparams, repeat)
+        return self._model.simulate_experiment(modelparams, expparams, repeat)
 
 class BinomialModel(Model):
     """
