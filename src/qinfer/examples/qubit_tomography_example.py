@@ -53,10 +53,10 @@ import time
 import sys
 
 ## Imports from within QInfer. ##
-from .. import distributions, ale
-from ..smc import SMCUpdater
-from ..tomography import QubitStatePauliModel
-from .._lib import docopt
+from qinfer import distributions, ale
+from qinfer.smc import SMCUpdater
+from qinfer.tomography import QubitStatePauliModel
+from qinfer._lib import docopt
 
 try:
     from .. import dialogs
