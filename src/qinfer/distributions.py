@@ -207,13 +207,13 @@ class HilbertSchmidtUniform(object):
         return x
         
     def make_Paulis(self,paulis,d):
-        if d == self.dim**2:
+        if d == self.dim*2:
             return paulis
         else:
             temp = np.zeros([d**2,d,d],dtype='complex128')
             for idx in xrange(temp.shape[0]):
                 temp[idx,:] = np.kron(paulis[np.trunc(idx/d)], self.paulis1Q[idx % 4])
-            return self.make_Paulis(temp,d**2)
+            return self.make_Paulis(temp,d*2)
             
         
 class HaarUniform(object):
