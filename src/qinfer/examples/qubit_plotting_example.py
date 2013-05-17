@@ -131,6 +131,7 @@ if __name__ == "__main__":
     if do_plot:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
+
         particles = updater.particle_locations
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -139,7 +140,9 @@ if __name__ == "__main__":
         x = np.cos(u) * np.sin(v)
         y = np.sin(u) * np.sin(v)
         z = np.cos(v)
-        ax.plot_wireframe(x, y, z, color="gray")
+        ax.plot_wireframe(x, y, z, color="gray", alpha = 0.5)
+        ax.set_ylim(-1,1)
+        ax.set_aspect('equal')
 
         ax.scatter(particles[:, 0], particles[:, 1], particles[:, 2], s=10)
         ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=25)
@@ -160,7 +163,7 @@ if __name__ == "__main__":
         updater.update(outcome, thisexp)
         
         # Optionally plot the data so far.
-        if do_plot and np.mod(idx_exp*idx_exp, n_exp) == 0:
+        if do_plot and np.mod(4*idx_exp, n_exp) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             ax.set_xlabel('X')
@@ -173,7 +176,10 @@ if __name__ == "__main__":
             x = np.cos(u) * np.sin(v)
             y = np.sin(u) * np.sin(v)
             z = np.cos(v)
-            ax.plot_wireframe(x, y, z, color="gray")       
+            ax.plot_wireframe(x, y, z, color="gray", alpha = 0.5)
+            ax.set_ylim(-1,1)
+            ax.set_aspect('equal')
+        
             ax.scatter(
                 particles[:, 0], particles[:, 1], particles[:, 2],
                 s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
@@ -197,6 +203,31 @@ if __name__ == "__main__":
 
     est_mean = updater.est_mean()
     if do_plot:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        x = np.cos(u) * np.sin(v)
+        y = np.sin(u) * np.sin(v)
+        z = np.cos(v)
+        ax.plot_wireframe(x, y, z, color="gray", alpha = 0.5)
+        ax.set_ylim(-1,1)
+        ax.set_aspect('equal')
+        particles = updater.particle_locations
+        weights = updater.particle_weights      
+        maxweight = np.max(weights)
+
+        ax.scatter(
+            particles[:, 0], particles[:, 1], particles[:, 2],
+            s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
+        )
+        
+        #temp = thisexp['axis'][0]*(-1)**outcome
+        #ax.scatter(temp[0], temp[1], temp[2], c='green', s=50)
+        ax.scatter(truemp[:, 0], truemp[:, 1], truemp[:, 2], c='red', s=50)
+        est_mean = updater.est_mean()
         ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)    
         
         faces, vertices = updater.region_est_hull()
@@ -213,7 +244,9 @@ if __name__ == "__main__":
         x = np.cos(u) * np.sin(v)
         y = np.sin(u) * np.sin(v)
         z = np.cos(v)
-        ax.plot_wireframe(x, y, z, color="gray")            
+        ax.plot_wireframe(x, y, z, color="gray", alpha = 0.5)
+        ax.set_ylim(-1,1)
+        ax.set_aspect('equal')
 
         particles = updater.particle_locations
         weights = updater.particle_weights      
@@ -237,7 +270,7 @@ if __name__ == "__main__":
 
         A, centroid = updater.region_est_ellipsoid(tol=0.0001)
 
-        # Plot covariance ellipse.
+        # Plot MVEE ellipse.
         U, D, V = la.svd(A)
         
         
@@ -269,7 +302,18 @@ if __name__ == "__main__":
         x = np.cos(u) * np.sin(v)
         y = np.sin(u) * np.sin(v)
         z = np.cos(v)
-        ax.plot_wireframe(x, y, z, color="gray")            
+        ax.plot_wireframe(x, y, z, color="gray", alpha = 0.5)
+        ax.set_ylim(-1,1)
+        ax.set_aspect('equal')
+        particles = updater.particle_locations
+        weights = updater.particle_weights      
+        maxweight = np.max(weights)
+
+        ax.scatter(
+            particles[:, 0], particles[:, 1], particles[:, 2],
+            s=20 * (1 + (weights - 1 / N_PARTICLES) * N_PARTICLES)
+        )
+
         rx, ry, rz = [1 / np.sqrt(d) for d in D]
         u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
 
@@ -290,8 +334,31 @@ if __name__ == "__main__":
         est_mean = updater.est_mean()
         ax.scatter(est_mean[0], est_mean[1], est_mean[2], c='cyan', s=25)                   
                 
-        ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
+        ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1, linewidth = 0.1)
+
+        A, centroid = la.inv(updater.est_covariance_mtx()),updater.est_mean()
+
+        # Plot covariance ellipse.
+        U, D, V = la.svd(A)
+
         
+        rx, ry, rz = [np.sqrt(7.81/d) for d in D]
+        u, v = np.mgrid[0:(2 * np.pi):20j, -(np.pi / 2):(np.pi / 2):10j]
+
+        
+        x = rx * np.cos(u) * np.cos(v)
+        y = ry * np.sin(u) * np.cos(v)
+        z = rz * np.sin(v)
+            
+        for idx in xrange(x.shape[0]):
+            for idy in xrange(y.shape[1]):
+                x[idx, idy], y[idx, idy], z[idx, idy] = \
+                    np.dot(
+                        np.transpose(V),
+                        np.array([x[idx,idy],y[idx,idy],z[idx,idy]])
+                    ) + centroid
+
+        ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1, color = 'red', linewidth = 0.1)
 
         plt.show()
         

@@ -167,15 +167,19 @@ if __name__ == "__main__":
     if do_plot:
         fig = plt.figure()
         ax = plt.gca()
-        particles = updater.particle_locations
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
+        ax.set_ylim(-1,1)
+        ax.set_xlim(-1,1)
+        ax.set_aspect('equal')
         
         u = np.linspace(0,2*np.pi,100)
         x = np.cos(u)
         y = np.sin(u)
         
         plt.plot(x,y)
+
+        particles = updater.particle_locations
      
         plt.scatter(particles[:, 0], particles[:, 1], s=10)
         plt.scatter(truemp[:, 0], truemp[:, 1], c='red', s=50)
@@ -216,6 +220,9 @@ if __name__ == "__main__":
         ax = plt.gca()
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
+        ax.set_ylim(-1,1)
+        ax.set_xlim(-1,1)
+        ax.set_aspect('equal')
 
         particles = updater.particle_locations
         weights = updater.particle_weights      
@@ -254,7 +261,9 @@ if __name__ == "__main__":
         ax = plt.gca()
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-
+        ax.set_ylim(-1,1)
+        ax.set_xlim(-1,1)
+        ax.set_aspect('equal')
         particles = updater.particle_locations
         weights = updater.particle_weights      
         maxweight = np.max(weights)
@@ -284,6 +293,9 @@ if __name__ == "__main__":
         ax = plt.gca()
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
+        ax.set_ylim(-1,1)
+        ax.set_xlim(-1,1)
+        ax.set_aspect('equal')
 
         particles = updater.particle_locations
         weights = updater.particle_weights      
@@ -311,7 +323,7 @@ if __name__ == "__main__":
 
         A, centroid = mvee(vertices, 0.001)
 
-        # Plot covariance ellipse.
+        # Plot mvee ellipse.
         U, D, V = la.svd(A)
         
         
@@ -328,6 +340,26 @@ if __name__ == "__main__":
                         np.transpose(V),
                         np.array([x[idx],y[idx]])
                     ) + centroid
+        
+        plt.plot(x,y)
+        
+        # Plot covariance ellipse.
+        U, D, V = la.svd(la.inv(updater.est_covariance_mtx()))
+        
+        
+        rx, ry = [np.sqrt(6/d) for d in D]
+        u = np.linspace(0,(2 * np.pi),100)
+
+        
+        x = rx * np.cos(u)
+        y = ry * np.sin(u)
+
+        for idx in xrange(x.shape[0]):
+                x[idx], y[idx] = \
+                    np.dot(
+                        np.transpose(V),
+                        np.array([x[idx],y[idx]])
+                    ) + updater.est_mean()
         
         plt.plot(x,y)
 
