@@ -174,8 +174,8 @@ class BinomialModel(Model):
     """
     
     def __init__(self, decorated_model):
-        super(BinomialModel, self).__init__()
         self.decorated_model = decorated_model
+        super(BinomialModel, self).__init__()
         
         if not (decorated_model.is_n_outcomes_constant and decorated_model.n_outcomes(None) == 2):
             raise ValueError("Decorated model must be a two-outcome model.")
