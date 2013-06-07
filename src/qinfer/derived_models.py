@@ -230,14 +230,14 @@ class BinomialModel(Model):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
         super(BinomialModel, self).likelihood(outcomes, modelparams, expparams)
-        pr0 = self.decorated_model.likelihood(
-            np.array([0], dtype='uint'),
+        pr1 = self.decorated_model.likelihood(
+            np.array([1], dtype='uint'),
             modelparams,
             expparams['x'] if self._expparams_scalar else expparams)
         
         # Now we concatenate over outcomes.
         return np.concatenate([
-            binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr0)
+            binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr1)
             for idx in xrange(outcomes.shape[0])
             ]) 
 
