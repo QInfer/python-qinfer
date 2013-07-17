@@ -303,6 +303,27 @@ class SMCUpdater(object):
             # the sum should collapse the particle index, 1.
             axis=1
         )
+        
+    def est_meanfn(self, fn):
+        """
+        Returns an estimate of the expectation value of a given function
+        :math:`f` of the model parameters, given by a sum over the current SMC
+        approximation of the posterior distribution over models.
+        
+        Here, :math:`f` is represented by a function ``fn`` that is vectorized
+        over particles, such that ``f(modelparams)`` has shape
+        ``(n_particles, k)``, where ``n_particles = modelparams.shape[0]``, and
+        where ``k`` is a positive integer.
+        
+        :param callable fn: Function implementing :math:`f` in a vectorized
+            manner. (See above.)
+        
+        :rtype: :class:`numpy.ndarray`, shape ``(k, )``.
+        :returns: An array containing the an estimate of the mean of :math:`f`.
+        """
+        return np.einsum('i,ik',
+            self.particle_weights, f(self.particle_locations)
+        )
 
     def est_covariance_mtx(self):
         """
