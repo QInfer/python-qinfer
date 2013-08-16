@@ -184,8 +184,8 @@ class NDieModel(Model):
     
     ## METHODS ##
     def __init__(self, n = 6):
-	self.n = n
-	Model.__init__(self)
+	    self.n = n
+	    Model.__init__(self)
 	
     @staticmethod
     def are_models_valid(modelparams):

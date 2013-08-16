@@ -39,10 +39,11 @@ __all__ = [
 import numpy as np
 import warnings
 
-from abstract_model import DifferentiableModel
-from metrics import rescaled_distance_mtx
+from qinfer.abstract_model import DifferentiableModel
+from qinfer.metrics import rescaled_distance_mtx
+from qinfer import clustering
 
-from resamplers import LiuWestResampler
+from qinfer.resamplers import LiuWestResampler
 
 from scipy.spatial import Delaunay
 import scipy.linalg as la
@@ -389,6 +390,39 @@ class SMCUpdater(object):
         tot_like = np.sum(L, axis=1)
         return np.dot(tot_like.T, rescale_var)
         
+    def expected_information_gain(self, expparams):
+        r"""
+        Calculates the expected information gain for a hypothetical experiment.
+        
+        :param expparams: The experiment at which to compute expected
+            information gain.
+        :type expparams: :class:`~numpy.ndarray` of dtype given by the current
+            model's :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype` property,
+            and of shape ``(1,)``
+            
+        :return float: The Bayes risk for the current posterior distribution
+            of the hypothetical experiment ``expparams``.
+        """
+
+        nout = self.model.n_outcomes(expparams)
+        w, L = self.hypothetical_update(np.arange(nout), expparams, return_likelihood=True)
+        w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
+        L = L[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
+        
+        # This is a special case of the KL divergence estimator (see below),
+        # in which the other distribution is guaranteed to share support.
+        #
+        # KLD[idx_outcome] = Sum over particles(self * log(self / other[idx_outcome])
+        # Est. KLD = E[KLD[idx_outcome] | outcomes].
+        
+        KLD = np.sum(
+            self.particle_weights * np.log(self.particle_weights / w),
+            axis=1 # Sum over particles.
+        )
+        
+        tot_like = np.sum(L, axis=1)
+        return np.dot(tot_like, KLD)
+        
     def est_entropy(self):
         nz_weights = self.particle_weights[self.particle_weights > 0]
         return -np.sum(np.log(nz_weights) * nz_weights)
@@ -419,7 +453,7 @@ class SMCUpdater(object):
         if cluster_opts is None:
             cluster_opts = {}
         
-        for cluster_label, cluster_particles in clustering.cluster(
+        for cluster_label, cluster_particles in clustering.particle_clusters(
                 self.particle_locations, self.particle_weights,
                 **cluster_opts
             ):
