@@ -236,7 +236,9 @@ class SMCUpdater(object):
         if check_for_resample:
             self._maybe_resample()
             
-        assert np.all(self.particle_weights >= 0)
+        if not np.all(self.particle_weights >= 0):
+            warnings.warn("Negative weights occured in particle approximation. Smallest weight observed == {}. Clipping weights.".format(np.min(self.particle_weights)), ApproximationWarning)
+            numpy.clip(self.particle_weights, 0, 1, out=self.particle_weights)
 
     def batch_update(self, outcomes, expparams, resample_interval=5):
         r"""
