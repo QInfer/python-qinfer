@@ -72,6 +72,7 @@ class SMCUpdater(object):
             ):
 
         self._resample_count = 0
+        self._normalization = 1
 
         self.model = model
         self.n_particles = n_particles
@@ -124,6 +125,17 @@ class SMCUpdater(object):
         # a docstring.
         return self._resample_count
 
+    @property
+    def normalization(self):
+        """
+        Returns the normalization of the previous update.
+        
+        :rtype: `float`
+        """
+        # We wrap this in a property to prevent external resetting and to enable
+        # a docstring.
+        return self._normalization
+        
     @property
     def n_ess(self):
         """
@@ -185,6 +197,9 @@ class SMCUpdater(object):
         
         # Sum up the weights to find the renormalization scale.
         norm_scale = np.sum(hyp_weights, axis=2)[..., np.newaxis]
+        
+        # Record this value
+        self._normalization = norm_scale
         
         # As a special case, check whether any entries of the norm_scale
         # are zero. If this happens, that implies that all of the weights are
