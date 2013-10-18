@@ -43,6 +43,7 @@ import warnings
 from utils import outer_product, particle_meanfn, particle_covariance_mtx
 
 from qinfer import clustering
+from qinfer._exceptions import ResamplerWarning
 
 ## CLASSES #####################################################################
 
@@ -123,9 +124,15 @@ class LiuWestResampler(object):
     r"""
     Creates a resampler instance that applies the algorithm of
     [LW01]_ to redistribute the particles.
+    
+    :param float a: Value of the parameter :math:`a` of the [LW01]_ algorithm
+        to use in resampling.
+    :param int maxiter: Maximum number of times to attempt to resample within
+        the space of valid models before giving up.
     """
-    def __init__(self, a=0.98):
+    def __init__(self, a=0.98, maxiter=1000):
         self.a = a # Implicitly calls the property setter below to set _h.
+        self._maxiter = maxiter
 
     ## PROPERTIES ##
 
@@ -176,7 +183,11 @@ class LiuWestResampler(object):
         mus = np.empty(l.shape, dtype=l.dtype)
         
         # Loop as long as there are any particles left to resample.
-        while idxs_to_resample.size:
+        n_iters = 0
+        while idxs_to_resample.size and n_iters < self._maxiter:
+            # Keep track of how many iterations we used.
+            n_iters += 1
+            
             # Draw j with probability self.particle_weights[j].
             # We do this by drawing random variates uniformly on the interval
             # [0, 1], then see where they belong in the CDF.
@@ -200,6 +211,15 @@ class LiuWestResampler(object):
             # elements of js, so that we don't need to reallocate.
             js = js[:idxs_to_resample.size]
             mus = mus[:idxs_to_resample.size, :]
+            
+        if idxs_to_resample.size:
+            # We failed to force all models to be valid within maxiter attempts.
+            # This means that we could be propagating out invalid models, and
+            # so we should warn about that.
+            warnings.warn((
+                "Liu-West resampling failed to find valid models for {} "
+                "particles within {} iterations."
+            ).format(idxs_to_resample.size, self._maxiter), ResamplerWarning)
 
         # Now we reset the weights to be uniform, letting the density of
         # particles represent the information that used to be stored in the
