@@ -93,6 +93,38 @@ class UniformDistribution(Distribution):
         shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
+
+class UniformDistributionWith0(Distribution):
+    """
+    Uniform distribution on a given rectangular region with padded zeros.
+    
+    :param numpy.ndarray ranges: Array of shape ``(n_rvs, 2)``, where ``n_rvs``
+        is the number of random variables, specifying the upper and lower limits
+        for each variable.
+    """
+    
+    def __init__(self, ranges=_DEFAULT_RANGES, zeros = 0):
+        if not isinstance(ranges, np.ndarray):
+            ranges = np.array(ranges)
+            
+        if len(ranges.shape) == 1:
+            ranges = ranges[np.newaxis, ...]
+        
+        self._ranges = ranges
+        self._n_rvs = ranges.shape[0]
+        self._delta = ranges[:, 1] - ranges[:, 0]
+        
+        self.zeros = zeros
+        
+    @property
+    def n_rvs(self):
+        return self._n_rvs
+        
+    def sample(self, n=1):
+        shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
+        z = np.random.random(shape)
+        foo =  self._ranges[:, 0] + z * self._delta
+        return np.pad(foo,((0,0), (0, self.zeros)), mode = 'constant')
         
     def grad_log_pdf(self, var):
         # THIS IS NOT TECHNICALLY LEGIT; BCRB doesn't technically work with a
