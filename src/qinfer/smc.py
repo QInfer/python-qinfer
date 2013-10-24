@@ -72,8 +72,7 @@ class SMCUpdater(object):
             ):
 
         self._resample_count = 0
-        self._normalization = 1
-
+        
         self.model = model
         self.n_particles = n_particles
         self.prior = prior
@@ -96,7 +95,8 @@ class SMCUpdater(object):
         self.resample_thresh = resample_thresh
 
         self._data_record = []
-
+        self._normalization_record = []
+        
         ## PARTICLE INITIALIZATION ##
         # Particles are stored using two arrays, particle_locations and
         # particle_weights, such that:
@@ -126,15 +126,15 @@ class SMCUpdater(object):
         return self._resample_count
 
     @property
-    def normalization(self):
+    def normalization_record(self):
         """
-        Returns the normalization of the previous update.
+        Returns the normalization record.
         
         :rtype: `float`
         """
         # We wrap this in a property to prevent external resetting and to enable
         # a docstring.
-        return self._normalization
+        return self._normalization_record
         
     @property
     def n_ess(self):
@@ -163,7 +163,7 @@ class SMCUpdater(object):
 
     ## UPDATE METHODS ##########################################################
 
-    def hypothetical_update(self, outcomes, expparams, return_likelihood=False):
+    def hypothetical_update(self, outcomes, expparams, return_likelihood=False, return_normalization=False):
         """
         Produces the particle weights for the posterior of a hypothetical
         experiment.
@@ -198,9 +198,6 @@ class SMCUpdater(object):
         # Sum up the weights to find the renormalization scale.
         norm_scale = np.sum(hyp_weights, axis=2)[..., np.newaxis]
         
-        # Record this value
-        self._normalization = norm_scale
-        
         # As a special case, check whether any entries of the norm_scale
         # are zero. If this happens, that implies that all of the weights are
         # zero--- that is, that the hypothicized outcome was impossible.
@@ -216,9 +213,15 @@ class SMCUpdater(object):
             # This introduces a length-1 axis for the particle number,
             # so that the normalization is broadcast over all particles.
         if not return_likelihood:
-            return norm_weights
+            if not return_normalization:
+                return norm_weights
+            else:
+                return norm_weights, norm_scale
         else:
-            return norm_weights, L
+            if not return_normalization:
+                return norm_weights, L
+            else:
+                return norm_weights, L, norm_scale
 
     def update(self, outcome, expparams, check_for_resample=True):
         """
@@ -243,10 +246,16 @@ class SMCUpdater(object):
         # TODO: record the experiment as well.
         self._data_record.append(outcome)
 
+        # Perform the update      
+        weights, norm = self.hypothetical_update(outcome, expparams, return_normalization=True)
+
         # Since hypothetical_update returns an array indexed by
         # [outcome, experiment, particle], we need to strip off those two
         # indices first.
-        self.particle_weights[:] = self.hypothetical_update(outcome, expparams)[0, 0, :]
+        self.particle_weights[:] = weights[0,0,:]
+        
+        # Record the normalization
+        self._normalization_record.append(norm[0][0])
 
         if check_for_resample:
             self._maybe_resample()
