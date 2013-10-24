@@ -11,6 +11,44 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+## MODULE MOCKING ##############################################################
+
+# ReadTheDocs doesn't support modules which depend on NumPy, so we must mock
+# them up as suggested by the FAQ:
+# http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
+import sys
+
+class Mock(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        return Mock()
+
+    @classmethod
+    def __getattr__(cls, name):
+        if name in ('__file__', '__path__'):
+            return '/dev/null'
+        elif name[0] == name[0].upper():
+            mockType = type(name, (), {})
+            mockType.__module__ = __name__
+            return mockType
+        else:
+            return Mock()
+
+MOCK_MODULES = [
+    'numpy',
+    'numpy.linalg',
+    'scipy',
+    'sklearn',
+    'sklearn.cluster',
+    'sklearn.metrics',
+    'sklearn.metrics.pairwise',
+]
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = Mock() 
+
+###############################################################################
 import sys, os
 
 # If extensions (or modules to document with autodoc) are in another directory,
