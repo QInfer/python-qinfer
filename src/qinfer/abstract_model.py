@@ -100,6 +100,14 @@ class Simulatable(object):
         :rtype: :class:`~numpy.ndarray` of shape ``(n_modelparams, )``.
         """
         return self._Q
+        
+    @property
+    def modelparam_names(self):
+        """
+        Returns the names of the various model parameters admitted by this
+        model, formatted as LaTeX strings.
+        """
+        return map("x_{}".format, xrange(self.n_modelparams))
     
     ## ABSTRACT METHODS ##
     

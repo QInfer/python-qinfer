@@ -159,7 +159,22 @@ def uniquify(seq):
     seen = set()
     seen_add = seen.add
     return [ x for x in seq if x not in seen and not seen_add(x)]
-    
+
+def format_latex_float(val, n_digits):
+    # FIXME: strip leading zeros from exponent.
+    fmtted = "{{:0.{0}}}".format(int(n_digits)).format(val)
+    if "e" in fmtted:
+        fmtted = fmtted.replace("e", r"\times 10^{") + "}"
+    return fmtted
+ 
+def format_uncertainty(value, uncertianty):
+    n_digits = int(np.floor(np.log10(value) - np.log10(uncertianty)) + 1)
+    if n_digits <= 0:
+        n_digits = 1
+    return r"${0} \pm {1}$".format(
+        format_latex_float(value, n_digits),
+        format_latex_float(uncertianty, n_digits)
+    )
     
 #==============================================================================
 #Test Code

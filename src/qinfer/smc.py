@@ -47,8 +47,8 @@ from qinfer.resamplers import LiuWestResampler
 
 from scipy.spatial import Delaunay
 import scipy.linalg as la
-from utils import outer_product, mvee, uniquify, particle_meanfn, \
-        particle_covariance_mtx
+from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
+        particle_covariance_mtx, format_uncertainty
 from _exceptions import ApproximationWarning
 import scipy.stats
 
@@ -619,6 +619,46 @@ class SMCUpdater(object):
     
     def risk(self, x0):
         return self.bayes_risk(np.array([(x0,)], dtype=self.model.expparams_dtype))
+        
+    ## IPYTHON SUPPORT METHODS #################################################
+    
+    def _repr_html_(self):
+        return r"""
+        <strong>{cls_name} for model of type {model}:</strong>
+        <table>
+            <caption>Current estimated parameters</caption>
+            <thead>
+                <tr>
+                    {parameter_names}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    {parameter_values}
+                </tr>
+            </tbody>
+        </table>
+        <em>Resample count:</em> {resample_count}
+        """.format(
+            cls_name=type(self).__name__, # Useful for subclassing.
+            model=type(self.model).__name__,
+            
+            parameter_names="\n".join(
+                map("<td>${}$</td>".format, self.model.modelparam_names)
+            ),
+            
+            # TODO: change format string based on number of digits of precision
+            #       admitted by the variance.
+            parameter_values="\n".join(
+                "<td>{}</td>".format(
+                    format_uncertainty(mu, std)
+                )
+                for mu, std in
+                zip(self.est_mean(), np.sqrt(np.diag(self.est_covariance_mtx())))
+            ),
+            
+            resample_count=self.resample_count
+        )
         
                 
 class SMCUpdaterBCRB(SMCUpdater):
