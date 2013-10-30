@@ -137,6 +137,19 @@ class SMCUpdater(object):
         return self._normalization_record
         
     @property
+    def log_total_likelihood(self):
+        """
+        Returns the log-likelihood of all the data collected so far.
+        
+        Equivalent to::
+            
+            np.sum(np.log(updater.normalization_record))
+        
+        :rtype: `float`
+        """
+        return np.sum(np.log(self.normalization_record))
+        
+    @property
     def n_ess(self):
         """
         Estimates the effective sample size (ESS) of the current distribution
@@ -205,10 +218,14 @@ class SMCUpdater(object):
         # zero. To allow this to happen without causing a NaN to propagate,
         # we forcibly set the norm_scale to 1, so that the weights will
         # all remain zero.
-        norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
+        #
+        # We don't actually want to propagate this out to the caller, however,
+        # and so we save the "fixed" norm_scale to a new array.
+        fixed_norm_scale = norm_scale.copy()
+        fixed_norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
         
         # normalize
-        norm_weights = hyp_weights / norm_scale
+        norm_weights = hyp_weights / fixed_norm_scale
             # Note that newaxis is needed to align the two matrices.
             # This introduces a length-1 axis for the particle number,
             # so that the normalization is broadcast over all particles.
@@ -262,7 +279,7 @@ class SMCUpdater(object):
             
         if not np.all(self.particle_weights >= 0):
             warnings.warn("Negative weights occured in particle approximation. Smallest weight observed == {}. Clipping weights.".format(np.min(self.particle_weights)), ApproximationWarning)
-            numpy.clip(self.particle_weights, 0, 1, out=self.particle_weights)
+            np.clip(self.particle_weights, 0, 1, out=self.particle_weights)
 
     def batch_update(self, outcomes, expparams, resample_interval=5):
         r"""
