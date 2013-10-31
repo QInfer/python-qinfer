@@ -105,6 +105,10 @@ class PoisonedModel(Model):
         the lifetime of a Model instance.
         """
         return self._model.is_n_outcomes_constant
+        
+    @property
+    def modelparam_names(self):
+        return self._model.modelparam_names
     
     ## METHODS ##
     
@@ -209,6 +213,10 @@ class BinomialModel(Model):
         the lifetime of a Model instance.
         """
         return False
+        
+    @property
+    def modelparam_names(self):
+        return self._model.modelparam_names
     
     ## METHODS ##
     
