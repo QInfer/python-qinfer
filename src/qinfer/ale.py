@@ -105,7 +105,7 @@ class ALEApproximateModel(Model):
 
         if error_tol <= 0:
             raise ValueError("Error tolerance must be strictly positive.")
-        if error_tol >= 1:
+        if error_tol > 1:
             raise ValueError("Error tolerance must be less than 1.")
             
         if min_samp <= 0:

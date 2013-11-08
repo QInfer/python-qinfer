@@ -365,8 +365,9 @@ class SMCUpdater(object):
         :rtype: :class:`numpy.ndarray`, shape ``(k, )``.
         :returns: An array containing the an estimate of the mean of :math:`f`.
         """
-        return np.einsum('i,ik',
-            self.particle_weights, f(self.particle_locations)
+        
+        return np.einsum('i...,i...',
+            self.particle_weights, fn(self.particle_locations)
         )
 
     def est_covariance_mtx(self):
