@@ -23,15 +23,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 import numpy as np
 import scipy.stats as st
 import scipy.linalg as la
 import abc
 
-
-## CLASSES #####################################################################
+## CLASSES ####################################################################
 
 class Distribution(object):
     """
@@ -301,3 +300,4 @@ class GinibreUniform(object):
         x = np.real(np.trace(np.dot(rho,np.array([[0,1],[1,0]]))))
         
         return np.array([x,y,z])
+

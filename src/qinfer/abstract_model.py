@@ -24,16 +24,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## IMPORTS ##
+## FEATURES ###################################################################
+
+from __future__ import division
+
+## IMPORTS ####################################################################
 
 import abc
     # Python standard library package for specifying abstract classes.
 import numpy as np
     
-## CLASSES ##
+## CLASSES ####################################################################
 
 class Simulatable(object):
     __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
+    # TODO: docstring!
     
     def __init__(self):
         self._sim_count = 0

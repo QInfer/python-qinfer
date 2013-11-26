@@ -23,26 +23,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
     'ResamplerWarning', 'ApproximationWarning'
 ]
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 import warnings
 
-## CLASSES #####################################################################
+## CLASSES ####################################################################
 
 class ResamplerWarning(RuntimeWarning):
+    """
+    Warning raised in response to events within resampling steps.
+    """
     pass
     
 class ApproximationWarning(RuntimeWarning):
+    """
+    Warning raised when a numerical approximation fails in a way that may
+    violate assumptions, such as when a negative variance is observed due to
+    numerical errors.
+    """
     pass
 

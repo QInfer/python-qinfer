@@ -23,7 +23,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## NOTES #######################################################################
+## NOTES ######################################################################
 
 # Several parts of the design of this modules are based on
 # http://stackoverflow.com/questions/7714868/python-multiprocessing-how-can-i-reliably-redirect-stdout-from-a-child-process/11779039#11779039
@@ -31,18 +31,18 @@
 # "Fatal IO error 11 (Resource temporarily unavailable) on X server"
 # due to multiple processes sharing X resources.
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
     'ProgressDialog'
 ]
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 import sys, os
 import time
@@ -52,9 +52,9 @@ import socket
 import warnings
 from itertools import count
 
-from ._lib import enum
+from qinfer._lib import enum # <- TODO: replace with flufl.enum
 
-## FUNCTIONS ###################################################################
+## FUNCTIONS ##################################################################
 
 def pretty_time(secs, force_h=False, force_m=False):
     if secs > 86400:
@@ -81,7 +81,7 @@ def _get_conn():
                 raise ex
     
    
-## ENUMS #######################################################################
+## ENUMS ######################################################################
 
 Properties = enum.enum(
     "TITLE", "STATUS", "MAXPROG", "PROGRESS",
@@ -92,7 +92,7 @@ Actions = enum.enum(
     "GET", "SET", "COMPLETE", "CLOSE"
 )
 
-## CLASSES #####################################################################
+## CLASSES ####################################################################
 
 class ProgressDialog(object):
     # TODO: docstring
@@ -174,19 +174,19 @@ class ProgressDialog(object):
         self._conn.send((Actions.SET, Properties.PROGRESS, newval))
     
     
-## MAIN CODE ###################################################################
+## MAIN CODE ##################################################################
 # Everything here only gets run when this module is run as a script, thus
 # ensuring that it doesn't get called from within other programs.
 # This way, the X11 connection created never existed in any other process.
 if __name__ == "__main__":
     
-    ## IMPORTS #################################################################
+    ## IMPORTS ################################################################
     
-    from .config import read_config, save_config
+    from qinfer.config import read_config, save_config
     
     # These imports are dangerous in a multiprocess environment,
     # so hide them here.
-    from .ui import progbar as ui_progbar
+    from qinfer.ui import progbar as ui_progbar
     from PySide import QtGui, QtCore
     import numpy as np
     import time
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         print "[WARN] Exception {} occured while configuring tskmon.".format(ex)
         tskmon_client = None
     
-    ## CLASSES #################################################################
+    ## CLASSES ################################################################
     
     class _ProgressDialog(QtGui.QDialog):
         """
@@ -321,7 +321,7 @@ if __name__ == "__main__":
                 )
                 
 
-    ## FUNCTIONS ###############################################################
+    ## FUNCTIONS ##############################################################
 
     def do_completion():
         """
@@ -366,7 +366,7 @@ if __name__ == "__main__":
         elif action == Actions.COMPLETE:
             do_completion()
             
-    ## SCRIPT ##################################################################     
+    ## SCRIPT ##################################################################    
 
     # Make a new conn, since we're emulating multiprocessing
     # in a forkless way.

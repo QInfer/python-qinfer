@@ -23,11 +23,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
@@ -35,15 +35,16 @@ __all__ = [
     'NOISE'
 ]
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
+
+import warnings
 
 import numpy as np
 import scipy.linalg as la
-import warnings
 
-from utils import outer_product, particle_meanfn, particle_covariance_mtx
-from _exceptions import ResamplerWarning
-import metrics
+from qinfer.utils import outer_product, particle_meanfn, particle_covariance_mtx
+from qinfer._exceptions import ResamplerWarning
+from qinfer import metrics
 
 try:
     import sklearn
@@ -55,11 +56,11 @@ except ImportError:
         ImportWarning)
     sklearn = None
 
-## CONSTANTS ###################################################################
+## CONSTANTS ##################################################################
 
 NOISE = -1
 
-## FUNCTIONS ###################################################################
+## FUNCTIONS ##################################################################
 
 def particle_clusters(
         particle_locations, particle_weights=None,

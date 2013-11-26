@@ -24,11 +24,11 @@
 ##
 
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
@@ -36,16 +36,16 @@ __all__ = [
     'save_config',
 ]
 
-## TODO ########################################################################
+## TODO #######################################################################
 
 # Put section header names here.
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 import sys, os
 import ConfigParser
 
-## FUNCTIONS ###################################################################
+## FUNCTIONS ##################################################################
 
 def ensuredir(filename):
     dirname = os.path.dirname(filename)
@@ -66,6 +66,7 @@ def preffilename():
     return configfile
     
 def read_config():
+    #
     parser = ConfigParser.SafeConfigParser()
     parser.read(preffilename())
     return parser

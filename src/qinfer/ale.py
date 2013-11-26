@@ -23,11 +23,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
@@ -35,18 +35,19 @@ __all__ = [
     'ALEApproximateModel'
 ]
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 from itertools import count
-
-import numpy as np
 import warnings
 
-from abstract_model import Model, Simulatable
-from _exceptions import ApproximationWarning
+import numpy as np
+
 from scipy.stats.distributions import binom
 
-## FUNCTIONS ###################################################################
+from qinfer.abstract_model import Model, Simulatable
+from qinfer._exceptions import ApproximationWarning
+
+## FUNCTIONS ##################################################################
 
 def binom_est_p(n, N, hedge=float(0)):
     r"""
@@ -71,7 +72,7 @@ def binom_est_error(p, N, hedge = float(0)):
     # asymptotic np.sqrt(p * (1 - p) / N)
     return np.sqrt(p*(1-p)/(N+2*hedge+1))
 
-## CLASSES #####################################################################
+## CLASSES ####################################################################
 
 class ALEApproximateModel(Model):
     r"""

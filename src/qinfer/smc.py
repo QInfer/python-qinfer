@@ -23,34 +23,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
-    'SMCUpdater'
+    'SMCUpdater',
+    'SMCUpdaterBCRB',
+    'SMCUpdaterABC'
 ]
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
+
+import warnings
 
 import numpy as np
-import warnings
+
+from scipy.spatial import Delaunay
+import scipy.linalg as la
+import scipy.stats
 
 from qinfer.abstract_model import DifferentiableModel
 from qinfer.metrics import rescaled_distance_mtx
 from qinfer import clustering
-
 from qinfer.resamplers import LiuWestResampler
-
-from scipy.spatial import Delaunay
-import scipy.linalg as la
 from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
         particle_covariance_mtx, format_uncertainty
-from _exceptions import ApproximationWarning
-import scipy.stats
+from qinfer._exceptions import ApproximationWarning
 
 ## CLASSES #####################################################################
 
@@ -111,7 +113,7 @@ class SMCUpdater(object):
         for idx_particle in xrange(n_particles):
             self.particle_locations[idx_particle, :] = prior.sample()
 
-    ## PROPERTIES ##############################################################
+    ## PROPERTIES #############################################################
 
     @property
     def resample_count(self):
@@ -164,7 +166,7 @@ class SMCUpdater(object):
         # TODO: return read-only view onto the data record.
         return self._data_record
 
-    ## PRIVATE METHODS #########################################################
+    ## PRIVATE METHODS ########################################################
     
     def _maybe_resample(self):
         """
@@ -174,7 +176,7 @@ class SMCUpdater(object):
             self.resample()
             pass
 
-    ## UPDATE METHODS ##########################################################
+    ## UPDATE METHODS #########################################################
 
     def hypothetical_update(self, outcomes, expparams, return_likelihood=False, return_normalization=False):
         """
@@ -308,7 +310,7 @@ class SMCUpdater(object):
             if (idx_exp + 1) % resample_interval == 0:
                 self._maybe_resample()
 
-    ## RESAMPLING METHODS ######################################################
+    ## RESAMPLING METHODS #####################################################
 
     def resample(self):
         # TODO: add amended docstring.
@@ -327,7 +329,7 @@ class SMCUpdater(object):
         self.particle_weights[:] = (1/self.n_particles)
 
 
-    ## ESTIMATION METHODS ######################################################
+    ## ESTIMATION METHODS #####################################################
 
     def est_mean(self):
         """
@@ -539,7 +541,7 @@ class SMCUpdater(object):
         return wcv / tv
         
 
-    ## REGION ESTIMATION METHODS ###############################################
+    ## REGION ESTIMATION METHODS ##############################################
 
     def est_credible_region(self, level=0.95):
         """
@@ -615,12 +617,12 @@ class SMCUpdater(object):
         A, centroid = mvee(vertices, tol)
         return A, centroid
         
-    ## MISC METHODS ############################################################
+    ## MISC METHODS ###########################################################
     
     def risk(self, x0):
         return self.bayes_risk(np.array([(x0,)], dtype=self.model.expparams_dtype))
         
-    ## IPYTHON SUPPORT METHODS #################################################
+    ## IPYTHON SUPPORT METHODS ################################################
     
     def _repr_html_(self):
         return r"""
@@ -765,3 +767,4 @@ class SMCUpdaterABC(SMCUpdater):
 
         if check_for_resample:
             self._maybe_resample()
+

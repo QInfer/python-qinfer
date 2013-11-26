@@ -23,24 +23,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
     'weighted_pairwise_distances'
 ]
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 import numpy as np
 import scipy.linalg as la
 import warnings
 
-from utils import outer_product
+from qinfer.utils import outer_product
 
 try:
     import sklearn
@@ -50,7 +50,7 @@ except ImportError:
     warnings.warn("Could not import scikit-learn. Some features may not work.")
     sklearn = None
 
-## FUNCTIONS ###################################################################
+## FUNCTIONS ##################################################################
 
 def rescaled_distance_mtx(p, q):
     r"""

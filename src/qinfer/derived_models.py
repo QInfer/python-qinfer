@@ -23,25 +23,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division # Ensures that a/b is always a float.
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
     'PoisonedModel',
     'BinomialModel'
 ]
-## IMPORTS #####################################################################
+
+## IMPORTS ####################################################################
 
 import numpy as np
 
-from utils import binomial_pdf
-from abstract_model import Model
-from _lib import enum
-from ale import binom_est_error
+from qinfer.utils import binomial_pdf
+from qinfer.abstract_model import Model
+from qinfer._lib import enum # <- TODO: replace with flufl.enum!
+from qinfer.ale import binom_est_error
     
 ## CLASSES #####################################################################
 
@@ -249,7 +250,7 @@ class BinomialModel(Model):
             for idx in xrange(outcomes.shape[0])
             ]) 
 
-## TESTING CODE ################################################################
+## TESTING CODE ###############################################################
 
 if __name__ == "__main__":
     

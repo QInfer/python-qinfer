@@ -23,17 +23,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 import numpy as np
-from abstract_model import Model
 import scipy.linalg as la
 
-## CLASSES #####################################################################
+from qinfer.abstract_model import Model
+
+## CLASSES ####################################################################
 
 class QubitStatePauliModel(Model):
     """
@@ -279,7 +280,7 @@ class HTCircuitModel(Model):
             
             return outcomes
         
-## TESTING CODE ################################################################
+## TESTING CODE ###############################################################
 
 # TODO: move to examples/.
 if __name__ == "__main__":
@@ -303,25 +304,3 @@ if __name__ == "__main__":
     )
     print L
 
-#### TEST PRIORS #############################################################        
-#    from mpl_toolkits.mplot3d import Axes3D
-#    import matplotlib.pyplot as plt 
-#
-#    prior = HilbertSchmidtUniform()
-#    
-#    n = 1000
-#    x = np.zeros((n,))   
-#    y = np.zeros((n,))    
-#    z = np.zeros((n,))
-#    
-#    for idx in xrange(n):
-#        temp = prior.sample()
-#        x[idx] = temp[0]        
-#        y[idx] = temp[1]        
-#        z[idx] = temp[2]        
-#        
-#    fig = plt.figure()
-#    ax = fig.add_subplot(111, projection='3d')
-#    
-#    ax.scatter(x,y,z)
-#    plt.show()

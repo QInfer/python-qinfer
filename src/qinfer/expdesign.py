@@ -23,11 +23,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
@@ -36,13 +36,13 @@ __all__ = [
     'OptimizationAlgorithms'
 ]
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 import numpy as np
 
 # for BCRB and BED classes
 import scipy.optimize as opt
-from ._lib import enum
+from qinfer._lib import enum # <- TODO: replace with flufl.enum!
 
 from abc import ABCMeta, abstractmethod
 import warnings
@@ -93,7 +93,7 @@ class ExperimentDesigner(object):
         # Set everything up for the first experiment.
         self.new_exp()
         
-    ## METHODS #################################################################
+    ## METHODS ################################################################
     def new_exp(self):
         """
         Resets this `ExperimentDesigner` instance and prepares for designing

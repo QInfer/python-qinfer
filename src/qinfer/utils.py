@@ -23,19 +23,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## IMPORTS ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
+
+## IMPORTS ####################################################################
+
+import warnings
+
 import numpy as np
-from scipy.special import gammaln, gamma
-
-from scipy.linalg import sqrtm
-
 import numpy.linalg as la
 
+from scipy.special import gammaln, gamma
+from scipy.linalg import sqrtm
+
 from qinfer._exceptions import ApproximationWarning
-import warnings
-###############################################################################
+
+## FUNCTIONS ##################################################################
 
 #TODO: cases for p=0 or p=1
 def binomial_pdf(N,n,p):
