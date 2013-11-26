@@ -160,21 +160,44 @@ def uniquify(seq):
     seen_add = seen.add
     return [ x for x in seq if x not in seen and not seen_add(x)]
 
-def format_latex_float(val, n_digits):
-    # FIXME: strip leading zeros from exponent.
-    fmtted = "{{:0.{0}}}".format(int(n_digits)).format(val)
-    if "e" in fmtted:
-        fmtted = fmtted.replace("e", r"\times 10^{") + "}"
-    return fmtted
- 
-def format_uncertainty(value, uncertianty):
-    n_digits = int(np.floor(np.log10(value) - np.log10(uncertianty)) + 1)
-    if n_digits <= 0:
-        n_digits = 1
-    return r"${0} \pm {1}$".format(
-        format_latex_float(value, n_digits),
-        format_latex_float(uncertianty, n_digits)
-    )
+def format_uncertainty(value, uncertianty, scinotn_break=4):
+    if uncertianty == 0:
+        # Return the exact number, without the ± annotation as a fixed point
+        # number, since all digits matter.
+        # FIXME: this assumes a precision of 6; need to select that dynamically.
+        return "{0:f}".format(value)
+    else:
+        # Return a string of the form "0.00 \pm 0.01".
+        mag_unc = int(np.log10(np.abs(uncertianty)))
+        # Zero should be printed as a single digit; that is, as wide as str "1".
+        mag_val = int(np.log10(np.abs(value))) if value != 0 else 0
+        n_digits = max(mag_val - mag_unc, 0)
+        print mag_val, mag_unc, n_digits
+            
+
+        if abs(mag_val) < abs(mag_unc) and abs(mag_unc) > scinotn_break:
+            # We're formatting something close to zero, so recale uncertianty
+            # accordingly.
+            scale = 10**mag_unc
+            return r"({{0:0.{0}f}} \pm {{1:0.{0}f}}) \times 10^{{2}}".format(
+                n_digits
+            ).format(
+                value / scale,
+                uncertianty / scale,
+                mag_unc
+           )
+        if abs(mag_val) <= scinotn_break:
+            return r"{{0:0.{n_digits}f}} \pm {{1:0.{n_digits}f}}".format(n_digits=n_digits).format(value, uncertianty)
+        else:
+            scale = 10**mag_val
+            return r"({{0:0.{0}f}} \pm {{1:0.{0}f}}) \times 10^{{2}}".format(
+                n_digits
+            ).format(
+                value / scale,
+                uncertianty / scale,
+                mag_val
+           )
+           
     
 #==============================================================================
 #Test Code
