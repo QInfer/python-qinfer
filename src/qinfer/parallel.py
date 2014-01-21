@@ -53,8 +53,6 @@ class DirectViewParallelizedModel(Model):
         self._serial_model = serial_model
         self._dv = direct_view
         
-        self._evaluate_likelihood = direct_view.parallel(block=True)(_evaluate_likelihood)
-        
         super(DirectViewParallelizedModel, self).__init__()
     
     ## PROPERTIES ##
@@ -73,8 +71,7 @@ class DirectViewParallelizedModel(Model):
     
     ## METHODS ##
     
-    @staticmethod
-    def are_models_valid(modelparams):
+    def are_models_valid(self, modelparams):
         return self._serial_model.are_models_valid(modelparams)
     
     def n_outcomes(self, expparams):
