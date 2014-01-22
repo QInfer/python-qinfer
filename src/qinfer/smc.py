@@ -493,6 +493,8 @@ class SMCUpdater(object):
             axis=0  # Sum over the particles of ``self``.
         )
         
+    ## CLUSTER ESTIMATION METHODS #############################################
+        
     def est_cluster_moments(self, cluster_opts=None):
         # TODO: document
         
@@ -537,9 +539,12 @@ class SMCUpdater(object):
         return within_cluster_var, between_cluster_var, total_var
         
     def est_cluster_metric(self, cluster_opts=None):
-        # TODO: document
+        """
+        Returns an estimate of how much of the variance in the current posterior
+        can be explained by a separation between *clusters*.
+        """
         wcv, bcv, tv = self.est_cluster_covs(cluster_opts)
-        return wcv / tv
+        return np.diag(bcv) / np.diag(tv)
         
 
     ## REGION ESTIMATION METHODS ##############################################

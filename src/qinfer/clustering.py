@@ -86,17 +86,24 @@ def particle_clusters(
     new_locs    = np.empty(particle_locations.shape)
     
     # Calculate and possibly reweight the metric.
-    M = sklearn.metrics.pairwise.pairwise_distances(particle_locations, metric=metric)
     if weighted:
+        M = sklearn.metrics.pairwise.pairwise_distances(particle_locations, metric=metric)
         M = metrics.weighted_pairwise_distances(M, particle_weights, w_pow=w_pow)
     
-    # Create and run a SciKit-Learn DBSCAN clusterer.
-    clusterer = sklearn.cluster.DBSCAN(
-        min_samples=min_particles,
-        eps=eps,
-        metric='precomputed'
-    )
-    cluster_labels = clusterer.fit_predict(M)
+        # Create and run a SciKit-Learn DBSCAN clusterer.
+        clusterer = sklearn.cluster.DBSCAN(
+            min_samples=min_particles,
+            eps=eps,
+            metric='precomputed'
+        )
+        cluster_labels = clusterer.fit_predict(M)
+    else:
+        clusterer = sklearn.cluster.DBSCAN(
+            min_samples=min_particles,
+            eps=eps,
+            metric=metric
+        )
+        cluster_labels = clusterer.fit_predict(particle_locations)
     
     # Find out how many clusters were identified.
     # Cluster counting logic from:
