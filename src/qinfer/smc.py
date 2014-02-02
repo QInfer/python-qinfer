@@ -54,6 +54,8 @@ from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
         particle_covariance_mtx, format_uncertainty
 from qinfer._exceptions import ApproximationWarning
 
+import matplotlib.pyplot as plt
+
 ## CLASSES #####################################################################
 
 class SMCUpdater(object):
@@ -627,6 +629,37 @@ class SMCUpdater(object):
     
     def risk(self, x0):
         return self.bayes_risk(np.array([(x0,)], dtype=self.model.expparams_dtype))
+        
+    ## PLOTTING METHODS #######################################################
+    
+    def posterior_mesh(self, idx_param1=0, idx_param2=1, res1=100, res2=100, smoothing=0.01):
+        # WARNING: fancy indexing is used here, which means that a copy is
+        #          made.
+        locs = self.particle_locations[:, [idx_param1, idx_param2]]
+    
+        p1s, p2s = np.meshgrid(
+            np.linspace(np.min(locs[:, 0]), np.max(locs[:, 0]), res1),
+            np.linspace(np.min(locs[:, 1]), np.max(locs[:, 1]), res2)
+        )
+        plot_locs = np.array([p1s, p2s]).T.reshape((np.prod(p1s.shape), 2))
+        
+        pr = np.sum(
+            np.prod( # <- product over model parameters to get a multinormal
+                # Evaluate the PDF at the plotting locations, with a normal
+                # located at the particle locations.
+                scipy.stats.norm.pdf(
+                    plot_locs[:, np.newaxis, :],
+                    scale=smoothing,
+                    loc=locs
+                ),
+                axis=-1
+            ) * self.particle_weights,
+            axis=1
+        ).reshape(p1s.shape)
+        return p1s, p2s, pr
+    
+    def plot_posterior_contour(self, idx_param1=0, idx_param2=1, res1=100, res2=100, smoothing=0.01):
+        return plt.contour(*self.posterior_mesh(idx_param1, idx_param2, res1, res2, smoothing))
         
     ## IPYTHON SUPPORT METHODS ################################################
     
