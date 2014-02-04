@@ -48,21 +48,27 @@ Dependencies
 
 - Python 2.7 (may work with earlier, but not tested).
 - NumPy and SciPy.
-- [Optional] `SciKit-Learn`_ required for some advanced features.
-- [Optional] `Sphinx`_ required to rebuild documentation.
+
+Some features of **QInfer** require additional packages, but the core of
+**QInfer** will work without them:
+
+- `SciKit-Learn`_ required for some advanced features.
+- `Sphinx`_ required to rebuild documentation.
+- `matplotlib`_ required for plotting functionality.
+- `IPython Notebook`_ (version 1.1) is used to provide examples.
 
 On Windows, these packages can be provided by `Python(x,y)`_. Linux users may
-obtain the needed dependencies. Under Ubuntu::
+obtain the needed dependencies using package managers. Under Ubuntu::
 
-    $ sudo apt-get install python2.7 python-numpy python-scipy python-scikits-learn python-sphinx
+    $ sudo apt-get install python2.7 python-numpy python-scipy python-scikits-learn python-matplotlib python-sphinx ipython-notebook
     
 On Fedora::
 
-    $ sudo yum install python numpy scipy python-sphinx
+    $ sudo yum install python numpy scipy python-sphinx python-matplotlib python-ipython-notebook
     $ sudo easy_install -U scikit-learn
 
 Alternatively,
-`Enthought Python Distribution`_ has been tested with **QInfer**, and may be
+`Enthought Canopy`_ has been tested with **QInfer**, and may be
 used on Windows, Mac OS X or Linux.
 
 Citing QInfer
@@ -101,8 +107,10 @@ particular version being cited.
 Getting Started
 ---------------
 
+TODO
 
-.. _Enthought Python Distribution: http://www.enthought.com/products/epd.php
+.. _Enthought Canopy: https://www.enthought.com/products/canopy/
 .. _Python(x,y): http://code.google.com/p/pythonxy/
+.. _matplotlib: http://matplotlib.org/
 .. _SciKit-Learn: http://scikit-learn.org/stable/
 .. _Sphinx: http://sphinx-doc.org/
