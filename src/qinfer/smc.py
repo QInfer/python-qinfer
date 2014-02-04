@@ -54,7 +54,12 @@ from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
         particle_covariance_mtx, format_uncertainty
 from qinfer._exceptions import ApproximationWarning
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    import warnings
+    warnings.warn("Could not import pyplot. Plotting methods will not work.")
+    plt = None
 
 ## CLASSES #####################################################################
 
@@ -633,6 +638,23 @@ class SMCUpdater(object):
     ## PLOTTING METHODS #######################################################
     
     def posterior_mesh(self, idx_param1=0, idx_param2=1, res1=100, res2=100, smoothing=0.01):
+        """
+        Returns a mesh, useful for plotting, of kernel density estimation
+        of a 2D projection of the current posterior distribution.
+        
+        :param int idx_param1: Parameter to be treated as :math:`x` when
+            plotting.
+        :param int idx_param2: Parameter to be treated as :math:`y` when
+            plotting.
+        :param int res1: Resolution along the :math:`x` direction.
+        :param int res2: Resolution along the :math:`y` direction.
+        :param float smoothing: Standard deviation of the Gaussian kernel
+            used to smooth the particle approximation to the current posterior.
+            
+        .. seealso::
+        
+            :meth:`SMCUpdater.plot_posterior_contour`
+        """
         # WARNING: fancy indexing is used here, which means that a copy is
         #          made.
         locs = self.particle_locations[:, [idx_param1, idx_param2]]
@@ -643,7 +665,7 @@ class SMCUpdater(object):
         )
         plot_locs = np.array([p1s, p2s]).T.reshape((np.prod(p1s.shape), 2))
         
-        pr = np.sum(
+        pr = np.sum( # <- sum over the particles in the SMC approximation.
             np.prod( # <- product over model parameters to get a multinormal
                 # Evaluate the PDF at the plotting locations, with a normal
                 # located at the particle locations.
@@ -655,10 +677,28 @@ class SMCUpdater(object):
                 axis=-1
             ) * self.particle_weights,
             axis=1
-        ).reshape(p1s.shape)
+        ).reshape(p1s.shape) # Finally, reshape back into the same shape as the mesh.
+        
         return p1s, p2s, pr
     
     def plot_posterior_contour(self, idx_param1=0, idx_param2=1, res1=100, res2=100, smoothing=0.01):
+        """
+        Plots a contour of the kernel density estimation
+        of a 2D projection of the current posterior distribution.
+        
+        :param int idx_param1: Parameter to be treated as :math:`x` when
+            plotting.
+        :param int idx_param2: Parameter to be treated as :math:`y` when
+            plotting.
+        :param int res1: Resolution along the :math:`x` direction.
+        :param int res2: Resolution along the :math:`y` direction.
+        :param float smoothing: Standard deviation of the Gaussian kernel
+            used to smooth the particle approximation to the current posterior.
+            
+        .. seealso::
+        
+            :meth:`SMCUpdater.posterior_mesh`
+        """
         return plt.contour(*self.posterior_mesh(idx_param1, idx_param2, res1, res2, smoothing))
         
     ## IPYTHON SUPPORT METHODS ################################################
