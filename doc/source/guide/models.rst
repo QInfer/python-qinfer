@@ -199,7 +199,79 @@ tensor :math:`L_{ijk} := \Pr(d_i | \vec{x}_j; \vec{e}_k)`.
 >>> print L.shape
 (1, 100, 9)
 
-Implementing Custom Models
---------------------------
+Implementing Custom Simulators and Models
+-----------------------------------------
 
-TODO
+In order to implement a custom simulator or model, one must specify metadata
+describing the number of outcomes, model parameters, experimental parameters,
+etc. in addition to implementing the simulation and/or likelihood methods.
+
+Here, we demonstrate how to do so by walking through a simple subclass of
+:class:`~qinfer.abstract_model.Model`. For more detail, please see the
+:ref:`apiref`.
+
+Suppose we wish to implement the likelihood function
+
+.. math::
+
+    \Pr(0 | \omega_1, \omega_2; t_1, t_2) = \cos^2(\omega_1 t_1 / 2) \cos^2(\omega_2 t_2 / 2),
+    
+as may arise in looking, for instance, at an experiment expired by 2D NMR.
+This model has two model parameters, :math:`\omega_1` and :math:`\omega_2`, and
+so we start by creating a new class and declaring the number of model
+parameters as a `property`:
+
+.. literalinclude:: multicos.py
+    :lines: 4-8
+    
+Next, we proceed to add a property and method indicating that this model always
+admits two outcomes, irrespective of what measurement is performed.
+
+.. literalinclude:: multicos.py
+    :lines: 10-14
+    
+We indicate the valid range for model parameters by returning an array of
+dtype `bool` for each of an input matrix of model parameters, specifying whether
+each model vector is valid or not. Typically, this will look like some typical
+bounds checking, combined using `~numpy.logical_and` and `~numpy.all`. Here,
+we follow that model by inisting that *all* elements of each model parameter
+vector must be at least 0, *and* must not exceed 1.
+    
+.. literalinclude:: multicos.py
+    :lines: 16-17
+    
+Next, we specify what a measurement looks like by defining ``expparams_dtype``.
+In this case, we want one field that is an array of two `float` elements:
+
+.. literalinclude:: multicos.py
+    :lines: 19-21
+    
+Finally, we write the likelihood itself. Since this is a two-outcome model,
+we can calculate the rank-two tensor
+:math:`p_{jk} = \Pr(0 | \vec{x}_j; \vec{e}_k)` and let
+:meth:`~qinfer.abstract_model.Model.pr0_to_likelihood_array` add an index over
+outcomes for us.
+To compute :math:`p_{jk}` efficiently, it is helpful to do a bit of index
+gymnastics  using NumPy's powerful `broadcasting rules`_. In this example, we
+set up the calculation to produce terms of the form
+:math:`\cos^2(x_{j,l} e_{k,l} / 2)` for :math:`l \in \{0, 1\}` indicating
+whether we're referring to :math:`\omega_1` or :math:`\omega_2`, respectively.
+Multiplying along this axis then gives us the product of the two cosine
+functions, and in a way that very nicely generalizes to likelihood functions of
+the form
+
+.. math::
+
+    \Pr(0 | \omega_1, \omega_2; t_1, t_2) = \prod_l \cos^2(\omega_l t_l / 2).
+    
+Running through the index gymnastics, we can implement the likelihood function
+as:
+
+.. literalinclude:: multicos.py
+    :lines: 23-48
+    :emphasize-lines: 35-43
+    
+Our new custom model is now ready to use!
+    
+.. _broadcasting rules: http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
+
