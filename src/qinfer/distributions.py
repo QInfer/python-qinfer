@@ -60,6 +60,23 @@ class Distribution(object):
         """
         pass
 
+class ProductDistribution(Distribution):
+    """
+    Returns the Cartesian product of two distributions called A and B.
+    """
+    def __init__(self, A, B):
+        self.A = A
+        self.B = B
+        
+    @property
+    def n_rvs(self):
+        return self.A.n_rvs + self.B.n_rvs
+        
+    def sample(self, n=1):
+        A_sample = self.A.sample(n)
+        B_sample = self.B.sample(n)
+        return np.hstack((A_sample, B_sample))
+
 
 _DEFAULT_RANGES = np.array([[0, 1]])
 _DEFAULT_RANGES.flags.writeable = False # Prevent anyone from modifying the
