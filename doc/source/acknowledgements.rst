@@ -11,3 +11,13 @@ Acknowledgements
 ================
 
 TODO
+
+Contributors
+------------
+
+We gratefully acknowledge contributions to the **QInfer** project by the
+following individuals:
+
+- `Yuval Sanders`_
+
+.. _Yuval Sanders: https://github.com/ysanders
