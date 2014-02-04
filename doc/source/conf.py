@@ -45,6 +45,7 @@ MOCK_MODULES = [
     'scipy.spatial',
     'scipy.special',
     'scipy.stats',
+    'scipy.stats.distributions',
     'sklearn',
     'sklearn.cluster',
     'sklearn.metrics',

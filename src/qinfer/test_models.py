@@ -40,7 +40,7 @@ from abstract_model import Model, DifferentiableModel
 class SimplePrecessionModel(DifferentiableModel):
     r"""
     Describes the free evolution of a single qubit prepared in the
-    :math:`\ket{+}` state under a Hamiltonian :math:`H = \omega \sigma_z / 2`,
+    :math:`\left|+\right\rangle` state under a Hamiltonian :math:`H = \omega \sigma_z / 2`,
     as explored in [GFWC12]_. (TODO: add other citations.)
     """
     

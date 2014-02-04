@@ -114,3 +114,4 @@ TODO
 .. _matplotlib: http://matplotlib.org/
 .. _SciKit-Learn: http://scikit-learn.org/stable/
 .. _Sphinx: http://sphinx-doc.org/
+.. _IPython Notebook: http://ipython.org/ipython-doc/stable/interactive/notebook.html
