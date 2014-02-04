@@ -49,6 +49,10 @@ class SimplePrecessionModel(DifferentiableModel):
     @property
     def n_modelparams(self):
         return 1
+    
+    @property
+    def modelparam_names(self):
+        return [r'\omega']
         
     @property
     def expparams_dtype(self):
