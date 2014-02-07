@@ -71,6 +71,23 @@ class Heuristic(object):
     @abstractmethod
     def __call__(self, *args):
         raise NotImplementedError("Not yet implemented.")
+        
+class PGH(Heuristic):
+    # TODO: docstring citing QHL.
+    
+    def __init__(self, updater, inv_field='x_', t_field='t'):
+        self._updater = updater
+        self._x_ = inv_field
+        self._t = t_field
+        
+    def __call__(self):
+        x, xp = self._updater.sample(n=2)
+        
+        eps = np.empty((1,), dtype=self._updater.model.expparams_dtype)
+        eps[self._x_] = x
+        eps[self._t]  = 1 / self._updater.model.distance(x, xp)
+        
+        return eps
 
 class ExperimentDesigner(object):
     """

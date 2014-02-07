@@ -160,6 +160,29 @@ class Simulatable(object):
         """
         return np.ones(expparams.shape)
         
+    def distance(self, a, b):
+        r"""
+        Gives the distance between two model parameter vectors :math:`\vec{a}` and
+        :math:`\vec{b}`. By default, this is the vector 1-norm of the difference
+        :math:`\mathbf{Q} (\vec{a} - \vec{b})` rescaled by
+        :attr:`~Simulatable.Q`.
+        
+        :param np.ndarray a: Array of model parameter vectors having shape
+            ``(n_models, n_modelparams)``.
+        :param np.ndarray b: Array of model parameters to compare to, having
+            the same shape as ``a``.
+        :return: An array ``d`` of distances ``d[i]`` between ``a[i, :]`` and
+            ``b[i, :]``.
+        """
+        
+        return np.apply_along_axis(
+            lambda vec: np.linalg.norm(vec, 1),
+            1,
+            self.Q * (a - b)
+        )
+        
+        
+        
 class LinearCostModelMixin(Simulatable):
     # FIXME: move this mixin to a new module.
     # TODO: test this mixin.
