@@ -49,6 +49,7 @@ import scipy.stats
 from qinfer.abstract_model import DifferentiableModel
 from qinfer.metrics import rescaled_distance_mtx
 from qinfer import clustering
+from qinfer.distributions import Distribution
 from qinfer.resamplers import LiuWestResampler
 from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
         particle_covariance_mtx, format_uncertainty
@@ -63,7 +64,7 @@ except ImportError:
 
 ## CLASSES #####################################################################
 
-class SMCUpdater(object):
+class SMCUpdater(Distribution):
     r"""
     Creates a new Sequential Monte carlo updater, using the algorithm of
     [GFWC12]_.
@@ -335,6 +336,20 @@ class SMCUpdater(object):
         # Reset the weights to uniform.
         self.particle_weights[:] = (1/self.n_particles)
 
+
+    ## DISTRIBUTION CONTRACT ##################################################
+    
+    @property
+    def n_rvs(self):
+        return self._model.n_modelparams
+        
+    def sample(self, n=1):
+        # TODO: cache this.
+        cumsum_weights = np.cumsum(self.particle_weights)
+        return self.particle_locations[cumsum_weights.searchsorted(
+            np.random.random((n,)),
+            side='right'
+        )]
 
     ## ESTIMATION METHODS #####################################################
 
