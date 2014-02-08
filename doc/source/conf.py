@@ -13,46 +13,48 @@
 
 ## MODULE MOCKING ##############################################################
 
-# ReadTheDocs doesn't support modules which depend on NumPy, so we must mock
-# them up as suggested by the FAQ:
-# http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
-import sys
+if not tags.has('nomock'):
 
-class Mock(object):
-    def __init__(self, *args, **kwargs):
-        pass
+    # ReadTheDocs doesn't support modules which depend on NumPy, so we must mock
+    # them up as suggested by the FAQ:
+    # http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
+    import sys
 
-    def __call__(self, *args, **kwargs):
-        return Mock()
+    class Mock(object):
+        def __init__(self, *args, **kwargs):
+            pass
 
-    @classmethod
-    def __getattr__(cls, name):
-        if name in ('__file__', '__path__'):
-            return '/dev/null'
-        elif name[0] == name[0].upper():
-            mockType = type(name, (), {})
-            mockType.__module__ = __name__
-            return mockType
-        else:
+        def __call__(self, *args, **kwargs):
             return Mock()
 
-MOCK_MODULES = [
-    'numpy',
-    'numpy.linalg',
-    'scipy',
-    'scipy.linalg',
-    'scipy.optimize',
-    'scipy.spatial',
-    'scipy.special',
-    'scipy.stats',
-    'scipy.stats.distributions',
-    'sklearn',
-    'sklearn.cluster',
-    'sklearn.metrics',
-    'sklearn.metrics.pairwise',
-]
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = Mock() 
+        @classmethod
+        def __getattr__(cls, name):
+            if name in ('__file__', '__path__'):
+                return '/dev/null'
+            elif name[0] == name[0].upper():
+                mockType = type(name, (), {})
+                mockType.__module__ = __name__
+                return mockType
+            else:
+                return Mock()
+
+    MOCK_MODULES = [
+        'numpy',
+        'numpy.linalg',
+        'scipy',
+        'scipy.linalg',
+        'scipy.optimize',
+        'scipy.spatial',
+        'scipy.special',
+        'scipy.stats',
+        'scipy.stats.distributions',
+        'sklearn',
+        'sklearn.cluster',
+        'sklearn.metrics',
+        'sklearn.metrics.pairwise',
+    ]
+    for mod_name in MOCK_MODULES:
+        sys.modules[mod_name] = Mock() 
 
 ###############################################################################
 import sys, os

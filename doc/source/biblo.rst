@@ -20,4 +20,6 @@ Biblography
     Mezzadri F. How to generate random matrices from the classical compact groups. (2006). :arxiv:`math-ph/0609050v2`.
 .. [Mis12]
     Miszczak J. `Generating and using truly random quantum states in Mathematica <http://www.iitis.pl/~miszczak/files/papers/miszczak12generating>`_. Computer Physics Communications **183** 118-124 (2012). :doi:`10.1016/j.cpc.2011.08.002`.
+.. [WGFC13a] Wiebe N., Granade C. E., Ferrie C. & Cory D. G. Hamiltonian Learning and Certification Using Quantum Resources. :arxiv:`1309.0876`
+.. [WGFC13b] Wiebe N., Granade C. E., Ferrie C. & Cory D. G. Quantum Hamiltonian Learning Using Imperfect Quantum Resources. :arxiv:`1311.5269`
 
