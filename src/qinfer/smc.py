@@ -756,6 +756,119 @@ class SMCUpdater(Distribution):
             resample_count=self.resample_count
         )
         
+          
+class MixedApproximateSMCUpdater(SMCUpdater):
+    """
+    Subclass of :class:`SMCUpdater` that uses a mixture of two models, one
+    of which is assumed to be expensive to compute, while the other is assumed
+    to be cheaper. This allows for approximate computation to be used on the
+    lower-weight particles.
+
+    :param ~qinfer.abstract_model.Model good_model: The more expensive, but
+        complete model.
+    :param ~qinfer.abstract_model.Model approximate_model: The less expensive,
+        but approximate model.
+    :param float mixture_ratio: The ratio of the posterior weight that will
+        be delegated to the good model in each update step.
+    :param float mixture_thresh: Any particles of weight at least equal to this
+        threshold will be delegated to the complete model, irrespective
+        of the value of ``mixture_ratio``.
+        
+    All other parameters are as described in the documentation of
+    :class:`SMCUpdater`.
+    """
+                
+    def __init__(self,
+            good_model, approximate_model,
+            n_particles, prior,
+            resample_a=None, resampler=None, resample_thresh=0.5,
+            mixture_ratio=0.5, mixture_thresh=0.0
+            ):
+            
+        self._good_model = good_model
+        self._apx_model = approximate_model
+        
+        super(MixedApproximateSMCUpdater, self).__init__(
+            good_model, n_particles, prior,
+            resample_a, resampler, resample_thresh
+        )
+        
+        self._mixture_ratio = mixture_ratio
+        self._mixture_thresh = mixture_thresh
+        
+                
+    def hypothetical_update(self, outcomes, expparams, return_likelihood=False, return_normalization=False):
+        # TODO: consolidate code with SMCUpdater by breaking update logic
+        #       into private method.
+        
+        # It's "hypothetical", don't want to overwrite old weights yet!
+        weights = self.particle_weights
+        locs = self.particle_locations
+
+        # Check if we have a single outcome or an array. If we only have one
+        # outcome, wrap it in a one-index array.
+        if not isinstance(outcomes, np.ndarray):
+            outcomes = np.array([outcomes])
+
+        # Make an empty array for likelihoods. We'll fill it in in two steps,
+        # the good step and the approximate step.
+        L = np.empty((outcomes.shape[0], locs.shape[0], expparams.shape[0]))
+
+        # Which indices go to good_model?
+        # Note that this is slow enough that it won't make sense except for
+        # rather expensive models.
+        idxs_sorted = np.argsort(weights)
+        sorted_weights = weights[idxs_sorted]
+        cum_weights = np.cumsum(weights[idxs_sorted])
+        idx_mask = np.logical_or(
+            cum_weights >= self._mixture_ratio,
+            sorted_weights >= self._mixture_thresh
+        )
+        idxs_good = idxs_sorted[idx_mask]
+        idxs_bad = idxs_sorted[np.logical_not(idx_mask)]
+        
+        # Now find L for each of the good and bad models. 
+        L[:, idxs_good, :] = self._good_model.likelihood(outcomes, locs[idxs_good], expparams)
+        L[:, idxs_bad, :] = self._apx_model.likelihood(outcomes, locs[idxs_bad], expparams)
+        
+        # update the weights sans normalization
+        # Rearrange so that likelihoods have shape (outcomes, experiments, models).
+        # This makes the multiplication with weights (shape (models,)) make sense,
+        # since NumPy broadcasting rules align on the right-most index.
+        L = self.model.likelihood(outcomes, locs, expparams).transpose([0, 2, 1])
+        hyp_weights = weights * L
+        
+        # Sum up the weights to find the renormalization scale.
+        norm_scale = np.sum(hyp_weights, axis=2)[..., np.newaxis]
+        
+        # As a special case, check whether any entries of the norm_scale
+        # are zero. If this happens, that implies that all of the weights are
+        # zero--- that is, that the hypothicized outcome was impossible.
+        # Conditioned on an impossible outcome, all of the weights should be
+        # zero. To allow this to happen without causing a NaN to propagate,
+        # we forcibly set the norm_scale to 1, so that the weights will
+        # all remain zero.
+        #
+        # We don't actually want to propagate this out to the caller, however,
+        # and so we save the "fixed" norm_scale to a new array.
+        fixed_norm_scale = norm_scale.copy()
+        fixed_norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
+        
+        # normalize
+        norm_weights = hyp_weights / fixed_norm_scale
+            # Note that newaxis is needed to align the two matrices.
+            # This introduces a length-1 axis for the particle number,
+            # so that the normalization is broadcast over all particles.
+        if not return_likelihood:
+            if not return_normalization:
+                return norm_weights
+            else:
+                return norm_weights, norm_scale
+        else:
+            if not return_normalization:
+                return norm_weights, L
+            else:
+                return norm_weights, L, norm_scale
                 
 class SMCUpdaterBCRB(SMCUpdater):
     """
