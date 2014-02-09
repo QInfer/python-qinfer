@@ -773,6 +773,8 @@ class MixedApproximateSMCUpdater(SMCUpdater):
     :param float mixture_thresh: Any particles of weight at least equal to this
         threshold will be delegated to the complete model, irrespective
         of the value of ``mixture_ratio``.
+    :param int min_good: Minimum number of "good" particles to assign at each
+        step.
         
     All other parameters are as described in the documentation of
     :class:`SMCUpdater`.
@@ -782,7 +784,7 @@ class MixedApproximateSMCUpdater(SMCUpdater):
             good_model, approximate_model,
             n_particles, prior,
             resample_a=None, resampler=None, resample_thresh=0.5,
-            mixture_ratio=0.5, mixture_thresh=1.0
+            mixture_ratio=0.5, mixture_thresh=1.0, min_good=0
             ):
             
         self._good_model = good_model
@@ -795,7 +797,7 @@ class MixedApproximateSMCUpdater(SMCUpdater):
         
         self._mixture_ratio = mixture_ratio
         self._mixture_thresh = mixture_thresh
-        
+        self._min_good = min_good
                 
     def hypothetical_update(self, outcomes, expparams, return_likelihood=False, return_normalization=False):
         # TODO: consolidate code with SMCUpdater by breaking update logic
@@ -812,24 +814,48 @@ class MixedApproximateSMCUpdater(SMCUpdater):
 
         # Make an empty array for likelihoods. We'll fill it in in two steps,
         # the good step and the approximate step.
-        L = np.empty((outcomes.shape[0], locs.shape[0], expparams.shape[0]))
+        L = np.zeros((outcomes.shape[0], locs.shape[0], expparams.shape[0]))
 
         # Which indices go to good_model?
-        # Note that this is slow enough that it won't make sense except for
-        # rather expensive models.
-        idxs_sorted = np.argsort(weights)[::-1]
-        sorted_weights = weights[idxs_sorted]
-        cum_weights = np.cumsum(weights[idxs_sorted])
-        idx_mask = (#np.logical_or(
-            cum_weights >= 1 - self._mixture_ratio
-            # sorted_weights >= self._mixture_thresh
-        )
-        idxs_good = idxs_sorted[idx_mask]
-        idxs_bad = idxs_sorted[np.logical_not(idx_mask)]
         
-        # Now find L for each of the good and bad models. 
-        L[:, idxs_good, :] = self._good_model.likelihood(outcomes, locs[idxs_good], expparams)
-        L[:, idxs_bad, :] = self._apx_model.likelihood(outcomes, locs[idxs_bad], expparams)
+        # Start by getting a permutation that sorts the weights.
+        # Since sorting as implemented by NumPy is stable, we want to break
+        # that stability to avoid introducing patterns, and so we first
+        # randomly shuffle the identity permutation.
+        idxs_random = np.arange(weights.shape[0])
+        np.random.shuffle(idxs_random)
+        idxs_sorted = np.argsort(weights[idxs_random])
+        
+        # Find the inverse permutation to be that which returns
+        # the composed permutation sort º shuffle to the identity.
+        inv_idxs_sort = np.argsort(idxs_random[idxs_sorted])
+        
+        # Now strip off a set of particles producing the desired total weight
+        # or that have weights above a given threshold.
+        sorted_weights = weights[idxs_random[idxs_sorted]]
+        cum_weights = np.cumsum(sorted_weights)
+        good_mask = (np.logical_or(
+            cum_weights >= 1 - self._mixture_ratio,
+            sorted_weights >= self._mixture_thresh
+        ))[inv_idxs_sort]
+        if np.sum(good_mask) < self._min_good:
+            # Just take the last _min_good instead of something sophisticated.
+            good_mask = np.zeros_like(good_mask)
+            good_mask[idxs_random[idxs_sorted][-self._min_good:]] = True
+        bad_mask = np.logical_not(good_mask)
+        
+        # Finally, separate out the locations that go to each of the good and
+        # bad models.
+        locs_good = locs[good_mask, :]
+        locs_bad = locs[bad_mask, :]
+        
+        assert_thresh=1e-6
+        assert np.mean(weights[good_mask]) - np.mean(weights[bad_mask]) >= -assert_thresh
+        
+        # Now find L for each of the good and bad models.
+        L[:, good_mask, :] = self._good_model.likelihood(outcomes, locs_good, expparams)
+        L[:, bad_mask, :] = self._apx_model.likelihood(outcomes, locs_bad, expparams)
+        L = L.transpose([0, 2, 1])
         
         # update the weights sans normalization
         # Rearrange so that likelihoods have shape (outcomes, experiments, models).
