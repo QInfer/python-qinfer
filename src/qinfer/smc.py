@@ -782,7 +782,7 @@ class MixedApproximateSMCUpdater(SMCUpdater):
             good_model, approximate_model,
             n_particles, prior,
             resample_a=None, resampler=None, resample_thresh=0.5,
-            mixture_ratio=0.5, mixture_thresh=0.0
+            mixture_ratio=0.5, mixture_thresh=1.0
             ):
             
         self._good_model = good_model
@@ -817,12 +817,12 @@ class MixedApproximateSMCUpdater(SMCUpdater):
         # Which indices go to good_model?
         # Note that this is slow enough that it won't make sense except for
         # rather expensive models.
-        idxs_sorted = np.argsort(weights)
+        idxs_sorted = np.argsort(weights)[::-1]
         sorted_weights = weights[idxs_sorted]
         cum_weights = np.cumsum(weights[idxs_sorted])
-        idx_mask = np.logical_or(
-            cum_weights >= self._mixture_ratio,
-            sorted_weights >= self._mixture_thresh
+        idx_mask = (#np.logical_or(
+            cum_weights >= 1 - self._mixture_ratio
+            # sorted_weights >= self._mixture_thresh
         )
         idxs_good = idxs_sorted[idx_mask]
         idxs_bad = idxs_sorted[np.logical_not(idx_mask)]
@@ -835,7 +835,6 @@ class MixedApproximateSMCUpdater(SMCUpdater):
         # Rearrange so that likelihoods have shape (outcomes, experiments, models).
         # This makes the multiplication with weights (shape (models,)) make sense,
         # since NumPy broadcasting rules align on the right-most index.
-        L = self.model.likelihood(outcomes, locs, expparams).transpose([0, 2, 1])
         hyp_weights = weights * L
         
         # Sum up the weights to find the renormalization scale.
