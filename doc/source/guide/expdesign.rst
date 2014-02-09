@@ -5,20 +5,28 @@
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
     
-.. _guide:
-
-User's Guide
-============
-
-Contents:
-
-.. toctree::
-    :maxdepth: 2
+.. _expdesign_guide:
     
-    distributions
-    models
-    smc
-    expdesign
-    parallel
-    robustness
-    
+.. currentmodule:: qinfer.expdesign
+
+Online Experiment Design
+========================
+
+Introduction
+------------
+
+TODO
+
+Fully Adaptive Optimization
+---------------------------
+
+TODO
+
+Heuristics
+----------
+
+Particle Guess Heuristic (PGH)
+""""""""""""""""""""""""""""""
+
+TODO
+
