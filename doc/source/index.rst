@@ -6,9 +6,14 @@
     California, 94041, USA.
     
 .. _index:
-    
+
+=================================================================    
 QInfer - Library for Statistical Inference in Quantum Information
 =================================================================
+
+------------------------------------------
+Christopher Granade and Christopher Ferrie
+------------------------------------------
 
 .. module:: qinfer
 
