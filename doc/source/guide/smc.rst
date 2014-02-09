@@ -100,7 +100,23 @@ passing different instances of :class:`~qinfer.resamplers.Resampler` to
 Posterior Credible Regions
 """"""""""""""""""""""""""
 
-TODO
+Posterior credible regions can be found by using the
+:meth:`~SMCUpdater.est_credible_region` method. This method returns a set of
+points :math:`\{\vec{x}_i'\}` such that the sum :math:`\sum_i w_i'` of the
+corresponding weights :math:`\{w_i'\}` is at least a specified ratio of the
+total weight.
+
+This does not admit a very compact description, however, such that it is useful
+to find region estimators :math:`\hat{X}` containing all of the particles
+describing a credible region, as above. 
+
+The :meth:`~SMCUpdater.region_est_hull` method does this by finding a convex
+hull of the credible particles, while :meth:`~SMCUpdater.region_est_ellipsoid`
+finds the minimum-volume enclosing ellipse (MVEE) of the convex hull region
+estimator.
+
+The derivation of these estimators, as well as a detailed discussion of their
+performances, can be found in [GFWC12]_ and [Fer14]_.
 
 Cluster Analysis
 """"""""""""""""
@@ -115,5 +131,26 @@ TODO
 Model Selection with Bayes Factors
 """"""""""""""""""""""""""""""""""
 
-TODO
+When considering which of two models :math:`A` or :math:`B` best explains a
+data record :math:`D`, the normalizations of SMC updates of the posterior
+conditoned on each provide the probabilities :math:`\Pr(D | A)` and
+:math:`\Pr(D | B)`. The normalization records can be obtained from the
+:attr:`~SMCUpdater.normalization_record` properties of each. As the
+probabilities of any individual data record quickly reach zero, however, it
+becomes numerically unstable to consider these probabilities directly. Instead,
+the property :attr:`~SMCUpdater.log_total_likelihood` records the quantity
+
+.. math::
+    
+    \ell(D | M) = \sum_i \log \Pr(d_i | M)
+    
+for :math:`M \in \{A, B\}`. This is related to the Bayes factor
+:math:`\text{f}` by
+
+.. math::
+
+    f = \exp(\ell(D | A) - \ell(D | B)).
+    
+As discussed in [WG+13b]_, the Bayes factor tells which of the two models
+under consideration is to be preferred as an explanation for the observed data.
 

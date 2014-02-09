@@ -127,6 +127,7 @@ Alternatively, IPython provides an online viewer for reading notebook files:
 - `Plotting Example <http://nbviewer.ipython.org/github/csferrie/python-qinfer/blob/master/examples/plot_example.ipynb>`_
 - `Noisy Coin Example <http://nbviewer.ipython.org/github/csferrie/python-qinfer/blob/master/examples/Noisy%20Coin%20Example.ipynb>`_
 
+More details can be found in the :ref:`examples` section.
 
 .. _Enthought Canopy: https://www.enthought.com/products/canopy/
 .. _Python(x,y): http://code.google.com/p/pythonxy/
