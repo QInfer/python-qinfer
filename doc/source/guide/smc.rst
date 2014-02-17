@@ -151,6 +151,6 @@ for :math:`M \in \{A, B\}`. This is related to the Bayes factor
 
     f = \exp(\ell(D | A) - \ell(D | B)).
     
-As discussed in [WG+13b]_, the Bayes factor tells which of the two models
+As discussed in [WGFC13b]_, the Bayes factor tells which of the two models
 under consideration is to be preferred as an explanation for the observed data.
 

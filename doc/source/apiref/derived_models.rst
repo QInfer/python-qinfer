@@ -15,9 +15,6 @@ Derived Models
 Introduction
 ------------
 
-.. todo::
-    Move to a guide.
-
 QInfer provides several models which *decorate* other models, providing
 additional functionality or changing the behaviors of underlying models.
 

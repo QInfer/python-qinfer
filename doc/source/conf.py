@@ -324,7 +324,8 @@ extlinks = {
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'http://docs.python.org/': None,
-    'numpy':('http://docs.scipy.org/doc/numpy',None)
+    'numpy': ('http://docs.scipy.org/doc/numpy',None),
+    'IPython': ('http://ipython.org/ipython-doc/stable/', None)
 }
 
 autodoc_member_order = 'bysource'
