@@ -38,6 +38,7 @@ __all__ = [
 ## IMPORTS ####################################################################
 
 import numpy as np
+from scipy.stats import binom
 
 from qinfer.utils import binomial_pdf
 from qinfer.abstract_model import Model
@@ -249,6 +250,28 @@ class BinomialModel(Model):
             binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr1)
             for idx in xrange(outcomes.shape[0])
             ]) 
+            
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        # FIXME: uncommenting causes a slowdown, but we need to call
+        #        to track sim counts.
+        #super(BinomialModel, self).simulate_experiment(modelparams, expparams)
+        
+        # Start by getting the pr(1) for the underlying model.
+        pr1 = self.decorated_model.likelihood(
+            np.array([1], dtype='uint'),
+            modelparams,
+            expparams['x'] if self._expparams_scalar else expparams)
+            
+        dist = binom(
+            expparams['n_meas'].astype('int64'), # ← Really, NumPy?
+            pr1[0, :, :]
+        )
+        os = np.concatenate([
+            dist.rvs()[np.newaxis, :, :]
+            for idx in xrange(repeat)
+        ], axis=0)
+        return os[0,0,0] if os.size == 1 else os
+        
 
 ## TESTING CODE ###############################################################
 

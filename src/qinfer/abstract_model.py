@@ -241,10 +241,23 @@ class Model(Simulatable):
         # This is used to count simulation calls.
         super(Model, self).simulate_experiment(modelparams, expparams, repeat)
         
-        probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
-        cdf = np.cumsum(probabilities,axis=0)
-        randnum = np.random.random((repeat, 1, modelparams.shape[0], expparams.shape[0]))
-        outcomes = np.argmax(cdf > randnum, axis=1)
+        if self.is_n_outcomes_constant:
+            all_outcomes = np.arange(self.n_outcomes(expparams[0, np.newaxis]))
+            probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
+            cdf = np.cumsum(probabilities,axis=0)
+            randnum = np.random.random((repeat, 1, modelparams.shape[0], expparams.shape[0]))
+            outcomes = np.argmax(cdf > randnum, axis=1)
+        else:
+            # Loop over each experiment, sadly.
+            outcomes = np.empty((repeat, modelparams.shape[0], expparams.shape[0]))
+            for idx_experiment, single_expparams in enumerate(expparams[:, np.newaxis]):
+                all_outcomes = np.arange(self.n_outcomes(single_expparams))
+                
+                probabilities = self.likelihood(np.arange(self.n_outcomes(single_expparams)), modelparams, single_expparams)
+                cdf = np.cumsum(probabilities, axis=0)[..., 0]
+                randnum = np.random.random((repeat, 1, modelparams.shape[0]))
+                outcomes[:, :, idx_experiment] = np.argmax(cdf > randnum, axis=1)
+                
         return outcomes[0, 0, 0] if repeat == 1 and expparams.shape[0] == 1 and modelparams.shape[0] == 1 else outcomes
                 
     ## STATIC METHODS ##
