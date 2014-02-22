@@ -26,6 +26,9 @@ Specific Distributions
 .. autoclass:: UniformDistribution
     :members:
 
+.. autoclass:: ConstantDistribution
+    :members:
+
 .. autoclass:: HilbertSchmidtUniform
     :members:
     
@@ -43,4 +46,7 @@ ones.
 
 .. autoclass:: ProductDistribution
     :members:
+
+.. autoclass:: PostselectedDistribution
+    :members
 
