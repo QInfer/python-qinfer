@@ -10,17 +10,17 @@
 Acknowledgements
 ================
 
-We gratefully acknowledge contributions to the **QInfer** project by the
-following individuals:
+We gratefully acknowledge contributions and testing to the **QInfer** project
+by the following individuals:
 
 - `Yuval Sanders`_
 - `Nathan Wiebe`_
+- `Ian Hincks`_
 
 Additionally, we thank those that have helped us to test **QInfer**, and that
 have made useful suggestions, pushing us forward.
 
 - `Rahul Deshpande`_
-- `Ian Hincks`_
 
 .. _Rahul Deshpande: https://services.iqc.uwaterloo.ca/people/profile/rdeshpande/
 .. _Ian Hincks: https://github.com/ihincks
