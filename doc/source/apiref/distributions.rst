@@ -12,28 +12,21 @@
 Probability Distributions
 =========================
 
-Introduction
-------------
-
-.. todo::
-    Move to a guide.
-
-Probability distributions such as prior distributions over model parameters
-are reprented in QInfer by objects of type :class:`Distribution` that are
-responsible for producing samples according to those distributions. This is
-especially useful, for instance, when drawing initial particles for use with
-an :class:`~qinfer.smc.SMCUpdater`.
-
 :class:`Distribution` - Abstract Base Class for Probability Distributions
 -------------------------------------------------------------------------
 
 .. autoclass:: Distribution
     :members:
 
+.. _specific_distributions:
+
 Specific Distributions
 ----------------------
 
 .. autoclass:: UniformDistribution
+    :members:
+
+.. autoclass:: ConstantDistribution
     :members:
 
 .. autoclass:: HilbertSchmidtUniform
@@ -53,4 +46,7 @@ ones.
 
 .. autoclass:: ProductDistribution
     :members:
+
+.. autoclass:: PostselectedDistribution
+    :members
 

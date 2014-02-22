@@ -10,12 +10,19 @@
 Introduction
 ============
 
-TODO
+**QInfer** is a library for working with sequential Monte Carlo methods for
+parameter estimation in quantum information. **QInfer** will use your custom
+experimental models to estimate properties of those models based on experimental
+data.
+
+Additionally, **QInfer** is designed for use with cutting-edge tools, such as
+Python and IPython, making it easier to integrate with the rich community of
+Python-based scientific software libraries.
 
 Obtaining QInfer
 ----------------
 
-A stable version of **QInfer** has not yet been released. Until then,
+A fully-stable version of **QInfer** has not yet been released. Until then,
 the latest version may always be obtained by cloning into the GitHub
 repository::
 
@@ -52,7 +59,7 @@ Dependencies
 Some features of **QInfer** require additional packages, but the core of
 **QInfer** will work without them:
 
-- `SciKit-Learn`_ required for some advanced features.
+- `SciKit-Learn`_ required for some advanced features, such as clustering.
 - `Sphinx`_ required to rebuild documentation.
 - `matplotlib`_ required for plotting functionality.
 - `IPython Notebook`_ (version 1.1) is used to provide examples.
@@ -107,7 +114,20 @@ particular version being cited.
 Getting Started
 ---------------
 
-TODO
+To get started using **QInfer**, it may be helpful to give a look through the
+:ref:`guide`. Alternatively, you may want to dive right into looking at
+the `examples`_ using `IPython Notebook`_. To do so, from your system command
+line, navigate to where you downloaded **QInfer**, then run::
+
+    cd python-qinfer/examples
+    ipython notebook
+
+Alternatively, IPython provides an online viewer for reading notebook files:
+
+- `Plotting Example <http://nbviewer.ipython.org/github/csferrie/python-qinfer/blob/master/examples/plot_example.ipynb>`_
+- `Noisy Coin Example <http://nbviewer.ipython.org/github/csferrie/python-qinfer/blob/master/examples/Noisy%20Coin%20Example.ipynb>`_
+
+More details can be found in the :ref:`examples` section.
 
 .. _Enthought Canopy: https://www.enthought.com/products/canopy/
 .. _Python(x,y): http://code.google.com/p/pythonxy/
@@ -115,3 +135,5 @@ TODO
 .. _SciKit-Learn: http://scikit-learn.org/stable/
 .. _Sphinx: http://sphinx-doc.org/
 .. _IPython Notebook: http://ipython.org/ipython-doc/stable/interactive/notebook.html
+
+.. _examples: https://github.com/csferrie/python-qinfer/tree/master/examples

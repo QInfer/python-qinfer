@@ -23,7 +23,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## IMPORTS #####################################################################
+## VERSION METADATA ###########################################################
+# In keeping with PEP-396, we define a version number of the form
+# {major}.{minor}[.{postrelease}]{prerelease-tag}
+
+__version__ = '1.0a1'
+
+## IMPORTS ####################################################################
 # These imports control what is made available by importing qinfer itself.
 
 from _exceptions import *

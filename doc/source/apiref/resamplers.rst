@@ -15,14 +15,23 @@ Resampling Algorithms
 Introduction
 ------------
 
-TODO
+In order to restore numerical stability to the sequential Monte Carlo
+algorithm as the effective sample size is reduced, *resampling* is used to
+adaptively move particles so as to better represent the posterior distribution.
+**QInfer** allows for such algorithms to be specified in a modular way.
 
-:class:`LiuWestResampler` -  Liu and West (2000) Resampling Algorithm
+:class:`LiuWestResampler` -  Liu and West (2000) resampling algorithm
 ---------------------------------------------------------------------
 
 Class Reference
 ~~~~~~~~~~~~~~~
 
 .. autoclass:: LiuWestResampler
+    :members:
+
+:class:`ClusteringResampler` - Cluster-based recursive resampler
+----------------------------------------------------------------
+
+.. autoclass:: ClusteringResampler
     :members:
 

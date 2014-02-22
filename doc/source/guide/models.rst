@@ -275,3 +275,38 @@ Our new custom model is now ready to use!
     
 .. _broadcasting rules: http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
 
+.. currentmodule:: qinfer.derived_models
+
+Adding Functionality to Models with Other Models
+------------------------------------------------
+
+QInfer also provides model classes which add functionality or otherwise modify
+other models. For instance, the :class:`BinomialModel` class accepts instances
+of two-outcome models and then represents the likelihood for many repeated
+measurements of that model. This is especially useful in cases where
+experimental concerns make switching experiments costly, such that repeated
+measurements make sense.
+
+To use :class:`BinomialModel`, simply provide an instance of another model
+class:
+
+>>> from qinfer.test_models import SimplePrecessionModel
+>>> from qinfer.derived_models import BinomialModel
+>>> bin_model = BinomialModel(SimplePrecessionModel())
+
+Experiments for :class:`BinomialModel` have an additional field from the
+underlying models, called ``n_meas``. If the original model used scalar
+experiment parameters (e.g.: ``expparams_dtype`` is `float`), then the original
+scalar will be referred to by a field ``x``.
+
+>>> import numpy as np
+>>> eps = np.array([(12.1, 10)], dtype=bin_model.expparams_dtype)
+>>> print eps['x'], eps['n_meas']
+[ 12.1] [10]
+
+Another model which *decorates* other models in this way is :class:`PoisonedModel`,
+which is discussed in more detail in :ref:`robustness_guide`. Roughly,
+this model causes the likeihood functions calculated by its underlying model
+to be subject to random noise, so that the robustness of an inference algorithm
+against such noise can be tested.
+

@@ -160,6 +160,29 @@ class Simulatable(object):
         """
         return np.ones(expparams.shape)
         
+    def distance(self, a, b):
+        r"""
+        Gives the distance between two model parameter vectors :math:`\vec{a}` and
+        :math:`\vec{b}`. By default, this is the vector 1-norm of the difference
+        :math:`\mathbf{Q} (\vec{a} - \vec{b})` rescaled by
+        :attr:`~Simulatable.Q`.
+        
+        :param np.ndarray a: Array of model parameter vectors having shape
+            ``(n_models, n_modelparams)``.
+        :param np.ndarray b: Array of model parameters to compare to, having
+            the same shape as ``a``.
+        :return: An array ``d`` of distances ``d[i]`` between ``a[i, :]`` and
+            ``b[i, :]``.
+        """
+        
+        return np.apply_along_axis(
+            lambda vec: np.linalg.norm(vec, 1),
+            1,
+            self.Q * (a - b)
+        )
+        
+        
+        
 class LinearCostModelMixin(Simulatable):
     # FIXME: move this mixin to a new module.
     # TODO: test this mixin.
@@ -218,10 +241,23 @@ class Model(Simulatable):
         # This is used to count simulation calls.
         super(Model, self).simulate_experiment(modelparams, expparams, repeat)
         
-        probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
-        cdf = np.cumsum(probabilities,axis=0)
-        randnum = np.random.random((repeat, 1, modelparams.shape[0], expparams.shape[0]))
-        outcomes = np.argmax(cdf > randnum, axis=1)
+        if self.is_n_outcomes_constant:
+            all_outcomes = np.arange(self.n_outcomes(expparams[0, np.newaxis]))
+            probabilities = self.likelihood(np.arange(self.n_outcomes(expparams)), modelparams, expparams)
+            cdf = np.cumsum(probabilities,axis=0)
+            randnum = np.random.random((repeat, 1, modelparams.shape[0], expparams.shape[0]))
+            outcomes = np.argmax(cdf > randnum, axis=1)
+        else:
+            # Loop over each experiment, sadly.
+            outcomes = np.empty((repeat, modelparams.shape[0], expparams.shape[0]))
+            for idx_experiment, single_expparams in enumerate(expparams[:, np.newaxis]):
+                all_outcomes = np.arange(self.n_outcomes(single_expparams))
+                
+                probabilities = self.likelihood(np.arange(self.n_outcomes(single_expparams)), modelparams, single_expparams)
+                cdf = np.cumsum(probabilities, axis=0)[..., 0]
+                randnum = np.random.random((repeat, 1, modelparams.shape[0]))
+                outcomes[:, :, idx_experiment] = np.argmax(cdf > randnum, axis=1)
+                
         return outcomes[0, 0, 0] if repeat == 1 and expparams.shape[0] == 1 and modelparams.shape[0] == 1 else outcomes
                 
     ## STATIC METHODS ##

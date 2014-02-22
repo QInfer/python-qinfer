@@ -14,8 +14,11 @@ Contents:
 
 .. toctree::
     :maxdepth: 2
-    :glob:
     
-    *
-
-
+    distributions
+    models
+    smc
+    expdesign
+    parallel
+    robustness
+    

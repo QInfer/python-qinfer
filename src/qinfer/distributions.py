@@ -30,6 +30,8 @@ import scipy.stats as st
 import scipy.linalg as la
 import abc
 
+import warnings
+
 ## CLASSES ####################################################################
 
 class Distribution(object):
@@ -61,8 +63,12 @@ class Distribution(object):
         pass
 
 class ProductDistribution(Distribution):
-    """
-    Returns the Cartesian product of two distributions called A and B.
+    r"""
+    Returns the Cartesian product of two distributions :math:`A` and
+    :math:`B`, :math:`\Pr(A, B) = \Pr(A) \Pr(B)`.
+    
+    :param Distribution A: Distribution object representing :math:`A`.
+    :param Distribution B: Distribution object representing :math:`B`.
     """
     def __init__(self, A, B):
         self.A = A
@@ -110,6 +116,25 @@ class UniformDistribution(Distribution):
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
 
+class ConstantDistribution(Distribution):
+    """
+    Represents a determinstic variable; useful for combining with other
+    distributions, marginalizing, etc.
+    
+    :param values: Shape ``(n,)`` array or list of values :math:`X_0` such that
+        :math:`\Pr(X) = \delta(X - X_0)`.
+    """
+    
+    def __init__(self, values):
+        self._values = np.array(values)[np.newaxis, :]
+        
+    @property
+    def n_rvs(self):
+        return self._values.shape[1]
+        
+    def sample(self, n=1):
+        return np.repeat(self._values, n, axis=0)
+
 class UniformDistributionWith0(Distribution):
     """
     Uniform distribution on a given rectangular region with padded zeros.
@@ -120,6 +145,11 @@ class UniformDistributionWith0(Distribution):
     """
     
     def __init__(self, ranges=_DEFAULT_RANGES, zeros = 0):
+        warnings.warn(
+            "This class has been superceded by ProductDistribution and ConstantDistribution.",
+            DeprecationWarning
+        )
+    
         if not isinstance(ranges, np.ndarray):
             ranges = np.array(ranges)
             
@@ -156,14 +186,14 @@ class NormalDistribution(Distribution):
         self.mean = mean
         self.var = var
         
-        self.dist = st.norm(mean,np.sqrt(var))        
+        self.dist = st.norm(mean, np.sqrt(var))        
 
     @property
     def n_rvs(self):
         return 1
 
-    def sample(self, n = 1):
-        return self.dist.rvs(size=n)[:,np.newaxis]
+    def sample(self, n=1):
+        return self.dist.rvs(size=n)[:, np.newaxis]
         
     def grad_log_pdf(self, x):
         return -(x - self.mean) / self.var
@@ -318,3 +348,48 @@ class GinibreUniform(object):
         
         return np.array([x,y,z])
 
+
+class PostselectedDistribution(Distribution):
+    """
+    Postselects a distribution based on validity within a given model.
+    """
+    # TODO: rewrite LiuWestResampler in terms of this and a
+    #       new MixtureDistribution.
+    
+    def __init__(self, distribution, model, maxiters=100):
+        self._dist = distribution
+        self._model = model
+        
+        self._maxiters = 100
+    
+    @property
+    def n_rvs(self):
+        return self._dist.n_rvs
+    
+    def sample(self, n=1):
+        """
+        Returns one or more samples from this probability distribution.
+        
+        :param int n: Number of samples to return.
+        :return numpy.ndarray: An array containing samples from the
+            distribution of shape ``(n, d)``, where ``d`` is the number of
+            random variables.
+        """
+        samples = np.empty((n, self.n_rvs))
+        idxs_to_sample = np.arange(n)
+        
+        iters = 0
+        
+        while idxs_to_sample.size and iters < self._maxiters:
+            samples[idxs_to_sample] = self._dist.sample(len(idxs_to_sample))
+            
+            idxs_to_sample = idxs_to_sample[np.nonzero(np.logical_not(
+                self._model.are_models_valid(samples[idxs_to_sample, :])
+            ))[0]]
+
+            iters += 1
+            
+        if idxs_to_sample.size:
+            raise RuntimeError("Did not successfully postselect within {} iterations.".format(self._maxiters))
+            
+        return samples

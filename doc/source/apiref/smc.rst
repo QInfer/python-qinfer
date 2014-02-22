@@ -12,11 +12,6 @@
 Sequential Monte Carlo
 ======================
 
-Introduction
-------------
-
-TODO
-
 :class:`SMCUpdater` - SMC-Based Particle Updater
 ------------------------------------------------
 
