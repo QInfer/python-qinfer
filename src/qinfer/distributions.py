@@ -30,6 +30,8 @@ import scipy.stats as st
 import scipy.linalg as la
 import abc
 
+import warnings
+
 ## CLASSES ####################################################################
 
 class Distribution(object):
@@ -61,8 +63,12 @@ class Distribution(object):
         pass
 
 class ProductDistribution(Distribution):
-    """
-    Returns the Cartesian product of two distributions called A and B.
+    r"""
+    Returns the Cartesian product of two distributions :math:`A` and
+    :math:`B`, :math:`\Pr(A, B) = \Pr(A) \Pr(B)`.
+    
+    :param Distribution A: Distribution object representing :math:`A`.
+    :param Distribution B: Distribution object representing :math:`B`.
     """
     def __init__(self, A, B):
         self.A = A
@@ -114,6 +120,9 @@ class ConstantDistribution(Distribution):
     """
     Represents a determinstic variable; useful for combining with other
     distributions, marginalizing, etc.
+    
+    :param values: Shape ``(n,)`` array or list of values :math:`X_0` such that
+        :math:`\Pr(X) = \delta(X - X_0)`.
     """
     
     def __init__(self, values):
@@ -136,6 +145,11 @@ class UniformDistributionWith0(Distribution):
     """
     
     def __init__(self, ranges=_DEFAULT_RANGES, zeros = 0):
+        warnings.warn(
+            "This class has been superceded by ProductDistribution and ConstantDistribution.",
+            DeprecationWarning
+        )
+    
         if not isinstance(ranges, np.ndarray):
             ranges = np.array(ranges)
             
