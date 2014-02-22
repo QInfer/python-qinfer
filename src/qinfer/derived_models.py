@@ -266,8 +266,13 @@ class BinomialModel(Model):
             expparams['n_meas'].astype('int64'), # ← Really, NumPy?
             pr1[0, :, :]
         )
+        sample = (
+            (lambda: dist.rvs()[np.newaxis, :, :])
+            if pr1.size != 1 else
+            (lambda: np.array([[[dist.rvs()]]]))
+        )
         os = np.concatenate([
-            dist.rvs()[np.newaxis, :, :]
+            sample()
             for idx in xrange(repeat)
         ], axis=0)
         return os[0,0,0] if os.size == 1 else os
