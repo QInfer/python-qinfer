@@ -330,6 +330,11 @@ class DifferentiableModel(Model):
             L = self.likelihood(outcomes, modelparams, expparams)
             scores = self.score(outcomes, modelparams, expparams)
             
+            assert len(scores.shape) in (3, 4)
+            
+            if len(scores.shape) == 3:
+                scores = scores[np.newaxis, :, :, :]
+            
             # Note that E[score] = 0 by regularity assumptions, so we only
             # need the expectation over the outer product.
             return np.einsum("ome,iome,jome->ijme",
