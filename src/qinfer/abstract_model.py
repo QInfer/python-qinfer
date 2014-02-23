@@ -341,4 +341,28 @@ class DifferentiableModel(Model):
                 L, scores, scores
             )
         else:
-            raise NotImplementedError
+            # Indexing will be a major pain here, so we need to start
+            # by making an empty array, so that index errors will be raised
+            # when (not if!) we make mistakes.
+            fisher = np.empty((
+                self.n_modelparams, self.n_modelparams,
+                modelparams.shape[0], expparams.shape[0]
+            ))
+            
+            # Now we loop over experiments, since we cannot vectorize the
+            # expectation value over data.
+            for idx_experiment, experiment in enumerate(expparams):
+                experiment = experiment.reshape((1,))
+                n_o = self.n_outcomes(experiment)
+            
+                outcomes = np.arange(n_o)
+                L = self.likelihood(outcomes, modelparams, experiment)
+                scores = self.score(outcomes, modelparams, experiment)
+                
+                fisher[:, :, :, idx_experiment] = np.einsum("ome,iome,jome->ijme",
+                    L, scores, scores
+                )
+            
+            return fisher
+            
+            

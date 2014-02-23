@@ -277,6 +277,19 @@ class BinomialModel(Model):
         ], axis=0)
         return os[0,0,0] if os.size == 1 else os
         
+class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
+    # TODO: document!!!
+    
+    def __init__(self, decorated_model):
+        if not isinstance(decorated_model, DifferentiableModel):
+            raise TypeError("Decorated model must also be differentiable.")
+        BinomialModel.__init__(self, decorated_model)
+    
+    def score(self, outcomes, modelparams, expparams):
+        raise NotImplementedError("Not yet implemented.")
+        
+    def fisher_information(self, modelparams, expparams):
+        raise NotImplementedError("Not yet implemented.")
 
 ## TESTING CODE ###############################################################
 
