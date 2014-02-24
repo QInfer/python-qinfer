@@ -902,6 +902,16 @@ class SMCUpdaterBCRB(SMCUpdater):
     functionality.
     
     Models considered by this class must be differentiable.
+    
+    In addition to the arguments taken by :class:`SMCUpdater`, this class
+    takes the following keyword-only arguments:
+        
+    :param bool adaptive: If `True`, the updater will track both the
+        non-adaptive and adaptive Bayes Information matrices.
+    :param initial_bim: If the regularity conditions are not met, then taking
+        the outer products of gradients over the prior will not give the correct
+        initial BIM. In such cases, ``initial_bim`` can be set to the correct
+        BIM corresponding to having done no experiments.
     """
     
 
@@ -919,11 +929,14 @@ class SMCUpdaterBCRB(SMCUpdater):
         #       returns the partial derivative with respect to the kth
         #       parameter evaluated at the model parameter vector
         #       modelparams[i, :].
-        gradients = prior.grad_log_pdf(self.particle_locations)
-        self.current_bim = np.sum(
-            gradients[:, :, np.newaxis] * gradients[:, np.newaxis, :],
-            axis=0
-        ) / self.n_particles
+        if 'initial_bim' not in kwargs or kwargs['initial_bim'] is None:
+            gradients = prior.grad_log_pdf(self.particle_locations)
+            self.current_bim = np.sum(
+                gradients[:, :, np.newaxis] * gradients[:, np.newaxis, :],
+                axis=0
+            ) / self.n_particles
+        else:
+            self.current_bim = kwargs['initial_bim']
             
         # Also track the adaptive BIM, if we've been asked to.
         if "adaptive" in kwargs and kwargs["adaptive"]:
