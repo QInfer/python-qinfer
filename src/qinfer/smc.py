@@ -912,12 +912,18 @@ class SMCUpdaterBCRB(SMCUpdater):
         if not isinstance(self.model, DifferentiableModel):
             raise ValueError("Model must be differentiable.")
         
-        # FIXME: the following line predates the recent changes in shapes
-        #        and method names and will need changed.
-        np.sum(np.array([
-            outer_product(self.prior.grad_log_pdf(particle))
-            for particle in self.particle_locations
-            ]), axis=0) / self.n_particles
+        # TODO: fix distributions to make grad_log_pdf return the right
+        #       shape, such that the indices are
+        #       [idx_model, idx_param] → [idx_model, idx_param],
+        #       so that prior.grad_log_pdf(modelparams[i, j])[i, k]
+        #       returns the partial derivative with respect to the kth
+        #       parameter evaluated at the model parameter vector
+        #       modelparams[i, :].
+        gradients = prior.grad_log_pdf(self.particle_locations)
+        self.current_bim = np.sum(
+            gradients[:, :, np.newaxis] * gradients[:, np.newaxis, :],
+            axis=0
+        ) / self.n_particles
             
         # Also track the adaptive BIM, if we've been asked to.
         if "adaptive" in kwargs and kwargs["adaptive"]:
@@ -973,7 +979,13 @@ class SMCUpdaterBCRB(SMCUpdater):
     def update(self, outcome, expparams):
         # Before we update, we need to commit the new Bayesian information
         # matrix corresponding to the measurement we just made.
-        self.current_bim += self.prior_bim(expparams)[:, :, 0]
+        self.current_bim += self.prior_bayes_information(expparams)[:, :, 0]
+        
+        # If we're tracking the information content accessible to adaptive
+        # algorithms, then we must use the current posterior as the prior
+        # for the next step, then add that accordingly.
+        if self._track_adaptive:
+            self.adaptive_bim += self.posterior_bayes_information(expparams)[:, :, 0]
         
         # We now can update as normal.
         SMCUpdater.update(self, outcome, expparams)
