@@ -218,7 +218,7 @@ class BinomialModel(Model):
         
     @property
     def modelparam_names(self):
-        return self._model.modelparam_names
+        return self.decorated_model.modelparam_names
     
     ## METHODS ##
     
@@ -289,7 +289,8 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
         raise NotImplementedError("Not yet implemented.")
         
     def fisher_information(self, modelparams, expparams):
-        raise NotImplementedError("Not yet implemented.")
+        two_outcome_fi = self.decorated_model.fisher_information(modelparams, expparams)
+        return two_outcome_fi * expparams['n_meas']
 
 ## TESTING CODE ###############################################################
 
