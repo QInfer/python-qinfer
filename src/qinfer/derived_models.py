@@ -278,7 +278,10 @@ class BinomialModel(Model):
         return os[0,0,0] if os.size == 1 else os
         
 class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
-    # TODO: document!!!
+    """
+    Extends :class:`BinomialModel` to take advantage of differentiable
+    two-outcome models.
+    """
     
     def __init__(self, decorated_model):
         if not isinstance(decorated_model, DifferentiableModel):
@@ -289,7 +292,12 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
         raise NotImplementedError("Not yet implemented.")
         
     def fisher_information(self, modelparams, expparams):
-        two_outcome_fi = self.decorated_model.fisher_information(modelparams, expparams)
+        # Since the FI simply adds, we can multiply the single-shot
+        # FI provided by the underlying model by the number of measurements
+        # that we perform.
+        two_outcome_fi = self.decorated_model.fisher_information(
+            modelparams, expparams
+        )
         return two_outcome_fi * expparams['n_meas']
 
 ## TESTING CODE ###############################################################
