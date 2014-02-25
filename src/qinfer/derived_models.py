@@ -41,7 +41,7 @@ import numpy as np
 from scipy.stats import binom
 
 from qinfer.utils import binomial_pdf
-from qinfer.abstract_model import Model
+from qinfer.abstract_model import Model, DifferentiableModel
 from qinfer._lib import enum # <- TODO: replace with flufl.enum!
 from qinfer.ale import binom_est_error
     

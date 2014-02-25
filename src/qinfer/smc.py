@@ -917,7 +917,13 @@ class SMCUpdaterBCRB(SMCUpdater):
 
 
     def __init__(self, *args, **kwargs):
-        SMCUpdater.__init__(self, *args, **kwargs)
+        SMCUpdater.__init__(self, *args, **{
+            key: kwargs[key] for key in kwargs
+            if key in [
+                'resampler_a', 'resampler', 'resample_thresh', 'model',
+                'prior', 'n_particles'
+            ]
+        })
         
         if not isinstance(self.model, DifferentiableModel):
             raise ValueError("Model must be differentiable.")
@@ -930,7 +936,7 @@ class SMCUpdaterBCRB(SMCUpdater):
         #       parameter evaluated at the model parameter vector
         #       modelparams[i, :].
         if 'initial_bim' not in kwargs or kwargs['initial_bim'] is None:
-            gradients = prior.grad_log_pdf(self.particle_locations)
+            gradients = self.prior.grad_log_pdf(self.particle_locations)
             self.current_bim = np.sum(
                 gradients[:, :, np.newaxis] * gradients[:, np.newaxis, :],
                 axis=0
@@ -944,6 +950,8 @@ class SMCUpdaterBCRB(SMCUpdater):
             # Both the prior- and posterior-averaged BIMs start
             # from the prior.
             self.adaptive_bim = self.current_bim.copy()
+        else:
+            self._track_adaptive = False
     
     # TODO: since we are guaranteed differentiability, and since SMCUpdater is
     #       now a Distribution subclass representing posterior sampling, write
