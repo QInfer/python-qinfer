@@ -115,6 +115,14 @@ class UniformDistribution(Distribution):
         shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
         z = np.random.random(shape)
         return self._ranges[:, 0] + z * self._delta
+        
+    def grad_log_pdf(self, var):
+        # THIS IS NOT TECHNICALLY LEGIT; BCRB doesn't technically work with a
+        # prior that doesn't go to 0 at its end points.  But we do it anyway.
+        if var.shape[0] == 1:
+            return 12/(self._delta)**2
+        else:
+            return np.zeros(var.shape)
 
 class ConstantDistribution(Distribution):
     """
@@ -197,6 +205,25 @@ class NormalDistribution(Distribution):
         
     def grad_log_pdf(self, x):
         return -(x - self.mean) / self.var
+        
+class MultivariateNormalDistribution(Distribution):
+    def __init__(self, mean, cov):
+        
+        self.mean = mean
+        self.cov = cov
+        self.invcov = la.inv(cov)
+    
+    @property
+    def n_rvs(self):
+        return self.mean.shape[1]
+        
+    def sample(self):
+        
+        return np.dot(la.sqrtm(self.cov), np.random.randn(self.n_rvs)) + self.mean
+
+    def grad_log_pdf(self, x):
+        return -np.dot(self.invcov,(x - self.mean[0])) 
+        
         
 class SlantedNormalDistribution(Distribution):
     """
