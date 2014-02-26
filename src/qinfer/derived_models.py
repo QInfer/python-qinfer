@@ -263,7 +263,7 @@ class BinomialModel(Model):
             expparams['x'] if self._expparams_scalar else expparams)
             
         dist = binom(
-            expparams['n_meas'].astype('int64'), # ← Really, NumPy?
+            expparams['n_meas'].astype('int'), # ← Really, NumPy?
             pr1[0, :, :]
         )
         sample = (
