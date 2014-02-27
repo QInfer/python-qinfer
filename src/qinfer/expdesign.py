@@ -75,14 +75,25 @@ class Heuristic(object):
 class PGH(Heuristic):
     # TODO: docstring citing QHL.
     
-    def __init__(self, updater, inv_field='x_', t_field='t'):
+    def __init__(self, updater, inv_field='x_', t_field='t', maxiters=10):
         self._updater = updater
         self._x_ = inv_field
         self._t = t_field
+        self._maxiters = maxiters
         
     def __call__(self):
-        x, xp = self._updater.sample(n=2)
-        
+        idx_iter = 0
+        while idx_iter < self._maxiters:
+                
+            x, xp = self._updater.sample(n=2)
+            if self._updater.model.distance(x, xp) > 0:
+                break
+            else:
+                idx_iter += 1
+                
+        if self._updater.model.distance(x, xp) == 0:
+            raise RuntimeError("PGH did not find distinct particles in {} iterations.".format(self._maxiters))
+            
         eps = np.empty((1,), dtype=self._updater.model.expparams_dtype)
         eps[self._x_] = x
         eps[self._t]  = 1 / self._updater.model.distance(x, xp)
