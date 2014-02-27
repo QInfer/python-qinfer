@@ -360,7 +360,7 @@ class PostselectedDistribution(Distribution):
         self._dist = distribution
         self._model = model
         
-        self._maxiters = 100
+        self._maxiters = maxiters
     
     @property
     def n_rvs(self):
