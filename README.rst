@@ -61,7 +61,9 @@ used on Windows, Mac OS X or Linux.
 More Information
 ================
 
-Full documentation for **QInfer** is available by running the documentation
+Full documentation for **QInfer** is
+`available on ReadTheDocs <http://python-qinfer.readthedocs.org/en/latest/>`_,
+or may be built locally by running the documentation
 build script in ``doc/``::
 
     $ cd /path/to/qinfer/doc/
