@@ -346,10 +346,10 @@ class SMCUpdater(Distribution):
     def sample(self, n=1):
         # TODO: cache this.
         cumsum_weights = np.cumsum(self.particle_weights)
-        return self.particle_locations[cumsum_weights.searchsorted(
+        return self.particle_locations[np.min(cumsum_weights.searchsorted(
             np.random.random((n,)),
             side='right'
-        )]
+        ), len(cumsum_weights) - 1)]
 
     ## ESTIMATION METHODS #####################################################
 
