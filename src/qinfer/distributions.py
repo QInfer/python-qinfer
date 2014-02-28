@@ -225,7 +225,7 @@ class MultivariateNormalDistribution(Distribution):
         return np.einsum("ij,nj->ni", la.sqrtm(self.cov), np.random.randn(n, self.n_rvs)) + self.mean
 
     def grad_log_pdf(self, x):
-        return -np.dot(self.invcov,(x - self.mean[0])) 
+        return -np.dot(self.invcov,(x[0] - self.mean[0]))[np.newaxis] 
         
         
 class SlantedNormalDistribution(Distribution):
