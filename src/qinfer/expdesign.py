@@ -73,7 +73,36 @@ class Heuristic(object):
         raise NotImplementedError("Not yet implemented.")
         
 class PGH(Heuristic):
-    # TODO: docstring citing QHL.
+    """
+    Implements the *particle guess heuristic* (PGH) of [WGFC13a]_, which
+    selects two particles from the current posterior, selects one as an
+    inversion hypothesis and sets the time parameter to be the inverse of
+    the distance between the particles. In this way, the PGH adapts to the
+    current uncertianty without additional simulation resources.
+    
+    :param qinfer.smc.SMCUpdater updater: Posterior updater for which
+        experiments should be heuristicly designed.
+    :param str inv_field: Name of the ``expparams`` field corresponding to the
+        inversion hypothesis.
+    :param str t_field: Name of the ``expparams`` field corresponding to the
+        evolution time.
+    :param int maxiters: Number of times to try and choose distinct particles
+        before giving up.
+    
+    Once initialized, a ``PGH`` object can be called to generate a new
+    experiment parameter vector:
+    
+    >>> pgh = PGH(updater) # doctest: +SKIP
+    >>> expparams = pgh() # doctest: +SKIP
+    
+    If the posterior weights are very highly peaked (that is, if the effective
+    sample size is too small, as measured by
+    :attr:`~qinfer.smc.SMCUpdater.n_ess`), then it may be the case that the two
+    particles chosen by the PGH are identical, such that the time would be
+    determined by ``1 / 0``. In this case, the `PGH` class will instead draw
+    new pairs of particles until they are not identical, up to ``maxiters``
+    attempts. If that limit is reached, a `RuntimeError` will be raised.
+    """
     
     def __init__(self, updater, inv_field='x_', t_field='t', maxiters=10):
         self._updater = updater
