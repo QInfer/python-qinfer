@@ -75,10 +75,16 @@ class SMCUpdater(Distribution):
     :param callable resampler: Specifies the resampling algorithm to be used. See :ref:`resamplers`
         for more details.
     :param float resample_thresh: Specifies the threshold for :math:`N_{\text{ess}}` to decide when to resample.
+    :param str zero_weight_policy: Specifies the action to be taken when the
+        particle weights would all be set to zero by an update.
+        One of ``["ignore", "skip", "warn", "error", "reset"]``.
+    :param float zero_weight_thresh: Value to be used when testing for the
+        zero-weight condition.
     """
     def __init__(self,
             model, n_particles, prior,
-            resample_a=None, resampler=None, resample_thresh=0.5
+            resample_a=None, resampler=None, resample_thresh=0.5,
+            zero_weight_policy='error', zero_weight_thresh=10*np.spacing(0)
             ):
 
         self._resample_count = 0
@@ -107,19 +113,11 @@ class SMCUpdater(Distribution):
         self._data_record = []
         self._normalization_record = []
         
+        self._zero_weight_policy = zero_weight_policy
+        self._zero_weight_thresh = zero_weight_thresh
+        
         ## PARTICLE INITIALIZATION ##
-        # Particles are stored using two arrays, particle_locations and
-        # particle_weights, such that:
-        # 
-        # particle_locations[idx_particle, idx_modelparam] is the idx_modelparam
-        #     parameter of the particle idx_particle.
-        # particle_weights[idx_particle] is the weight of the particle
-        #     idx_particle.
-        self.particle_locations = np.zeros((n_particles, model.n_modelparams))
-        self.particle_weights = np.ones((n_particles,)) / n_particles
-
-        for idx_particle in xrange(n_particles):
-            self.particle_locations[idx_particle, :] = prior.sample()
+        self.reset()
 
     ## PROPERTIES #############################################################
 
@@ -183,6 +181,25 @@ class SMCUpdater(Distribution):
         if self.n_ess < self.n_particles * self.resample_thresh:
             self.resample()
             pass
+
+    ## INITIALIZATION METHODS #################################################
+    
+    def reset(self):
+        """
+        Causes all particle locations and weights to be drawn fresh from the
+        initial prior.
+        """
+        # Particles are stored using two arrays, particle_locations and
+        # particle_weights, such that:
+        # 
+        # particle_locations[idx_particle, idx_modelparam] is the idx_modelparam
+        #     parameter of the particle idx_particle.
+        # particle_weights[idx_particle] is the weight of the particle
+        #     idx_particle.
+        self.particle_locations = np.zeros((self.n_particles, model.n_modelparams))
+        self.particle_weights = np.ones((self.n_particles,)) / self.n_particles
+
+        self.particle_locations[:, :] = self.prior.sample(n=self.n_particles)
 
     ## UPDATE METHODS #########################################################
 
@@ -273,8 +290,31 @@ class SMCUpdater(Distribution):
         # TODO: record the experiment as well.
         self._data_record.append(outcome)
 
-        # Perform the update      
+        # Perform the update. 
         weights, norm = self.hypothetical_update(outcome, expparams, return_normalization=True)
+
+        # Check for negative weights before applying the update.            
+        if not np.all(weights >= 0):
+            warnings.warn("Negative weights occured in particle approximation. Smallest weight observed == {}. Clipping weights.".format(np.min(weights)), ApproximationWarning)
+            np.clip(weights, 0, 1, out=weights)
+
+        # Next, check if we have caused the weights to go to zero, as can
+        # happen if the likelihood is identically zero for all particles,
+        # or if the previous clip step choked on a NaN.
+        if np.sum(weights) <= self._zero_weight_thresh:
+            if self._zero_weight_policy == 'ignore':
+                pass
+            elif self._zero_weight_policy == 'skip':
+                return
+            elif self._zero_weight_policy == 'warn':
+                warnings.warn("All particle weights are zero. This will very likely fail quite badly.", ApproximationWarning)
+            elif self._zero_weight_policy == 'error':
+                raise RuntimeError("All particle weights are zero.")
+            elif self._zero_weight_policy == 'reset':
+                warnings.warn("All particle weights are zero. Resetting from initial prior.", ApproximationWarning)
+                self.reset()
+            else:
+                raise ValueError("Invalid zero-weight policy {} encountered.".format(self._zero_weight_policy))
 
         # Since hypothetical_update returns an array indexed by
         # [outcome, experiment, particle], we need to strip off those two
@@ -286,10 +326,6 @@ class SMCUpdater(Distribution):
 
         if check_for_resample:
             self._maybe_resample()
-            
-        if not np.all(self.particle_weights >= 0):
-            warnings.warn("Negative weights occured in particle approximation. Smallest weight observed == {}. Clipping weights.".format(np.min(self.particle_weights)), ApproximationWarning)
-            np.clip(self.particle_weights, 0, 1, out=self.particle_weights)
 
     def batch_update(self, outcomes, expparams, resample_interval=5):
         r"""
