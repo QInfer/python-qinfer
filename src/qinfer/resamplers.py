@@ -43,7 +43,7 @@ import warnings
 from utils import outer_product, particle_meanfn, particle_covariance_mtx
 
 from qinfer import clustering
-from qinfer._exceptions import ResamplerWarning
+from qinfer._exceptions import ResamplerWarning, ResamplerError
 
 ## CLASSES #####################################################################
 
@@ -169,6 +169,10 @@ class LiuWestResampler(object):
         # parameters in the Liu and West algorithm            
         a, h = self._a, self._h
         S, S_err = la.sqrtm(cov, disp=False)
+        if not np.isfinite(S_err):
+            raise ResamplerError(
+                "Infinite error in computing the square root of the "
+                "covariance matrix. Check that n_ess is not too small.")
     	S = np.real(h * S)
         n_ms, n_mp = l.shape
         
