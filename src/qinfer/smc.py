@@ -196,7 +196,7 @@ class SMCUpdater(Distribution):
         #     parameter of the particle idx_particle.
         # particle_weights[idx_particle] is the weight of the particle
         #     idx_particle.
-        self.particle_locations = np.zeros((self.n_particles, model.n_modelparams))
+        self.particle_locations = np.zeros((self.n_particles, self.model.n_modelparams))
         self.particle_weights = np.ones((self.n_particles,)) / self.n_particles
 
         self.particle_locations[:, :] = self.prior.sample(n=self.n_particles)
