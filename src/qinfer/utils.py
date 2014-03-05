@@ -106,6 +106,7 @@ def particle_covariance_mtx(weights,locations):
     # The SMC approximation is not guaranteed to produce a
     # positive-semidefinite covariance matrix. If a negative eigenvalue
     # is produced, we should warn the caller of this.
+    assert np.all(np.isfinite(cov))
     if not np.all(la.eig(cov)[0] >= 0):
         warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.', ApproximationWarning)
 
