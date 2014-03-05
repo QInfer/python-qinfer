@@ -178,7 +178,15 @@ class SMCUpdater(Distribution):
         """
         Checks the resample threshold and conditionally resamples.
         """
-        if self.n_ess < self.n_particles * self.resample_thresh:
+        ess = self.n_ess
+        if ess <= 10:
+            warnings.warn(
+                "Extremely small n_ess encountered ({}). "
+                "Resampling is likely to fail. Consider adding particles, or "
+                "resampling more often.".format(ess),
+                ApproximationWarning
+            )
+        if ess < self.n_particles * self.resample_thresh:
             self.resample()
             pass
 

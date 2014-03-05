@@ -31,7 +31,7 @@ from __future__ import division
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
-    'ResamplerWarning', 'ApproximationWarning'
+    'ResamplerWarning', 'ResamplerError', 'ApproximationWarning'
 ]
 
 ## IMPORTS ####################################################################
@@ -39,6 +39,17 @@ __all__ = [
 import warnings
 
 ## CLASSES ####################################################################
+
+class ResamplerError(RuntimeError):
+    """
+    Error failed when a resampler has failed in an unrecoverable manner.
+    """
+    def __init__(self, msg, cause=None):
+        super(ResamplerError, self).__init__(
+            "{}, caused by exception: {}".format(msg, cause)
+            if cause is not None else msg
+        )
+        self._cause = cause
 
 class ResamplerWarning(RuntimeWarning):
     """
