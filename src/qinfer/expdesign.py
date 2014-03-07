@@ -86,6 +86,8 @@ class PGH(Heuristic):
         inversion hypothesis.
     :param str t_field: Name of the ``expparams`` field corresponding to the
         evolution time.
+    :param callable inv_func: Function to be applied to modelparameter vectors
+        to produce an inversion field ``x_``.
     :param int maxiters: Number of times to try and choose distinct particles
         before giving up.
     
@@ -104,10 +106,11 @@ class PGH(Heuristic):
     attempts. If that limit is reached, a `RuntimeError` will be raised.
     """
     
-    def __init__(self, updater, inv_field='x_', t_field='t', maxiters=10):
+    def __init__(self, updater, inv_field='x_', t_field='t', inv_func=lambda x: x, maxiters=10):
         self._updater = updater
         self._x_ = inv_field
         self._t = t_field
+        self._inv_func = inv_func
         self._maxiters = maxiters
         
     def __call__(self):
@@ -124,7 +127,7 @@ class PGH(Heuristic):
             raise RuntimeError("PGH did not find distinct particles in {} iterations.".format(self._maxiters))
             
         eps = np.empty((1,), dtype=self._updater.model.expparams_dtype)
-        eps[self._x_] = x
+        eps[self._x_] = self._inv_func(x)
         eps[self._t]  = 1 / self._updater.model.distance(x, xp)
         
         return eps
