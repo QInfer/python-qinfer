@@ -207,8 +207,23 @@ class LiuWestResampler(object):
             new_locs[idxs_to_resample, :] = mus + np.dot(S, np.random.randn(n_mp, mus.shape[0])).T
             
             # Now we remove from the list any valid models.
+            # We write it out in a longer form than is strictly necessary so
+            # that we can validate assertions as we go. This is helpful for
+            # catching models that may not hold to the expected postconditions.
+            resample_locs = new_locs[idxs_to_resample, :]
+            valid_mask = model.are_models_valid(resample_locs)
+            assert (
+                (
+                    len(valid_mask.shape) == 1
+                    or len(valid_mask.shape) == 2 and valid_mask.shape[-1] == 1
+                ) and valid_mask.shape[0] == resample_locs.shape[0]
+            ), (
+                "are_models_valid returned wrong shape {} "
+                "for input of shape {}."
+            ).format(valid_mask.shape, resample_locs.shape)
+            
             idxs_to_resample = idxs_to_resample[np.nonzero(np.logical_not(
-                model.are_models_valid(new_locs[idxs_to_resample, :])
+                valid_mask
             ))[0]]
 
             # This may look a little weird, but it should delete the unused

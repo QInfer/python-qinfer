@@ -28,7 +28,12 @@
 import numpy as np
 import scipy.stats as st
 import scipy.linalg as la
+from scipy.interpolate import interp1d
+from scipy.integrate import cumtrapz
+
 import abc
+
+from qinfer import utils as u
 
 import warnings
 
@@ -423,3 +428,43 @@ class PostselectedDistribution(Distribution):
             raise RuntimeError("Did not successfully postselect within {} iterations.".format(self._maxiters))
             
         return samples
+        
+class InterpolatedUnivariateDistribution(Distribution):
+    """
+    Samples from a single-variable distribution specified by its PDF. The
+    samples are drawn by first drawing uniform samples over the interval
+    ``[0, 1]``, and then using an interpolation of the inverse-CDF
+    corresponding to the given PDF to transform these samples into the
+    desired distribution.
+    
+    :param callable pdf: Vectorized single-argument function that evaluates
+        the PDF of the desired distribution.
+    :param float compactification_scale: Scale of the compactified coordinates
+        used to interpolate the given PDF.
+    :param int n_interp_points: The number of points at which to sample the
+        given PDF.
+    """
+    
+    def __init__(self, pdf, compactification_scale=1, n_interp_points=1500):
+        self._pdf = pdf
+        self._xs  = u.compactspace(compactification_scale, n_interp_points)
+        
+        self._generate_interp()
+        
+    def _generate_interp(self):
+        
+        xs = self._xs
+        
+        pdfs = self._pdf(xs)
+        norm_factor = np.trapz(pdfs, xs)
+        
+        self._cdfs = cumtrapz(pdfs / norm_factor, xs, initial=0)
+        self._interp_inv_cdf = interp1d(self._cdfs, xs, bounds_error=False)
+        
+    @property
+    def n_rvs(self):
+        return 1
+        
+    def sample(self, n=1):
+        return self._interp_inv_cdf(np.random.random(n))[:, np.newaxis]
+        

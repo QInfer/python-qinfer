@@ -34,6 +34,7 @@ import warnings
 import numpy as np
 import numpy.linalg as la
 
+from scipy.stats import logistic
 from scipy.special import gammaln, gamma
 from scipy.linalg import sqrtm
 
@@ -202,6 +203,17 @@ def format_uncertainty(value, uncertianty, scinotn_break=4):
                 uncertianty / scale,
                 mag_val
            )
+           
+def compactspace(scale, n):
+    r"""
+    Returns points :math:`x` spaced in the open interval
+    :math:`(-\infty, \infty)`  by linearly spacing in the compactified
+    coordinate :math:`s(x) = e^{-\alpha x} / (1 + e^{-\alpha x})^2`,
+    where :math:`\alpha` is a scale factor.
+    """
+    logit = logistic(scale=scale).ppf
+    compact_xs = np.linspace(0, 1, n + 2)[1:-1]
+    return logit(compact_xs)
            
     
 #==============================================================================
