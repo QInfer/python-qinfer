@@ -213,7 +213,10 @@ class LiuWestResampler(object):
             resample_locs = new_locs[idxs_to_resample, :]
             valid_mask = model.are_models_valid(resample_locs)
             assert (
-                valid_mask.shape[0] == resample_locs.shape[0]
+                (
+                    len(valid_mask.shape) == 1
+                    or len(valid_mask.shape) == 2 and valid_mask.shape[-1] == 1
+                ) and valid_mask.shape[0] == resample_locs.shape[0]
             ), (
                 "are_models_valid returned wrong shape {} "
                 "for input of shape {}."
