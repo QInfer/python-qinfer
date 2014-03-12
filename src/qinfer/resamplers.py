@@ -220,7 +220,7 @@ class LiuWestResampler(object):
             ).format(valid_mask.shape, resample_locs.shape)
             
             idxs_to_resample = idxs_to_resample[np.nonzero(np.logical_not(
-                model.are_models_valid(new_locs[idxs_to_resample, :])
+                valid_mask
             ))[0]]
 
             # This may look a little weird, but it should delete the unused
