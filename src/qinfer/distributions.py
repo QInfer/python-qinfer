@@ -262,6 +262,20 @@ class SlantedNormalDistribution(Distribution):
         z = np.random.randn(n,self._n_rvs)
         return self._ranges[:, 0] +self._weight*z+np.random.rand(n)*self._ranges[:, 1];
 
+class LogNormalDistribution(Distribution):
+    def __init__(self, mu, sigma):
+        self.mu = mu
+        self.sigma = sigma
+        
+        self.dist = st.lognorm(sigma,0,mu)
+
+    @property
+    def n_rvs(self):
+        return 1
+
+    def sample(self, n=1):
+        return self.dist.rvs(size=n)[:,np.newaxis]
+
 class MVUniformDistribution(object):
     
     def __init__(self, dim = 6):
