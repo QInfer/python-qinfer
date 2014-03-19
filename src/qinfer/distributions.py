@@ -263,11 +263,19 @@ class SlantedNormalDistribution(Distribution):
         return self._ranges[:, 0] +self._weight*z+np.random.rand(n)*self._ranges[:, 1];
 
 class LogNormalDistribution(Distribution):
-    def __init__(self, mu, sigma):
-        self.mu = mu
-        self.sigma = sigma
+    """
+    Log-normal distribution.
+    
+    :param numeric mu: Location parameter, set to 0 by default.
+    :param numeric sigma: Scale parameter, set to 1 by default.
+                          Must be strictly greater than zero.
+    """
+    
+    def __init__(self, mu=0, sigma=1):
+        self.mu = mu # lognormal location parameter
+        self.sigma = sigma # lognormal scale parameter
         
-        self.dist = st.lognorm(sigma,0,mu)
+        self.dist = st.lognorm(sigma,0,mu) # scipy distribution location = 0
 
     @property
     def n_rvs(self):
