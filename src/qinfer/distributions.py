@@ -266,9 +266,9 @@ class LogNormalDistribution(Distribution):
     """
     Log-normal distribution.
     
-    :param numeric mu: Location parameter, set to 0 by default.
-    :param numeric sigma: Scale parameter, set to 1 by default.
-                          Must be strictly greater than zero.
+    :param mu: Location parameter (numeric), set to 0 by default.
+    :param sigma: Scale parameter (numeric), set to 1 by default.
+                  Must be strictly greater than zero.
     """
     
     def __init__(self, mu=0, sigma=1):
