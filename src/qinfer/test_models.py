@@ -105,13 +105,15 @@ class SimplePrecessionModel(DifferentiableModel):
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)
 
-    def grad_log_likelihood(self, outcome, modelparams, expparams):
+    def score(self, outcomes, modelparams, expparams):
         #TODO: vectorize this
+
+        outcomes = outcomes[:, np.newaxis, np.newaxis]
 
         arg = modelparams * expparams / 2        
         return (
-            ( expparams / np.tan(arg)) ** (outcome) *
-            (-expparams * np.tan(arg)) ** (1-outcome)
+            ( expparams / np.tan(arg)) ** (outcomes) *
+            (-expparams * np.tan(arg)) ** (1-outcomes)
         )
         
 class NoisyCoinModel(Model):

@@ -41,7 +41,7 @@ import numpy as np
 from scipy.stats import binom
 
 from qinfer.utils import binomial_pdf
-from qinfer.abstract_model import Model
+from qinfer.abstract_model import Model, DifferentiableModel
 from qinfer._lib import enum # <- TODO: replace with flufl.enum!
 from qinfer.ale import binom_est_error
     
@@ -218,7 +218,7 @@ class BinomialModel(Model):
         
     @property
     def modelparam_names(self):
-        return self._model.modelparam_names
+        return self.decorated_model.modelparam_names
     
     ## METHODS ##
     
@@ -263,7 +263,7 @@ class BinomialModel(Model):
             expparams['x'] if self._expparams_scalar else expparams)
             
         dist = binom(
-            expparams['n_meas'].astype('int64'), # ← Really, NumPy?
+            expparams['n_meas'].astype('int'), # ← Really, NumPy?
             pr1[0, :, :]
         )
         sample = (
@@ -277,6 +277,28 @@ class BinomialModel(Model):
         ], axis=0)
         return os[0,0,0] if os.size == 1 else os
         
+class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
+    """
+    Extends :class:`BinomialModel` to take advantage of differentiable
+    two-outcome models.
+    """
+    
+    def __init__(self, decorated_model):
+        if not isinstance(decorated_model, DifferentiableModel):
+            raise TypeError("Decorated model must also be differentiable.")
+        BinomialModel.__init__(self, decorated_model)
+    
+    def score(self, outcomes, modelparams, expparams):
+        raise NotImplementedError("Not yet implemented.")
+        
+    def fisher_information(self, modelparams, expparams):
+        # Since the FI simply adds, we can multiply the single-shot
+        # FI provided by the underlying model by the number of measurements
+        # that we perform.
+        two_outcome_fi = self.decorated_model.fisher_information(
+            modelparams, expparams
+        )
+        return two_outcome_fi * expparams['n_meas']
 
 ## TESTING CODE ###############################################################
 

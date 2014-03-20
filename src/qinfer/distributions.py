@@ -214,20 +214,24 @@ class NormalDistribution(Distribution):
 class MultivariateNormalDistribution(Distribution):
     def __init__(self, mean, cov):
         
-        self.mean = mean
+        # Flatten the mean first, so we have a strong guarantee about its
+        # shape.
+        
+        self.mean = np.array(mean).flatten()
         self.cov = cov
         self.invcov = la.inv(cov)
     
     @property
     def n_rvs(self):
-        return self.mean.shape[1]
+        return self.mean.shape[0]
         
-    def sample(self):
+    def sample(self, n=1):
         
-        return np.dot(la.sqrtm(self.cov), np.random.randn(self.n_rvs)) + self.mean
+        return np.einsum("ij,nj->ni", la.sqrtm(self.cov), np.random.randn(n, self.n_rvs)) + self.mean
 
     def grad_log_pdf(self, x):
-        return -np.dot(self.invcov,(x - self.mean[0])) 
+        
+        return -np.dot(self.invcov,(x - self.mean).transpose()).transpose()
         
         
 class SlantedNormalDistribution(Distribution):
