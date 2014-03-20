@@ -379,7 +379,7 @@ class RandomWalkModel(Model):
     def update_timestep(self, modelparams, expparams):
         # Note that the timestep update is presumed to be independent of the
         # experiment.
-        steps = self._step_dist.sample(repeat=modelparams.shape[0] * expparams.shape[0])
+        steps = self._step_dist.sample(n=modelparams.shape[0] * expparams.shape[0])
         # Break apart the first two axes and transpose.
         steps = steps.reshape((modelparams.shape[0], expparams.shape[0], self.n_modelparams))
         steps = steps.transpose((0, 2, 1))
