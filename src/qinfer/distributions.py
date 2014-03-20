@@ -214,20 +214,24 @@ class NormalDistribution(Distribution):
 class MultivariateNormalDistribution(Distribution):
     def __init__(self, mean, cov):
         
-        self.mean = mean
+        # Flatten the mean first, so we have a strong guarantee about its
+        # shape.
+        
+        self.mean = np.array(mean).flatten()
         self.cov = cov
         self.invcov = la.inv(cov)
     
     @property
     def n_rvs(self):
-        return self.mean.shape[1]
+        return self.mean.shape[0]
         
-    def sample(self):
+    def sample(self, n=1):
         
-        return np.dot(la.sqrtm(self.cov), np.random.randn(self.n_rvs)) + self.mean
+        return np.einsum("ij,nj->ni", la.sqrtm(self.cov), np.random.randn(n, self.n_rvs)) + self.mean
 
     def grad_log_pdf(self, x):
-        return -np.dot(self.invcov,(x - self.mean[0])) 
+        
+        return -np.dot(self.invcov,(x - self.mean).transpose()).transpose()
         
         
 class SlantedNormalDistribution(Distribution):
@@ -261,6 +265,28 @@ class SlantedNormalDistribution(Distribution):
         shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
         z = np.random.randn(n,self._n_rvs)
         return self._ranges[:, 0] +self._weight*z+np.random.rand(n)*self._ranges[:, 1];
+
+class LogNormalDistribution(Distribution):
+    """
+    Log-normal distribution.
+    
+    :param mu: Location parameter (numeric), set to 0 by default.
+    :param sigma: Scale parameter (numeric), set to 1 by default.
+                  Must be strictly greater than zero.
+    """
+    
+    def __init__(self, mu=0, sigma=1):
+        self.mu = mu # lognormal location parameter
+        self.sigma = sigma # lognormal scale parameter
+        
+        self.dist = st.lognorm(sigma,0,mu) # scipy distribution location = 0
+
+    @property
+    def n_rvs(self):
+        return 1
+
+    def sample(self, n=1):
+        return self.dist.rvs(size=n)[:,np.newaxis]
 
 class MVUniformDistribution(object):
     

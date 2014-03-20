@@ -288,6 +288,81 @@ class DifferentiableModel(Model):
     __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
     
     @abc.abstractmethod
-    def grad_log_likelihood(self, outcome, modelparams, expparams):
-        #TODO document
+    def score(self, outcome, modelparams, expparams):
+        r"""
+        Returns the score of this likelihood function, defined as:
+        
+        .. math::
+        
+            q(d, \vec{x}; \vec{e}) = \vec{\nabla}_{\vec{x}} \Pr(d | \vec{x}; \vec{e}).
+            
+        Calls are represented as a four-index tensor
+        ``score[idx_modelparam, idx_outcome, idx_model, idx_experiment]``.
+        The left-most index may be suppressed for single-parameter models.
+        """
         pass
+        
+    def fisher_information(self, modelparams, expparams):
+        """
+        Returns the covariance of the score taken over possible outcomes,
+        known as the Fisher information.
+        
+        The result is represented as the four-index tensor
+        ``fisher[idx_modelparam_i, idx_modelparam_j, idx_model, idx_experiment]``,
+        which gives the Fisher information matrix for each model vector
+        and each experiment vector.
+        
+        .. note::
+            
+            The default implementation of this method calls
+            :meth:`~DifferentiableModel.score()` for each possible outcome,
+            which can be quite slow. If possible, overriding this method can
+            give significant speed advantages.
+        """
+        
+        # TODO: break into two cases, one for constant outcomes, one for
+        #       variable. The latter will have to be a loop, which is much
+        #       slower.
+        #       Here, we sketch the first case.
+        # FIXME: completely untested!
+        if self.is_n_outcomes_constant:
+            outcomes = np.arange(self.n_outcomes(expparams))
+            L = self.likelihood(outcomes, modelparams, expparams)
+            scores = self.score(outcomes, modelparams, expparams)
+            
+            assert len(scores.shape) in (3, 4)
+            
+            if len(scores.shape) == 3:
+                scores = scores[np.newaxis, :, :, :]
+            
+            # Note that E[score] = 0 by regularity assumptions, so we only
+            # need the expectation over the outer product.
+            return np.einsum("ome,iome,jome->ijme",
+                L, scores, scores
+            )
+        else:
+            # Indexing will be a major pain here, so we need to start
+            # by making an empty array, so that index errors will be raised
+            # when (not if!) we make mistakes.
+            fisher = np.empty((
+                self.n_modelparams, self.n_modelparams,
+                modelparams.shape[0], expparams.shape[0]
+            ))
+            
+            # Now we loop over experiments, since we cannot vectorize the
+            # expectation value over data.
+            for idx_experiment, experiment in enumerate(expparams):
+                experiment = experiment.reshape((1,))
+                n_o = self.n_outcomes(experiment)
+            
+                outcomes = np.arange(n_o)
+                L = self.likelihood(outcomes, modelparams, experiment)
+                scores = self.score(outcomes, modelparams, experiment)
+                
+                fisher[:, :, :, idx_experiment] = np.einsum("ome,iome,jome->ijme",
+                    L, scores, scores
+                )
+            
+            return fisher
+            
+            

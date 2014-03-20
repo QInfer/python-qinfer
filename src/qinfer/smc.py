@@ -390,10 +390,10 @@ class SMCUpdater(Distribution):
     def sample(self, n=1):
         # TODO: cache this.
         cumsum_weights = np.cumsum(self.particle_weights)
-        return self.particle_locations[cumsum_weights.searchsorted(
+        return self.particle_locations[np.minimum(cumsum_weights.searchsorted(
             np.random.random((n,)),
             side='right'
-        )]
+        ), len(cumsum_weights) - 1)]
 
     ## ESTIMATION METHODS #####################################################
 
@@ -946,57 +946,111 @@ class SMCUpdaterBCRB(SMCUpdater):
     functionality.
     
     Models considered by this class must be differentiable.
+    
+    In addition to the arguments taken by :class:`SMCUpdater`, this class
+    takes the following keyword-only arguments:
+        
+    :param bool adaptive: If `True`, the updater will track both the
+        non-adaptive and adaptive Bayes Information matrices.
+    :param initial_bim: If the regularity conditions are not met, then taking
+        the outer products of gradients over the prior will not give the correct
+        initial BIM. In such cases, ``initial_bim`` can be set to the correct
+        BIM corresponding to having done no experiments.
     """
     
 
 
     def __init__(self, *args, **kwargs):
-        SMCUpdater.__init__(self, *args, **kwargs)
+        SMCUpdater.__init__(self, *args, **{
+            key: kwargs[key] for key in kwargs
+            if key in [
+                'resampler_a', 'resampler', 'resample_thresh', 'model',
+                'prior', 'n_particles'
+            ]
+        })
         
         if not isinstance(self.model, DifferentiableModel):
             raise ValueError("Model must be differentiable.")
         
-        self.current_bim = np.sum(np.array([
-            outer_product(self.prior.grad_log_pdf(particle))
-            for particle in self.particle_locations
-            ]), axis=0) / self.n_particles
-    
-        
-    def hypothetical_bim(self, expparams):
-        # E_{prior} E_{data | model, exp} [outer-product of grad-log-likelihood]
-        like_bim = np.zeros(self.current_bim.shape)
-  
-        # If there is only 1 model parameter, things can be more easily vectorized
-        if self.model.n_modelparams == 1:
-            outcomes = np.arange(self.model.n_outcomes(expparams))
-            modelparams = self.prior.sample(self.n_particles)
-            weights = np.ones((self.n_particles,)) / self.n_particles
-            grad = self.model.grad_log_likelihood(outcomes, modelparams, expparams)**2 
-            L = self.model.likelihood(outcomes, modelparams, expparams)
-            
-            like_bim = np.sum(weights[:,np.newaxis] * np.sum(grad * L,0))
-            
+        # TODO: fix distributions to make grad_log_pdf return the right
+        #       shape, such that the indices are
+        #       [idx_model, idx_param] → [idx_model, idx_param],
+        #       so that prior.grad_log_pdf(modelparams[i, j])[i, k]
+        #       returns the partial derivative with respect to the kth
+        #       parameter evaluated at the model parameter vector
+        #       modelparams[i, :].
+        if 'initial_bim' not in kwargs or kwargs['initial_bim'] is None:
+            gradients = self.prior.grad_log_pdf(self.particle_locations)
+            self.current_bim = np.sum(
+                gradients[:, :, np.newaxis] * gradients[:, np.newaxis, :],
+                axis=0
+            ) / self.n_particles
         else:
-            for idx_particle in xrange(self.n_particles):
-        
-                modelparams = self.prior.sample()
+            self.current_bim = kwargs['initial_bim']
+            
+        # Also track the adaptive BIM, if we've been asked to.
+        if "adaptive" in kwargs and kwargs["adaptive"]:
+            self._track_adaptive = True
+            # Both the prior- and posterior-averaged BIMs start
+            # from the prior.
+            self.adaptive_bim = self.current_bim.copy()
+        else:
+            self._track_adaptive = False
     
-                weight = 1 / self.n_particles
-                
-                for outcome in np.arange(self.model.n_outcomes(expparams))[...,np.newaxis]:
-                     
-                    grad = outer_product(self.model.grad_log_likelihood(outcome, modelparams, expparams))[0] 
-                    L = self.model.likelihood(outcome, modelparams, expparams)
-                    
-                    like_bim += weight * grad * L
-                    
-        return self.current_bim + like_bim
+    # TODO: since we are guaranteed differentiability, and since SMCUpdater is
+    #       now a Distribution subclass representing posterior sampling, write
+    #       a grad_log_pdf for the posterior distribution, perhaps?
         
+    def _bim(self, modelparams, expparams, modelweights=None):
+        # TODO: document
+        #       rough idea of this function is to take expectations of an
+        #       FI over some distribution, here represented by modelparams.
+        
+        # NOTE: The signature of this function is a bit odd, but it allows
+        #       us to represent in one function both prior samples of uniform
+        #       weight and weighted samples from a posterior.
+        #       Because it's a bit odd, we make it a private method and expose
+        #       functionality via the prior_bayes_information and
+        #       posterior_bayes_information methods.
+        
+        # About shapes: the FI we will be averaging over has four indices:
+        # FI[i, j, m, e], i and j being matrix indices, m being a model index
+        # and e being a model index.
+        # We will thus want to return an array of shape BI[i, j, e], reducing
+        # over the model index.
+        fi = self.model.fisher_information(modelparams, expparams)
+        
+        # We now either reweight and sum, or sum and divide, based on whether we
+        # have model weights to consider or not.
+        if modelweights is None:
+            # Assume uniform weights.
+            bim = np.sum(fi, axis=2) / modelparams.shape[0]
+        else:
+            bim = np.einsum("m,ijme->ije", modelweights, fi)
+            
+        return bim
+        
+    def prior_bayes_information(self, expparams, n_samples=None):
+        if n_samples is None:
+            n_samples = self.particle_locations.shape[0]
+        return self._bim(self.prior.sample(n_samples), expparams)
+        
+    def posterior_bayes_information(self, expparams):
+        return self._bim(
+            self.particle_locations, expparams,
+            modelweights=self.particle_weights
+        )
         
     def update(self, outcome, expparams):
         # Before we update, we need to commit the new Bayesian information
         # matrix corresponding to the measurement we just made.
-        self.current_bim = self.hypothetical_bim(expparams)
+        self.current_bim += self.prior_bayes_information(expparams)[:, :, 0]
+        
+        # If we're tracking the information content accessible to adaptive
+        # algorithms, then we must use the current posterior as the prior
+        # for the next step, then add that accordingly.
+        if self._track_adaptive:
+            self.adaptive_bim += self.posterior_bayes_information(expparams)[:, :, 0]
         
         # We now can update as normal.
         SMCUpdater.update(self, outcome, expparams)
