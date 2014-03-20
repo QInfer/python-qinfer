@@ -163,6 +163,9 @@ class PoisonedModel(Model):
         """
         super(PoisonedModel, self).simulate_experiment(modelparams, expparams, repeat)
         return self._model.simulate_experiment(modelparams, expparams, repeat)
+        
+    def update_timestep(self, modelparams, expparams):
+        return self._model.update_timestep(modelparams, expparams)
 
 class BinomialModel(Model):
     """
@@ -277,6 +280,11 @@ class BinomialModel(Model):
         ], axis=0)
         return os[0,0,0] if os.size == 1 else os
         
+    def update_timestep(self, modelparams, expparams):
+        return self.decorated_model.update_timestep(modelparams,
+            expparams['x'] if self._expparams_scalar else expparams
+        )
+        
 class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
     """
     Extends :class:`BinomialModel` to take advantage of differentiable
@@ -299,6 +307,84 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
             modelparams, expparams
         )
         return two_outcome_fi * expparams['n_meas']
+        
+class RandomWalkModel(Model):
+    r"""
+    Model such that after each time step, a random perturbation is added to
+    each model parameter vector according to a given distribution.
+    
+    :param Model underlying_model: Model representing the likelihood with no
+        random walk added.
+    :param Distribution step_distribution: Distribution over step vectors.
+    """
+    def __init__(self, underlying_model, step_distribution):
+        self._model = underlying_model
+        self._step_dist = step_distribution
+        
+        if self._model.n_modelparams != self._step_dist.n_rvs:
+            raise TypeError("Step distribution does not match model dimension.")
+        
+        super(RandomWalkModel, self).__init__()
+            
+    ## PROPERTIES ##
+    
+    @property
+    def n_modelparams(self):
+        # We have as many modelparameters as the underlying model.
+        return self._model.n_modelparams
+        
+    @property
+    def expparams_dtype(self):
+        return self._model.expparams_dtype
+    
+    @property
+    def is_n_outcomes_constant(self):
+        """
+        Returns ``True`` if and only if the number of outcomes for each
+        experiment is independent of the experiment being performed.
+        
+        This property is assumed by inference engines to be constant for
+        the lifetime of a Model instance.
+        """
+        return self._model.is_n_outcomes_constant
+        
+    @property
+    def modelparam_names(self):
+        return self._model.modelparam_names
+    
+    ## METHODS ##
+    
+    def are_models_valid(self, modelparams):
+        return self._model.are_models_valid(modelparams)
+    
+    def n_outcomes(self, expparams):
+        """
+        Returns an array of dtype ``uint`` describing the number of outcomes
+        for each experiment specified by ``expparams``.
+        
+        :param numpy.ndarray expparams: Array of experimental parameters. This
+            array must be of dtype agreeing with the ``expparams_dtype``
+            property.
+        """
+        return self._model.n_outcomes(expparams)
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        super(RandomWalkModel, self).likelihood(outcomes, modelparams, expparams)
+        return self._model.likelihood(outcomes, modelparams, expparams)
+        
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        super(RandomWalkModel, self).simulate_experiment(modelparams, expparams, repeat)
+        return self._model.simulate_experiment(modelparams, expparams, repeat)
+        
+    def update_timestep(self, modelparams, expparams):
+        # Note that the timestep update is presumed to be independent of the
+        # experiment.
+        steps = self._step_dist.sample(repeat=modelparams.shape[0] * expparams.shape[0])
+        # Break apart the first two axes and transpose.
+        steps = steps.reshape((modelparams.shape[0], expparams.shape[0], self.n_modelparams))
+        steps = steps.transpose((0, 2, 1))
+        
+        return modelparams[:, :, np.newaxis] + steps
 
 ## TESTING CODE ###############################################################
 

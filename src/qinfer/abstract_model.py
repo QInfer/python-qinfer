@@ -181,6 +181,25 @@ class Simulatable(object):
             self.Q * (a - b)
         )
         
+    def update_timestep(self, modelparams, expparams):
+        r"""
+        Returns a set of model parameter vectors that is the update of an
+        input set of model parameter vectors, such that the new models are
+        conditioned on a particular experiment having been performed.
+        By default, this is the trivial function
+        :math:`\vec{x}(t_{k+1)) = \vec{x}(t_k)`.
+        
+        :param np.ndarray modelparams: Set of model parameter vectors to be
+            updated.
+        :param np.ndarray expparams: An experiment parameter array describing
+            the experiment that was just performed.
+        
+        :return np.ndarray: Array of shape
+            ``(n_models, n_modelparams, n_experiments)`` describing the update
+            of each model according to each experiment.
+        """
+        return modelparams[:, :, np.newaxis]
+        
         
         
 class LinearCostModelMixin(Simulatable):
