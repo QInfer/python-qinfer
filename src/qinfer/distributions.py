@@ -491,3 +491,5 @@ class InterpolatedUnivariateDistribution(Distribution):
     def sample(self, n=1):
         return self._interp_inv_cdf(np.random.random(n))[:, np.newaxis]
         
+    def grad_log_pdf(self, x):
+        return self._dist.grad_log_pdf(x)
