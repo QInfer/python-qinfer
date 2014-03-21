@@ -424,3 +424,6 @@ class PostselectedDistribution(Distribution):
             raise RuntimeError("Did not successfully postselect within {} iterations.".format(self._maxiters))
             
         return samples
+        
+    def grad_log_pdf(self, x):
+        return self._dist.grad_log_pdf(x)
