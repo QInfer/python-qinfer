@@ -452,6 +452,9 @@ class PostselectedDistribution(Distribution):
             
         return samples
         
+    def grad_log_pdf(self, x):
+        return self._dist.grad_log_pdf(x)
+        
 class InterpolatedUnivariateDistribution(Distribution):
     """
     Samples from a single-variable distribution specified by its PDF. The
@@ -490,6 +493,3 @@ class InterpolatedUnivariateDistribution(Distribution):
         
     def sample(self, n=1):
         return self._interp_inv_cdf(np.random.random(n))[:, np.newaxis]
-        
-    def grad_log_pdf(self, x):
-        return self._dist.grad_log_pdf(x)
