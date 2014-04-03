@@ -90,6 +90,7 @@ class PGH(Heuristic):
         to produce an inversion field ``x_``.
     :param int maxiters: Number of times to try and choose distinct particles
         before giving up.
+    :param dict other_fields: Values to set for fields not given by the PGH.
     
     Once initialized, a ``PGH`` object can be called to generate a new
     experiment parameter vector:
@@ -106,18 +107,19 @@ class PGH(Heuristic):
     attempts. If that limit is reached, a `RuntimeError` will be raised.
     """
     
-    def __init__(self, updater, inv_field='x_', t_field='t', inv_func=lambda x: x, maxiters=10):
+    def __init__(self, updater, inv_field='x_', t_field='t', inv_func=lambda x: x, maxiters=10, other_fields=None):
         self._updater = updater
         self._x_ = inv_field
         self._t = t_field
         self._inv_func = inv_func
         self._maxiters = maxiters
+        self._other_fields = other_fields if other_fields is not None else {}
         
     def __call__(self):
         idx_iter = 0
         while idx_iter < self._maxiters:
                 
-            x, xp = self._updater.sample(n=2)
+            x, xp = self._updater.sample(n=2)[:, np.newaxis, :]
             if self._updater.model.distance(x, xp) > 0:
                 break
             else:
@@ -129,6 +131,9 @@ class PGH(Heuristic):
         eps = np.empty((1,), dtype=self._updater.model.expparams_dtype)
         eps[self._x_] = self._inv_func(x)
         eps[self._t]  = 1 / self._updater.model.distance(x, xp)
+        
+        for field, value in self._other_fields.iteritems():
+            eps[field] = value
         
         return eps
 
