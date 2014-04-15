@@ -1,1 +1,3 @@
-from qinfer.tests import test_distributions
+from qinfer.tests import (
+    test_distributions, base_test
+)

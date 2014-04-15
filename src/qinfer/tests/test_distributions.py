@@ -31,8 +31,8 @@ from __future__ import division # Ensures that a/b is always a float.
 
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
-import unittest
 
+from qinfer.tests.base_test import DerandomizedTestCase
 from qinfer.distributions import (
     NormalDistribution,
     UniformDistribution, ConstantDistribution, ProductDistribution
@@ -40,22 +40,9 @@ from qinfer.distributions import (
     
 ## CLASSES ####################################################################
 
-class TestDistributions(unittest.TestCase):
+class TestDistributions(DerandomizedTestCase):
     # TODO
     
-    ## SETUP AND TEARDOWN ##
-    # We want every test method to be setup first by seeding NumPy's random
-    # number generator with a predictable seed (namely: zero). This way,
-    # all of our tests are *deterministic*, and once first checked, will
-    # not deviate from that behavior unless there is a change to the underlying
-    # functionality.
-    #
-    # We do this by using the fact that nosetests and unittest both call
-    # the method named "setUp" (note the capitalization!) before each
-    # test method.
-    
-    def setUp(self):
-        np.random.seed(0)
     
     ## TEST METHODS ##
     
