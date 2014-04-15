@@ -39,9 +39,23 @@ from operator import mul
 ## FUNCTIONS ##################################################################
 
 def p(F, d=2):
+    """
+    Given the fidelity of a gate in :math:`d` dimensions, returns the
+    depolarizating probability of the twirled channel.
+    
+    :param float F: Fidelity of a gate.
+    :param int d: Dimensionality of the Hilbert space on which the gate acts.
+    """
     return (d * F - 1) / (d - 1)
 
 def F(p, d=2):
+    """
+    Given the depolarizating probabilty of a twirled channel in :math:`d`
+    dimensions, returns the fidelity of the original gate.
+    
+    :param float p: Depolarizing parameter for the twirled channel.
+    :param int d: Dimensionality of the Hilbert space on which the gate acts.
+    """
     return 1 - (1 - p) * (d - 1) / d
 
 ## CLASSES ####################################################################
