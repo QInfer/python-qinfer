@@ -19,6 +19,7 @@ Contents:
     models
     smc
     expdesign
+    rb
     parallel
     robustness
     
