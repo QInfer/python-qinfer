@@ -69,5 +69,18 @@ If one is interested in the fidelity of a single gate, rather than an entire
 gateset, then the gate of interest can be interleaved with other gates from
 the gateset to isolate its performance. In this mode, models admit an additional
 model and experiment parameter, :math:`\tilde{p}` and ``mode``, respectively.
-The 
+The :math:`\tilde{p}` model parameter is the depolarizing strength of the
+twirl of the interleaved gate, such that the interleaved survival probability is
+given by
+
+.. math::
+
+	\Pr(\text{survival} | \tilde{p}, p_{\text{ref}}, A_0, B_0; m, \text{interleaved}) = 
+	A_0 (\tilde{p} p_{\text{ref}})^m + B_0.
+
+Model instances for interleaved mode are constructed using the ``interleaved=True``
+keyword argument:
+
+>>> from qinfer.rb import RandomizedBenchmarkingModel
+>>> model = RandomizedBenchmarkingModel(interleaved=True)
 
