@@ -21,7 +21,7 @@ Introduction
 
 Randomized benchmarking allows for extracting information about the fidelity
 of a quantum operation by exploiting *twirling* errors over an approximate
-implementation of the Clifford group. This provides the advantage that the
+implementation of the Clifford group [KL+08]_. This provides the advantage that the
 fidelity can be learned without simulating the dynamics of a quantum system.
 Instead, benchmarking admits an analytic form for the survival probability for
 an arbitrary input state in terms of the strength :math:`p` of an equivalent
@@ -36,7 +36,7 @@ Regardless of the order or interleaving mode, each model instance for randomized
 benchmarking yields 0/1 data, with 1 indicating a survival (measuring the same
 state after applying a gate sequence as was initially prepared). To use these
 models with data batched over many sequences, model instances can be augmented
-by :class:`~qinfer.BinomialModel`.
+by :class:`~qinfer.derived_models.BinomialModel`.
 
 Zeroth-Order Model
 ------------------
@@ -44,7 +44,7 @@ Zeroth-Order Model
 The :class:`RandomizedBenchmarkingModel` class implements randomized
 benchmarking as a **QInfer** model, both in interleaved and non-interleaved
 modes. For the non-interleaved mode, there are three model parameters,
-:math:`p`, :math:`A_0` and :math:`B_0`, given by [MGE12]_ as
+:math:`\vec{x} = (p, A_0, B_0)`, given by [MGE12]_ as
 
 .. math::
 
@@ -55,7 +55,9 @@ modes. For the non-interleaved mode, there are three model parameters,
 where :math:`E_\psi` is the measurement, :math:`\rho_\psi` is the state
 preparation, :math:`\Lambda` is the average map over timesteps and gateset
 elements, :math:`d` is the dimension of the system,  and where
-:math:`F_\ave` is the average gate fidelity [TODO].
+:math:`F_\ave` is the average gate fidelity [TODO]. The functions
+:obj:`p` and :obj:`F` convert back and forth between depolarizing probabilities
+and fidelities.
 
 An experiment parameter vector for this model is simply a specification of
 :math:`m`, the length of the Clifford sequence used for that datum.
@@ -67,4 +69,5 @@ If one is interested in the fidelity of a single gate, rather than an entire
 gateset, then the gate of interest can be interleaved with other gates from
 the gateset to isolate its performance. In this mode, models admit an additional
 model and experiment parameter, :math:`\tilde{p}` and ``mode``, respectively.
+The 
 

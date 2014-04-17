@@ -70,7 +70,7 @@ class RandomizedBenchmarkingModel(DifferentiableModel):
     parameters to be estimated.
     
     :param bool interleaved: If `True`, the model implements the interleaved
-        protocol, with :math:`\tidle{p}` being the depolarizing parameter for
+        protocol, with :math:`\tilde{p}` being the depolarizing parameter for
         the interleaved gate and with :math:`p_{\text{ref}}` being the reference
         parameter.
     """
