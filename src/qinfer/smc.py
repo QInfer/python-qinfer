@@ -84,7 +84,7 @@ class SMCUpdater(Distribution):
     def __init__(self,
             model, n_particles, prior,
             resample_a=None, resampler=None, resample_thresh=0.5,
-            zero_weight_policy='error', zero_weight_thresh=10*np.spacing(0)
+            zero_weight_policy='error', zero_weight_thresh=None
             ):
 
         self._resample_count = 0
@@ -114,7 +114,11 @@ class SMCUpdater(Distribution):
         self._normalization_record = []
         
         self._zero_weight_policy = zero_weight_policy
-        self._zero_weight_thresh = zero_weight_thresh
+        self._zero_weight_thresh = (
+            zero_weight_thresh
+            if zero_weight_thresh is not None else
+            10*np.spacing(0)
+        )
         
         ## PARTICLE INITIALIZATION ##
         self.reset()
@@ -169,8 +173,12 @@ class SMCUpdater(Distribution):
 
     @property
     def data_record(self):
-        # TODO: return read-only view onto the data record.
-        return self._data_record
+        """
+        List of outcomes given to :meth:`~SMCUpdater.update`.
+        """
+        # We use [:] to force a new list to be made, decoupling
+        # this property from the caller.
+        return self._data_record[:]
 
     ## PRIVATE METHODS ########################################################
     

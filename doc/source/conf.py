@@ -48,6 +48,8 @@ if not tags.has('nomock'):
         'scipy.special',
         'scipy.stats',
         'scipy.stats.distributions',
+        'scipy.interpolate',
+        'scipy.integrate',
         'sklearn',
         'sklearn.cluster',
         'sklearn.metrics',

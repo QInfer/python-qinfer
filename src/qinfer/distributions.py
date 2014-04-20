@@ -28,21 +28,8 @@
 import numpy as np
 import scipy.stats as st
 import scipy.linalg as la
-
-# When building docs with ReadTheDocs, some of SciPy doesn't seem to be there.
-# We instead need to catch the ImportError and turn it into a Warning.
-try:
-    from scipy.interpolate import interp1d
-    from scipy.integrate import cumtrapz
-except ImportError:
-    import warnings
-    warnings.warn(
-        "Could not import parts of SciPy. "
-        "Interpolated distributions will not work.",
-        ImportWarning
-    )
-    interp1d = None
-    cumtrapz = None
+from scipy.interpolate import interp1d
+from scipy.integrate import cumtrapz
 
 import abc
 
