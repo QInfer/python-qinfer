@@ -28,8 +28,12 @@
 import numpy as np
 import scipy.stats as st
 import scipy.linalg as la
-from scipy.interpolate import interp1d
 from scipy.integrate import cumtrapz
+
+try:
+    from scipy.interpolate import interp1d
+except ImportError:
+    interp1d = None
 
 import abc
 
