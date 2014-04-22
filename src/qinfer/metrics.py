@@ -41,6 +41,7 @@ import scipy.linalg as la
 import warnings
 
 from qinfer.utils import outer_product
+import qinfer.smc
 
 try:
     import sklearn
@@ -75,8 +76,8 @@ def rescaled_distance_mtx(p, q):
     """
     
     # TODO: check that models are actually the same!
-    p_locs = p.particle_locations if isinstance(p, SMCUpdater) else p
-    q_locs = q.particle_locations if isinstance(q, SMCUpdater) else q
+    p_locs = p.particle_locations if isinstance(p, qinfer.smc.SMCUpdater) else p
+    q_locs = q.particle_locations if isinstance(q, qinfer.smc.SMCUpdater) else q
     
     # Because the modelparam axis is last in each of the three cases, we're
     # good as far as broadcasting goes.

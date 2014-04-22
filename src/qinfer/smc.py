@@ -47,7 +47,6 @@ import scipy.linalg as la
 import scipy.stats
 
 from qinfer.abstract_model import DifferentiableModel
-from qinfer.metrics import rescaled_distance_mtx
 from qinfer import clustering
 from qinfer.distributions import Distribution
 from qinfer.resamplers import LiuWestResampler
@@ -87,6 +86,7 @@ class SMCUpdater(Distribution):
     def __init__(self,
             model, n_particles, prior,
             resample_a=None, resampler=None, resample_thresh=0.5,
+            track_resampling_divergence=False,
             zero_weight_policy='error', zero_weight_thresh=None
             ):
 
@@ -200,6 +200,7 @@ class SMCUpdater(Distribution):
         List of KL divergences between the pre- and post-resampling
         distributions, if that is being tracked. Otherwise, `None`.
         """
+        return self._resampling_divergences
 
     ## PRIVATE METHODS ########################################################
     
@@ -1163,4 +1164,10 @@ class SMCUpdaterABC(SMCUpdater):
 
         if check_for_resample:
             self._maybe_resample()
+
+    
+## POST IMPORTS ###############################################################
+# We put imports here to avoid circular dependance.
+
+from qinfer.metrics import rescaled_distance_mtx
 

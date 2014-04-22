@@ -144,9 +144,9 @@ class LiuWestResampler(object):
         if h is not None:
             self._override_h = True
             self._h = h
-        else:
-            self._override_h = False
         self._maxiter = maxiter
+
+    _override_h = False
 
     ## PROPERTIES ##
 
