@@ -39,8 +39,6 @@ if not tags.has('nomock'):
                 return Mock()
 
     MOCK_MODULES = [
-        'numpy',
-        'numpy.linalg',
         'scipy',
         'scipy.linalg',
         'scipy.optimize',
