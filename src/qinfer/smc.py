@@ -339,7 +339,13 @@ class SMCUpdater(Distribution):
         
         # Record the normalization
         self._normalization_record.append(norm[0][0])
-
+        
+        # Update the particle locations according to the model's timestep.
+        self.particle_locations = self.model.update_timestep(
+            self.particle_locations, expparams
+        )[:, :, 0]
+        
+        # Resample if needed.
         if check_for_resample:
             self._maybe_resample()
 
