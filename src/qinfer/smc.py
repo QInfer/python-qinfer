@@ -53,7 +53,7 @@ from qinfer.distributions import Distribution
 from qinfer.resamplers import LiuWestResampler
 from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
         particle_covariance_mtx, format_uncertainty
-from qinfer._exceptions import ApproximationWarning
+from qinfer._exceptions import ApproximationWarning, ResamplerWarning
 
 try:
     import matplotlib.pyplot as plt
@@ -75,6 +75,9 @@ class SMCUpdater(Distribution):
     :param callable resampler: Specifies the resampling algorithm to be used. See :ref:`resamplers`
         for more details.
     :param float resample_thresh: Specifies the threshold for :math:`N_{\text{ess}}` to decide when to resample.
+    :param bool track_resampling_divergence: If true, then the divergences
+        between the pre- and post-resampling distributions are tracked and
+        recorded in the ``resampling_divergences`` attribute.
     :param str zero_weight_policy: Specifies the action to be taken when the
         particle weights would all be set to zero by an update.
         One of ``["ignore", "skip", "warn", "error", "reset"]``.
@@ -110,8 +113,11 @@ class SMCUpdater(Distribution):
 
         self.resample_thresh = resample_thresh
 
+        # Initialize properties to hold information about the history.
+        self._just_resampled = False
         self._data_record = []
         self._normalization_record = []
+        self._resampling_divergences = [] if track_resampling_divergence else None
         
         self._zero_weight_policy = zero_weight_policy
         self._zero_weight_thresh = (
@@ -136,6 +142,14 @@ class SMCUpdater(Distribution):
         # We wrap this in a property to prevent external resetting and to enable
         # a docstring.
         return self._resample_count
+        
+    @property
+    def just_resampled(self):
+        """
+        `True` if and only if there has been no data added since the last
+        resampling, or if there has not yet been a resampling step.
+        """
+        return self._just_resampled
 
     @property
     def normalization_record(self):
@@ -179,6 +193,13 @@ class SMCUpdater(Distribution):
         # We use [:] to force a new list to be made, decoupling
         # this property from the caller.
         return self._data_record[:]
+        
+    @property
+    def resampling_divergences(self):
+        """
+        List of KL divergences between the pre- and post-resampling
+        distributions, if that is being tracked. Otherwise, `None`.
+        """
 
     ## PRIVATE METHODS ########################################################
     
@@ -305,6 +326,7 @@ class SMCUpdater(Distribution):
         # First, record the outcome.
         # TODO: record the experiment as well.
         self._data_record.append(outcome)
+        self._just_resampled = False
 
         # Perform the update. 
         weights, norm = self.hypothetical_update(outcome, expparams, return_normalization=True)
@@ -380,9 +402,23 @@ class SMCUpdater(Distribution):
 
     def resample(self):
         # TODO: add amended docstring.
+        
+        if self.just_resampled:
+            warnings.warn(
+                "Resampling without additional data; this may not perform as "
+                "desired.",
+                ResamplerWarning
+            )
 
         # Record that we have performed a resampling step.
+        self._just_resampled = True
         self._resample_count += 1
+
+        # If we're tracking divergences, make a copy of the weights and
+        # locations.
+        if self._resampling_divergences is not None:
+            old_locs = self.particle_locations.copy()
+            old_weights = self.particle_weights.copy()
 
         # Find the new particle locations according to the chosen resampling
         # algorithm.
@@ -394,6 +430,11 @@ class SMCUpdater(Distribution):
         # Reset the weights to uniform.
         self.particle_weights[:] = (1/self.n_particles)
 
+        # Possibly track the new divergence.
+        if self._resampling_divergences is not None:
+            self._resampling_divergences.append(
+                self._kl_divergence(old_locs, old_weights)
+            )
 
     ## DISTRIBUTION CONTRACT ##################################################
     
@@ -552,25 +593,36 @@ class SMCUpdater(Distribution):
     def est_entropy(self):
         nz_weights = self.particle_weights[self.particle_weights > 0]
         return -np.sum(np.log(nz_weights) * nz_weights)
-        
-    def est_kl_divergence(self, other, kernel=None, delta=1e-2):
-        # TODO: document.
+    
+    def _kl_divergence(self, other_locs, other_weights, kernel=None, delta=1e-2):
+        """
+        Finds the KL divergence between this and another SMC-approximated
+        distribution by using a kernel density estimator to smooth over the
+        other distribution's particles.
+        """
         if kernel is None:
             kernel = scipy.stats.norm(loc=0, scale=1).pdf
         
-        dist = rescaled_distance_mtx(self, other) / delta
-        K = kernel(dist)
-        
+        dist = rescaled_distance_mtx(self, other_locs) / delta
+        K = kernel(dist)        
         
         return -self.est_entropy() - (1 / delta) * np.sum(
             self.particle_weights * 
             np.log(
                 np.sum(
-                    other.particle_weights * K,
+                    other_weights * K,
                     axis=1 # Sum over the particles of ``other``.
                 )
             ),
             axis=0  # Sum over the particles of ``self``.
+        )  
+        
+    def est_kl_divergence(self, other, kernel=None, delta=1e-2):
+        # TODO: document.
+        return self._kl_divergence(
+            other.particle_locations,
+            other.particle_weights,
+            kernel, delta
         )
         
     ## CLUSTER ESTIMATION METHODS #############################################

@@ -69,15 +69,20 @@ def rescaled_distance_mtx(p, q):
         :math:`p(\vec{x})`.
     :param qinfer.smc.SMCUpdater q: SMC updater for the distribution
         :math:`q(\vec{x})`.
+        
+    Either or both of ``p`` or ``q`` can simply be the locations array for
+    an :ref:`SMCUpdater`.
     """
     
     # TODO: check that models are actually the same!
+    p_locs = p.particle_locations if isinstance(p, SMCUpdater) else p
+    q_locs = q.particle_locations if isinstance(q, SMCUpdater) else q
     
     # Because the modelparam axis is last in each of the three cases, we're
     # good as far as broadcasting goes.
     delta = np.sqrt(p.model.Q) * (
-        p.particle_locations[:, np.newaxis, :] -
-        q.particle_locations[np.newaxis, :, :]
+        p_locs[:, np.newaxis, :] -
+        q_locs[np.newaxis, :, :]
     )
     
     return np.sqrt(np.sum(delta**2, axis=-1))
