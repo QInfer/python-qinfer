@@ -127,11 +127,25 @@ class LiuWestResampler(object):
     
     :param float a: Value of the parameter :math:`a` of the [LW01]_ algorithm
         to use in resampling.
+    :param float h: Value of the parameter :math:`h` to use, or `None` to
+        use that corresponding to :math:`a`.
     :param int maxiter: Maximum number of times to attempt to resample within
         the space of valid models before giving up.
+        
+    .. warning::
+    
+        The [LW01]_ algorithm preserves the first two moments of the
+        distribution (in expectation over the random choices made by the
+        resampler) if and only if :math:`a^2 + h^2 = 1`, as is set by the
+        ``h=None`` keyword argument.
     """
-    def __init__(self, a=0.98, maxiter=1000):
+    def __init__(self, a=0.98, h=None, maxiter=1000):
         self.a = a # Implicitly calls the property setter below to set _h.
+        if h is not None:
+            self._override_h = True
+            self._h = h
+        else:
+            self._override_h = False
         self._maxiter = maxiter
 
     ## PROPERTIES ##
@@ -143,7 +157,8 @@ class LiuWestResampler(object):
     @a.setter
     def a(self, new_a):
         self._a = new_a
-        self._h = np.sqrt(1 - new_a**2)
+        if not self._override_h:
+            self._h = np.sqrt(1 - new_a**2)
 
     ## METHODS ##
     
