@@ -23,18 +23,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ###################################################################
 
 from __future__ import division
 
-## ALL #########################################################################
+## ALL ########################################################################
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
     'LiuWestResampler'
 ]
 
-## IMPORTS #####################################################################
+## IMPORTS ####################################################################
 
 import numpy as np
 import scipy.linalg as la
@@ -45,7 +45,13 @@ from utils import outer_product, particle_meanfn, particle_covariance_mtx
 from qinfer import clustering
 from qinfer._exceptions import ResamplerWarning, ResamplerError
 
-## CLASSES #####################################################################
+## LOGGING ####################################################################
+
+import logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+## CLASSES ####################################################################
 
 class ClusteringResampler(object):
     r"""
@@ -131,6 +137,9 @@ class LiuWestResampler(object):
         use that corresponding to :math:`a`.
     :param int maxiter: Maximum number of times to attempt to resample within
         the space of valid models before giving up.
+    :param bool debug: Because the resampler can generate large amounts of
+        debug information, nothing is output to the logger, even at DEBUG level,
+        unless this flag is True.
         
     .. warning::
     
@@ -139,12 +148,13 @@ class LiuWestResampler(object):
         resampler) if and only if :math:`a^2 + h^2 = 1`, as is set by the
         ``h=None`` keyword argument.
     """
-    def __init__(self, a=0.98, h=None, maxiter=1000):
+    def __init__(self, a=0.98, h=None, maxiter=1000, debug=False):
         self.a = a # Implicitly calls the property setter below to set _h.
         if h is not None:
             self._override_h = True
             self._h = h
         self._maxiter = maxiter
+        self._debug = debug
 
     _override_h = False
 
@@ -203,17 +213,18 @@ class LiuWestResampler(object):
         
         # Loop as long as there are any particles left to resample.
         n_iters = 0
+            
+        # Draw j with probability self.particle_weights[j].
+        # We do this by drawing random variates uniformly on the interval
+        # [0, 1], then see where they belong in the CDF.
+        js[:] = cumsum_weights.searchsorted(
+            np.random.random((idxs_to_resample.size,)),
+            side='right'
+        )
+        
         while idxs_to_resample.size and n_iters < self._maxiter:
             # Keep track of how many iterations we used.
             n_iters += 1
-            
-            # Draw j with probability self.particle_weights[j].
-            # We do this by drawing random variates uniformly on the interval
-            # [0, 1], then see where they belong in the CDF.
-            js[:] = cumsum_weights.searchsorted(
-                np.random.random((idxs_to_resample.size,)),
-                side='right'
-            )
             
             # Set mu_i to a x_j + (1 - a) mu.
             mus[...] = a * l[js,:] + (1 - a) * mean
@@ -227,6 +238,16 @@ class LiuWestResampler(object):
             # catching models that may not hold to the expected postconditions.
             resample_locs = new_locs[idxs_to_resample, :]
             valid_mask = model.are_models_valid(resample_locs)
+            
+            assert valid_mask.ndim == 1, "are_models_valid returned tensor, expected vector."
+            
+            if self._debug:
+                logger.debug(
+                    "LW resampler found {} invalid particles; repeating.".format(
+                        n_ms - np.sum(valid_mask)
+                    )
+                )
+            
             assert (
                 (
                     len(valid_mask.shape) == 1
@@ -243,7 +264,7 @@ class LiuWestResampler(object):
 
             # This may look a little weird, but it should delete the unused
             # elements of js, so that we don't need to reallocate.
-            js = js[:idxs_to_resample.size]
+            js = js[np.logical_not(valid_mask)]
             mus = mus[:idxs_to_resample.size, :]
             
         if idxs_to_resample.size:
