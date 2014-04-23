@@ -61,6 +61,12 @@ except ImportError:
     warnings.warn("Could not import pyplot. Plotting methods will not work.")
     plt = None
 
+## LOGGING ####################################################################
+
+import logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
 ## CLASSES #####################################################################
 
 class SMCUpdater(Distribution):
@@ -74,6 +80,9 @@ class SMCUpdater(Distribution):
     :param callable resampler: Specifies the resampling algorithm to be used. See :ref:`resamplers`
         for more details.
     :param float resample_thresh: Specifies the threshold for :math:`N_{\text{ess}}` to decide when to resample.
+    :param bool debug_resampling: If `True`, debug information will be
+        generated on resampling performance, and will be written to the
+        standard Python logger.
     :param bool track_resampling_divergence: If true, then the divergences
         between the pre- and post-resampling distributions are tracked and
         recorded in the ``resampling_divergences`` attribute.
@@ -86,6 +95,7 @@ class SMCUpdater(Distribution):
     def __init__(self,
             model, n_particles, prior,
             resample_a=None, resampler=None, resample_thresh=0.5,
+            debug_resampling=False,
             track_resampling_divergence=False,
             zero_weight_policy='error', zero_weight_thresh=None
             ):
@@ -99,6 +109,7 @@ class SMCUpdater(Distribution):
         ## RESAMPLER CONFIGURATION ##
         # Backward compatibility with the old resample_a keyword argument,
         # which assumed that the Liu and West resampler was being used.
+        self._debug_resampling = debug_resampling
         if resample_a is not None:
             warnings.warn("The 'resample_a' keyword argument is deprecated; use 'resampler=LiuWestResampler(a)' instead.", DeprecationWarning)
             if resampler is not None:
@@ -420,6 +431,11 @@ class SMCUpdater(Distribution):
         if self._resampling_divergences is not None:
             old_locs = self.particle_locations.copy()
             old_weights = self.particle_weights.copy()
+            
+        # Record the previous mean, cov if needed.
+        if self._debug_resampling:
+            old_mean = self.est_mean()
+            old_cov = self.est_covariance_mtx()
 
         # Find the new particle locations according to the chosen resampling
         # algorithm.
@@ -436,6 +452,15 @@ class SMCUpdater(Distribution):
             self._resampling_divergences.append(
                 self._kl_divergence(old_locs, old_weights)
             )
+            
+        # Report current and previous mean, cov.
+        if self._debug_resampling:
+            new_mean = self.est_mean()
+            new_cov = self.est_covariance_mtx()
+            logger.debug("Resampling changed mean by {}. Norm change in cov: {}.".format(
+                old_mean - new_mean,
+                np.linalg.norm(new_cov - old_cov)
+            ))
 
     ## DISTRIBUTION CONTRACT ##################################################
     

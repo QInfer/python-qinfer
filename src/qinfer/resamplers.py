@@ -241,10 +241,12 @@ class LiuWestResampler(object):
             
             assert valid_mask.ndim == 1, "are_models_valid returned tensor, expected vector."
             
-            if self._debug:
+            n_invalid = np.sum(np.logical_not(valid_mask))
+            
+            if self._debug and n_invalid > 0:
                 logger.debug(
                     "LW resampler found {} invalid particles; repeating.".format(
-                        n_ms - np.sum(valid_mask)
+                        n_invalid
                     )
                 )
             
@@ -275,6 +277,9 @@ class LiuWestResampler(object):
                 "Liu-West resampling failed to find valid models for {} "
                 "particles within {} iterations."
             ).format(idxs_to_resample.size, self._maxiter), ResamplerWarning)
+            
+        if self._debug:
+            logger.debug("LW resampling completed in {} iterations.".format(n_iters))
 
         # Now we reset the weights to be uniform, letting the density of
         # particles represent the information that used to be stored in the
