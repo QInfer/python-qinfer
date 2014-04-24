@@ -47,9 +47,10 @@ import scipy.linalg as la
 import scipy.stats
 
 from qinfer.abstract_model import DifferentiableModel
-from qinfer import clustering
 from qinfer.distributions import Distribution
-from qinfer.resamplers import LiuWestResampler
+import qinfer.resamplers
+import qinfer.clustering
+import qinfer.metrics
 from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
         particle_covariance_mtx, format_uncertainty
 from qinfer._exceptions import ApproximationWarning, ResamplerWarning
@@ -114,10 +115,10 @@ class SMCUpdater(Distribution):
             warnings.warn("The 'resample_a' keyword argument is deprecated; use 'resampler=LiuWestResampler(a)' instead.", DeprecationWarning)
             if resampler is not None:
                 raise ValueError("Both a resample_a and an explicit resampler were provided; please provide only one.")
-            self.resampler = LiuWestResampler(a=resample_a)
+            self.resampler = qinfer.resamplers.LiuWestResampler(a=resample_a)
         else:
             if resampler is None:
-                self.resampler = LiuWestResampler()
+                self.resampler = qinfer.resamplers.LiuWestResampler()
             else:
                 self.resampler = resampler
 
@@ -629,7 +630,7 @@ class SMCUpdater(Distribution):
         if kernel is None:
             kernel = scipy.stats.norm(loc=0, scale=1).pdf
         
-        dist = rescaled_distance_mtx(self, other_locs) / delta
+        dist = qinfer.metrics.rescaled_distance_mtx(self, other_locs) / delta
         K = kernel(dist)        
         
         return -self.est_entropy() - (1 / delta) * np.sum(
@@ -1191,8 +1192,3 @@ class SMCUpdaterABC(SMCUpdater):
             self._maybe_resample()
 
     
-## POST IMPORTS ###############################################################
-# We put imports here to avoid circular dependance.
-
-from qinfer.metrics import rescaled_distance_mtx
-

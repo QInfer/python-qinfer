@@ -44,7 +44,7 @@ import scipy.linalg as la
 
 from qinfer.utils import outer_product, particle_meanfn, particle_covariance_mtx
 from qinfer._exceptions import ResamplerWarning
-from qinfer import metrics
+import qinfer.metrics as metrics
 
 try:
     import sklearn

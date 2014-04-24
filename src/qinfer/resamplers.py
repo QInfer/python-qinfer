@@ -42,7 +42,7 @@ import warnings
 
 from utils import outer_product, particle_meanfn, particle_covariance_mtx
 
-from qinfer import clustering
+import qinfer.clustering
 from qinfer._exceptions import ResamplerWarning, ResamplerError
 
 ## LOGGING ####################################################################
