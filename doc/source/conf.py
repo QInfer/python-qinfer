@@ -67,6 +67,7 @@ sys.path.insert(0, os.path.abspath('../../src'))
 # The LaTeX preamble is placed here so that it can be used both by pngmath
 # and by the LaTeX output plugin.
 preamble = r"""
+\usepackage{amsfonts}
 \usepackage{bbm}
 \usepackage[bold]{hhtensor}
 \newcommand{\T}{\mathrm{T}}
