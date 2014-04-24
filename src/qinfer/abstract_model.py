@@ -187,7 +187,7 @@ class Simulatable(object):
         input set of model parameter vectors, such that the new models are
         conditioned on a particular experiment having been performed.
         By default, this is the trivial function
-        :math:`\vec{x}(t_{k+1)) = \vec{x}(t_k)`.
+        :math:`\vec{x}(t_{k+1}) = \vec{x}(t_k)`.
         
         :param np.ndarray modelparams: Set of model parameter vectors to be
             updated.
