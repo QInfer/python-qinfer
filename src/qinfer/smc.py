@@ -393,7 +393,13 @@ class SMCUpdater(Distribution):
 
         # Reset the weights to uniform.
         self.particle_weights[:] = (1/self.n_particles)
-
+        
+        # Instruct the model to clear its cache, demoting any errors to
+        # warnings.
+        try:
+            self.model.clear_cache()
+        except Exception as e:
+            warnings.warn("Exception raised when clearing model cache: {}. Ignoring.".format(e))
 
     ## DISTRIBUTION CONTRACT ##################################################
     

@@ -144,6 +144,15 @@ class Simulatable(object):
         
     ## CONCRETE METHODS ##
     
+    def clear_cache(self):
+        """
+        Tells the model to clear any internal caches used in computing
+        likelihoods and drawing samples. Calling this method should not cause
+        any different results, but should only affect performance.
+        """
+        # By default, no cache to clear.
+        pass
+    
     def experiment_cost(self, expparams):
         """
         Given an array of experimental parameters, returns the cost associated

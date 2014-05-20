@@ -225,6 +225,9 @@ class BinomialModel(Model):
     
     ## METHODS ##
     
+    def clear_cache(self):
+        self.decorated_model.clear_cache()
+    
     def are_models_valid(self, modelparams):
         return self.decorated_model.are_models_valid(modelparams)
     
