@@ -112,7 +112,7 @@ class Simulatable(object):
         Returns the names of the various model parameters admitted by this
         model, formatted as LaTeX strings.
         """
-        return map("x_{}".format, xrange(self.n_modelparams))
+        return map("x_{{{}}}".format, xrange(self.n_modelparams))
     
     ## ABSTRACT METHODS ##
     
