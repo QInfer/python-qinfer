@@ -828,7 +828,7 @@ class SMCUpdater(Distribution):
             # TODO: change format string based on number of digits of precision
             #       admitted by the variance.
             parameter_values="\n".join(
-                "<td>{}</td>".format(
+                "<td>${}$</td>".format(
                     format_uncertainty(mu, std)
                 )
                 for mu, std in
