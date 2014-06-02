@@ -60,7 +60,9 @@ class DirectViewParallelizedModel(Model):
     def __getstate__(self):
         return {
             '_serial_model': self._serial_model,
-            '_dv': None
+            '_dv': None,
+            '_call_count': self._call_count,
+            '_sim_count': self._sim_count
         }
     
     ## PROPERTIES ##
