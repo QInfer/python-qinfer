@@ -79,7 +79,11 @@ class DirectViewParallelizedModel(Model):
 
     @property
     def n_engines(self):
-        return len(self._dv)
+        return len(self._dv) if self._dv is not None else 0
+        
+    @property
+    def modelparam_names(self):
+        return self._serial_model.modelparam_names
     
     ## METHODS ##
     
