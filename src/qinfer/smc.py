@@ -42,6 +42,8 @@ import warnings
 
 import numpy as np
 
+from itertools import izip
+
 from scipy.spatial import Delaunay
 import scipy.linalg as la
 import scipy.stats
