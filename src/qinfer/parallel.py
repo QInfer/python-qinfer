@@ -55,6 +55,14 @@ class DirectViewParallelizedModel(Model):
         
         super(DirectViewParallelizedModel, self).__init__()
     
+    ## SPECIAL METHODS ##
+    
+    def __getstate__(self):
+        return {
+            '_serial_model': self._serial_model,
+            '_dv': None
+        }
+    
     ## PROPERTIES ##
     
     @property
@@ -71,7 +79,11 @@ class DirectViewParallelizedModel(Model):
 
     @property
     def n_engines(self):
-        return len(self._dv)
+        return len(self._dv) if self._dv is not None else 0
+        
+    @property
+    def modelparam_names(self):
+        return self._serial_model.modelparam_names
     
     ## METHODS ##
     
@@ -85,6 +97,13 @@ class DirectViewParallelizedModel(Model):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
         super(DirectViewParallelizedModel, self).likelihood(outcomes, modelparams, expparams) 
+        
+        if self._dv is None:
+            raise RuntimeError(
+                "No direct view provided; this may be because the instance was "
+                "loaded from a pickle or NumPy saved array without providing a "
+                "new direct view."
+            )
 
         # Need to decorate with interactive to overcome namespace issues with
         # remote engines.

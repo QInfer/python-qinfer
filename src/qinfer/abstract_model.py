@@ -112,7 +112,7 @@ class Simulatable(object):
         Returns the names of the various model parameters admitted by this
         model, formatted as LaTeX strings.
         """
-        return map("x_{}".format, xrange(self.n_modelparams))
+        return map("x_{{{}}}".format, xrange(self.n_modelparams))
     
     ## ABSTRACT METHODS ##
     
@@ -143,6 +143,15 @@ class Simulatable(object):
         self._sim_count += modelparams.shape[0] * expparams.shape[0] * repeat
         
     ## CONCRETE METHODS ##
+    
+    def clear_cache(self):
+        """
+        Tells the model to clear any internal caches used in computing
+        likelihoods and drawing samples. Calling this method should not cause
+        any different results, but should only affect performance.
+        """
+        # By default, no cache to clear.
+        pass
     
     def experiment_cost(self, expparams):
         """
