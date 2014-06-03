@@ -270,10 +270,11 @@ class SMCUpdater(Distribution):
         # particle_weights[idx_particle] is the weight of the particle
         #     idx_particle.
         
+        if n_particles is not None and only_params is not None:
+            raise ValueError("Cannot set both n_particles and only_params.")
+        
         if n_particles is None:
             n_particles = self.n_particles
-            if only_params is not None:
-                raise ValueError("Cannot set both n_particles and only_params.")
         
         if reset_weights:
             self.particle_weights = np.ones((n_particles,)) / n_particles
