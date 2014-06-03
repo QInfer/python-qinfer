@@ -251,14 +251,17 @@ class SMCUpdater(Distribution):
 
     ## INITIALIZATION METHODS #################################################
     
-    def reset(self, n_particles=None):
+    def reset(self, n_particles=None, only_params=None, reset_weights=True):
         """
         Causes all particle locations and weights to be drawn fresh from the
         initial prior.
-        """
-        if n_particles is None:
-            n_particles = self.n_particles
         
+        :param int n_particles: Forces the size of the new particle set. If
+            `None`, the size of the particle set is not changed.
+        :param slice only_params: Resets only some of the parameters. Cannot
+            be set if ``n_particles`` is also given.
+        :param bool reset_weights: Resets the weights as well as the particles.
+        """
         # Particles are stored using two arrays, particle_locations and
         # particle_weights, such that:
         # 
@@ -266,10 +269,23 @@ class SMCUpdater(Distribution):
         #     parameter of the particle idx_particle.
         # particle_weights[idx_particle] is the weight of the particle
         #     idx_particle.
-        self.particle_locations = np.zeros((n_particles, self.model.n_modelparams))
-        self.particle_weights = np.ones((n_particles,)) / n_particles
+        
+        if n_particles is None:
+            n_particles = self.n_particles
+            if only_params is not None:
+                raise ValueError("Cannot set both n_particles and only_params.")
+        
+        if reset_weights:
+            self.particle_weights = np.ones((n_particles,)) / n_particles
+        
+        if only_params is None:
+            sl = np.s_[:, :]
+            # Might as well make a new array if we're resetting everything.
+            self.particle_locations = np.zeros((n_particles, self.model.n_modelparams))
+        else:
+            sl = np.s_[:, only_params]
 
-        self.particle_locations[:, :] = self.prior.sample(n=n_particles)
+        self.particle_locations[sl] = self.prior.sample(n=n_particles)[sl]
 
     ## UPDATE METHODS #########################################################
 
