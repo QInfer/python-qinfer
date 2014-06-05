@@ -42,9 +42,13 @@ import warnings
 
 import numpy as np
 
+from itertools import izip
+
 from scipy.spatial import Delaunay
 import scipy.linalg as la
 import scipy.stats
+import scipy.interpolate
+from scipy.ndimage.filters import gaussian_filter1d
 
 from qinfer.abstract_model import DifferentiableModel
 from qinfer.metrics import rescaled_distance_mtx
@@ -833,6 +837,67 @@ class SMCUpdater(Distribution):
         
     ## PLOTTING METHODS #######################################################
     
+    def posterior_marginal(self, idx_param=0, res=100, smoothing=0, range_min=None, range_max=None):
+        """
+        Returns an estimate of the marginal distribution of a given model parameter, based on 
+        taking the derivative of the interpolated cdf.
+        
+        :param int idx_param: Index of parameter to be marginalized.
+        :param int res1: Resolution of of the axis.
+        :param float smoothing: Standard deviation of the Gaussian kernel
+            used to smooth; same units as parameter.
+        :param float range_min: Minimum range of the output axis.
+        :param float range_max: Maximum range of the output axis.
+            
+        .. seealso::
+        
+            :meth:`SMCUpdater.plot_posterior_marginal`
+        """
+
+        # We need to sort the particles to get cumsum to make sense.
+        # interp1d would  do it anyways (using argsort, too), so it's not a waste
+        s = np.argsort(self.particle_locations[:,idx_param])
+        locs = self.particle_locations[s,idx_param]
+        
+        # relevant axis discretization
+        r_min = np.min(locs) if range_min is None else range_min
+        r_max = np.max(locs) if range_max is None else range_max
+        ps = np.linspace(r_min, r_max, res)
+
+        # interpolate the cdf of the marginal distribution using cumsum
+        interp = scipy.interpolate.interp1d(
+            np.append(locs, r_max + np.abs(r_max-r_min)), 
+            np.append(np.cumsum(self.particle_weights[s]), 1),
+            #kind='cubic',
+            bounds_error=False,
+            fill_value=0,
+            assume_sorted=True
+        )
+
+        # get distribution from derivative of cdf, and smooth it
+        pr = np.gradient(interp(ps), ps[1]-ps[0])
+        if smoothing > 0:
+            gaussian_filter1d(pr, res*smoothing/(np.abs(r_max-r_min)), output=pr)
+
+        return ps, pr
+
+    def plot_posterior_marginal(self, idx_param=0, res=100, smoothing=0, range_min=None, range_max=None):
+        """
+        Plots a marginal of the requested parameter.
+        
+        :param int idx_param: Index of parameter to be marginalized.
+        :param int res1: Resolution of of the axis.
+        :param float smoothing: Standard deviation of the Gaussian kernel
+            used to smooth; same units as parameter.
+        :param float range_min: Minimum range of the output axis.
+        :param float range_max: Maximum range of the output axis.
+            
+        .. seealso::
+        
+            :meth:`SMCUpdater.posterior_marginal`
+        """
+        return plt.plot(*self.posterior_marginal(idx_param, res, smoothing, range_min, range_max))
+
     def posterior_mesh(self, idx_param1=0, idx_param2=1, res1=100, res2=100, smoothing=0.01):
         """
         Returns a mesh, useful for plotting, of kernel density estimation
@@ -851,6 +916,7 @@ class SMCUpdater(Distribution):
         
             :meth:`SMCUpdater.plot_posterior_contour`
         """
+
         # WARNING: fancy indexing is used here, which means that a copy is
         #          made.
         locs = self.particle_locations[:, [idx_param1, idx_param2]]
