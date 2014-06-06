@@ -12,10 +12,6 @@
 Accelerated Randomized Benchmarking
 ===================================
 
-.. note::
-
-    This part of the guide is still incomplete, and will be expanded soon.
-
 Introduction
 ------------
 
@@ -55,12 +51,21 @@ modes. For the non-interleaved mode, there are three model parameters,
 where :math:`E_\psi` is the measurement, :math:`\rho_\psi` is the state
 preparation, :math:`\Lambda` is the average map over timesteps and gateset
 elements, :math:`d` is the dimension of the system,  and where
-:math:`F_\ave` is the average gate fidelity [TODO]. The functions
-:obj:`p` and :obj:`F` convert back and forth between depolarizing probabilities
-and fidelities.
+:math:`F_\ave` is the average gate fidelity, taken over the gateset. The
+functions :obj:`p` and :obj:`F` convert back and forth between depolarizing
+parameters and fidelities.
 
 An experiment parameter vector for this model is simply a specification of
-:math:`m`, the length of the Clifford sequence used for that datum.
+:math:`m`, the length of the Clifford sequence used for that datum. Since
+:class:`RandomizedBenchmarkingModel` represents 0/1 data, it is common to wrap
+this model in a :class:`~qinfer.derived_models.BinomialModel`:
+
+>>> from qinfer.derived_models import BinomialModel
+>>> from qinfer.rb import RandomizedBenchmarkingModel
+>>> model = BinomialModel(RandomizedBenchmarkingModel(order=0, interleaved=False))
+>>> expparams = np.array([
+...    (100, 1000) # 1000 shots of sequences with length 100.
+... ], dtype=model.expparams_dtype)
 
 Interleaved Mode
 ~~~~~~~~~~~~~~~~
