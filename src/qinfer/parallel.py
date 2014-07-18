@@ -58,6 +58,8 @@ class DirectViewParallelizedModel(Model):
     ## SPECIAL METHODS ##
     
     def __getstate__(self):
+        # Since instances of this class will be pickled as they are passed to
+        # remote engines, we need to be careful not to include _dv
         return {
             '_serial_model': self._serial_model,
             '_dv': None,
@@ -89,6 +91,9 @@ class DirectViewParallelizedModel(Model):
     
     ## METHODS ##
     
+    def clear_cache(self):
+        self._serial_model.clear_cache()
+
     def are_models_valid(self, modelparams):
         return self._serial_model.are_models_valid(modelparams)
     
