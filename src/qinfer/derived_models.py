@@ -114,6 +114,9 @@ class PoisonedModel(Model):
     
     ## METHODS ##
     
+    def clear_cache(self):
+        self._model.clear_cache()
+
     def are_models_valid(self, modelparams):
         return self._model.are_models_valid(modelparams)
     
@@ -357,6 +360,9 @@ class RandomWalkModel(Model):
     
     ## METHODS ##
     
+    def clear_cache(self):
+        self._model.clear_cache()
+
     def are_models_valid(self, modelparams):
         return self._model.are_models_valid(modelparams)
     
