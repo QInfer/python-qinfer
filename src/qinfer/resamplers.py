@@ -140,6 +140,8 @@ class LiuWestResampler(object):
     :param bool debug: Because the resampler can generate large amounts of
         debug information, nothing is output to the logger, even at DEBUG level,
         unless this flag is True.
+    :param bool postselect: If `True`, ensures that models are valid by
+        postselecting.
         
     .. warning::
     
@@ -148,13 +150,14 @@ class LiuWestResampler(object):
         resampler) if and only if :math:`a^2 + h^2 = 1`, as is set by the
         ``h=None`` keyword argument.
     """
-    def __init__(self, a=0.98, h=None, maxiter=1000, debug=False):
+    def __init__(self, a=0.98, h=None, maxiter=1000, debug=False, postselect=True):
         self.a = a # Implicitly calls the property setter below to set _h.
         if h is not None:
             self._override_h = True
             self._h = h
         self._maxiter = maxiter
         self._debug = debug
+        self._postselect = postselect
 
     _override_h = False
 
@@ -237,7 +240,10 @@ class LiuWestResampler(object):
             # that we can validate assertions as we go. This is helpful for
             # catching models that may not hold to the expected postconditions.
             resample_locs = new_locs[idxs_to_resample, :]
-            valid_mask = model.are_models_valid(resample_locs)
+            if self._postselect:
+                valid_mask = model.are_models_valid(resample_locs)
+            else:
+                valid_mask = np.ones((resample_locs.shape[0],), dtype=bool)
             
             assert valid_mask.ndim == 1, "are_models_valid returned tensor, expected vector."
             

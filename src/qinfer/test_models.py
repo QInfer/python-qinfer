@@ -73,7 +73,7 @@ class SimplePrecessionModel(DifferentiableModel):
     
     @staticmethod
     def are_models_valid(modelparams):
-        return modelparams > 0
+        return np.all(modelparams > 0, axis=1)
     
     def n_outcomes(self, expparams):
         """

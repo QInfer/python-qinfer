@@ -41,7 +41,6 @@ import scipy.linalg as la
 import warnings
 
 from qinfer.utils import outer_product
-import qinfer.smc
 
 try:
     import sklearn
@@ -107,3 +106,6 @@ def weighted_pairwise_distances(X, w, metric='euclidean', w_pow=0.5):
     
     return base_metric / (w_matrix ** w_pow)
     
+## FINAL IMPORTS ##############################################################
+
+import qinfer.smc
