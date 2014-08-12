@@ -208,7 +208,27 @@ class Simulatable(object):
             of each model according to each experiment.
         """
         return modelparams[:, :, np.newaxis]
-        
+
+    def canonicalize(self, modelparams):
+        r"""
+        Returns a canonical set of model parameters corresponding to a given
+        possibly non-canonical set. This is used for models in which there
+        exist model parameters :math:`\vec{x}_i` and :\math:`\vec{x}_j` such
+        that
+
+        .. math::
+
+            \Pr(d | \vec{x}_i; \vec{e}) = \Pr(d | \vec{x}_j; \vec{e})
+
+        for all outcomes :math:`d` and experiments :math:`\vec{e}`. For
+        models admitting such an ambiguity, this
+        method should then be overridden to return a consistent choice
+        out of such vectors, hence avoiding supurious model degeneracies.
+
+        Note that, by default, :class:`~qinfer.smc.SMCUpdater` will *not*
+        call this method.
+        """
+        return modelparams
         
         
 class LinearCostModelMixin(Simulatable):

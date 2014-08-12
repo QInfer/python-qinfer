@@ -42,8 +42,19 @@ class SimplePrecessionModel(DifferentiableModel):
     Describes the free evolution of a single qubit prepared in the
     :math:`\left|+\right\rangle` state under a Hamiltonian :math:`H = \omega \sigma_z / 2`,
     as explored in [GFWC12]_. (TODO: add other citations.)
+
+    :param float min_freq: Minimum value for :math:`\omega` to accept as valid.
+        This is used for testing techniques that mitigate the effects of degenerate models;
+        there is no "good" reason to ever set this other than zero, other than to
+        test with an explicitly broken model.
     """
     
+    ## INITIALIZER ##
+
+    def __init__(self, min_freq=0):
+        super(SimplePrecessionModel, self).__init__()
+        self._min_freq = min_freq
+
     ## PROPERTIES ##
     
     @property
@@ -71,9 +82,8 @@ class SimplePrecessionModel(DifferentiableModel):
     
     ## METHODS ##
     
-    @staticmethod
-    def are_models_valid(modelparams):
-        return np.all(modelparams > 0, axis=1)
+    def are_models_valid(self, modelparams):
+        return np.all(modelparams > self._min_freq, axis=1)
     
     def n_outcomes(self, expparams):
         """
