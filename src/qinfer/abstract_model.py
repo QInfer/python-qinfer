@@ -316,17 +316,19 @@ class DifferentiableModel(Model):
     __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
     
     @abc.abstractmethod
-    def score(self, outcome, modelparams, expparams):
+    def score(self, outcome, modelparams, expparams, return_L=False):
         r"""
         Returns the score of this likelihood function, defined as:
         
         .. math::
         
-            q(d, \vec{x}; \vec{e}) = \vec{\nabla}_{\vec{x}} \Pr(d | \vec{x}; \vec{e}).
+            q(d, \vec{x}; \vec{e}) = \vec{\nabla}_{\vec{x}} \log \Pr(d | \vec{x}; \vec{e}).
             
         Calls are represented as a four-index tensor
         ``score[idx_modelparam, idx_outcome, idx_model, idx_experiment]``.
         The left-most index may be suppressed for single-parameter models.
+        
+        If return_L is True, both `q` and the likelihood `L` are returned as `q, L`.
         """
         pass
         
@@ -355,8 +357,7 @@ class DifferentiableModel(Model):
         # FIXME: completely untested!
         if self.is_n_outcomes_constant:
             outcomes = np.arange(self.n_outcomes(expparams))
-            L = self.likelihood(outcomes, modelparams, expparams)
-            scores = self.score(outcomes, modelparams, expparams)
+            scores, L = self.score(outcomes, modelparams, expparams, return_L=True)
             
             assert len(scores.shape) in (3, 4)
             
@@ -384,8 +385,7 @@ class DifferentiableModel(Model):
                 n_o = self.n_outcomes(experiment)
             
                 outcomes = np.arange(n_o)
-                L = self.likelihood(outcomes, modelparams, experiment)
-                scores = self.score(outcomes, modelparams, experiment)
+                scores, L = self.score(outcomes, modelparams, experiment, return_L=True)
                 
                 fisher[:, :, :, idx_experiment] = np.einsum("ome,iome,jome->ijme",
                     L, scores, scores
