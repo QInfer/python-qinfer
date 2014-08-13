@@ -316,7 +316,7 @@ class DifferentiableModel(Model):
     __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
     
     @abc.abstractmethod
-    def score(self, outcome, modelparams, expparams, return_L=False):
+    def score(self, outcomes, modelparams, expparams, return_L=False):
         r"""
         Returns the score of this likelihood function, defined as:
         

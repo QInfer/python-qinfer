@@ -43,7 +43,7 @@ class ScoreMixin(object):
     """
     
     
-    self._h = 1e-10
+    _h = 1e-10
     
     @property
     def h(self):
@@ -60,7 +60,7 @@ class ScoreMixin(object):
         else:
             return self._h * np.ones(self.n_modelparams)
     
-    def score(self, outcome, modelparams, expparams, return_L=False):
+    def score(self, outcomes, modelparams, expparams, return_L=False):
         r"""
         Returns the numerically computed score of the likelihood 
         function, defined as:
@@ -79,12 +79,15 @@ class ScoreMixin(object):
         If return_L is True, both `q` and the likelihood `L` are returned as `q, L`.
         """
         
+        if len(modelparams.shape) == 1:
+            modelparams = modelparams[:, np.newaxis]
+        
         # compute likelihood at central point
         L0 = self.likelihood(outcomes, modelparams, expparams)
         
         # allocate space for the score
         q = np.empty([self.n_modelparams, 
-                      outcome.shape[0], 
+                      outcomes.shape[0], 
                       modelparams.shape[0], 
                       expparams.shape[0]])
         h_perturb = np.empty(modelparams.shape)
@@ -93,13 +96,13 @@ class ScoreMixin(object):
         # of them that vectorizing would be worth the effort.
         for mp_idx in xrange(self.n_modelparams):
             h_perturb[:] = np.zeros(modelparams.shape)
-            h_perturb[:, m_idx] = self.h[m_idx]
+            h_perturb[:, mp_idx] = self.h[mp_idx]
             # use the chain rule since taking the numerical derivative of a 
             # logarithm is unstable
             q[mp_idx, :] = (
                 self.likelihood(outcomes, modelparams + h_perturb, expparams) - 
                 self.likelihood(outcomes, modelparams - h_perturb, expparams)
-            ) / (2 * self.h[m_idx] * L0)
+            ) / (2 * self.h[mp_idx] * L0)
             
         
         if return_L:
