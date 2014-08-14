@@ -34,3 +34,6 @@ __version__ = '1.0a1'
 
 from _exceptions import *
 
+from qinfer.test_models import *
+from qinfer.score import *
+from qinfer.rb import *
