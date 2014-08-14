@@ -27,6 +27,12 @@
 
 from __future__ import division
 
+## ALL ########################################################################
+
+__all__ = [
+    'RandomizedBenchmarkingModel'
+]
+
 ## IMPORTS ####################################################################
 
 from itertools import starmap
@@ -206,6 +212,7 @@ class RandomizedBenchmarkingModel(DifferentiableModel):
             ), axis=0) / L
         
         if return_L:
-            return q, L
+            # Need to strip off the extra axis we added for broadcasting to q.
+            return q, L[0, ...]
         else:
             return q

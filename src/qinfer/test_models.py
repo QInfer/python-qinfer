@@ -23,11 +23,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ##
+## FEATURES ###################################################################
 
 from __future__ import division # Ensures that a/b is always a float.
 
-## IMPORTS ##
+## ALL ########################################################################
+
+__all__ = [
+    'SimplePrecessionModel',
+    'NoisyCoinModel',
+    'NDieModel'
+]
+
+## IMPORTS ####################################################################
 
 import numpy as np
 
@@ -35,7 +43,7 @@ from utils import binomial_pdf
 
 from abstract_model import Model, DifferentiableModel
     
-## CLASSES #####################################################################
+## CLASSES ####################################################################
 
 class SimplePrecessionModel(DifferentiableModel):
     r"""
@@ -111,13 +119,15 @@ class SimplePrecessionModel(DifferentiableModel):
         if len(modelparams.shape) == 1:
             modelparams = modelparams[:, np.newaxis]
 
-        outcomes = outcomes[:, np.newaxis, np.newaxis]
+        outcomes = outcomes.reshape((outcomes.shape[0], 1, 1))
 
         arg = modelparams * expparams / 2        
         q = (
-            ( expparams / np.tan(arg)) ** (outcomes) *
-            (-expparams * np.tan(arg)) ** (1-outcomes)
+            np.power( expparams / np.tan(arg), outcomes) *
+            np.power(-expparams * np.tan(arg), 1 - outcomes)
         )[np.newaxis, ...]
+
+        assert q.ndim == 4
         
         
         if return_L:
