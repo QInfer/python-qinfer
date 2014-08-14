@@ -105,16 +105,25 @@ class SimplePrecessionModel(DifferentiableModel):
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)
 
-    def score(self, outcomes, modelparams, expparams):
+    def score(self, outcomes, modelparams, expparams, return_L=False):
         #TODO: vectorize this
+
+        if len(modelparams.shape) == 1:
+            modelparams = modelparams[:, np.newaxis]
 
         outcomes = outcomes[:, np.newaxis, np.newaxis]
 
         arg = modelparams * expparams / 2        
-        return (
+        q = (
             ( expparams / np.tan(arg)) ** (outcomes) *
             (-expparams * np.tan(arg)) ** (1-outcomes)
-        )
+        )[np.newaxis, ...]
+        
+        
+        if return_L:
+            return q, self.likelihood(outcomes, modelparams, expparams)
+        else:
+            return q
         
 class NoisyCoinModel(Model):
     r"""
