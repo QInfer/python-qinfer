@@ -34,3 +34,4 @@ __version__ = '1.0a1'
 
 from _exceptions import *
 
+from qinfer.unstructured_models import UnstructuredFrequencyModel
