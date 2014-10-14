@@ -48,5 +48,5 @@ ones.
     :members:
 
 .. autoclass:: PostselectedDistribution
-    :members
+    :members:
 

@@ -38,8 +38,11 @@ if not tags.has('nomock'):
             else:
                 return Mock()
 
+    # TODO: replace with RTD build from requirements.txt!
     MOCK_MODULES = [
         'scipy',
+        'scipy.ndimage',
+        'scipy.ndimage.filters',
         'scipy.linalg',
         'scipy.optimize',
         'scipy.spatial',

@@ -40,3 +40,5 @@ Example Modules
 
     tomography
     
+
+.. _IPython Notebook: http://ipython.org/notebook.html
