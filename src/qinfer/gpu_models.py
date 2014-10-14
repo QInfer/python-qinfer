@@ -32,6 +32,12 @@ model to the pure-NumPy model implemented in the QInfer project.
 
 from __future__ import division
 
+## EXPORTS #####################################################################
+
+__all__ = [
+    'AcceleratedPrecessionModel'
+]
+
 ## IMPORTS #####################################################################
 
 try:

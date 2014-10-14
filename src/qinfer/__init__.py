@@ -36,3 +36,6 @@ from _exceptions import *
 
 from qinfer.gpu_models import *
 from qinfer.perf_testing import *
+from qinfer.expdesign import *
+from qinfer.test_models import *
+from qinfer.distributions import *

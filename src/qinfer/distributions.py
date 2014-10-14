@@ -23,7 +23,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## IMPORTS ####################################################################
+## IMPORTS ###################################################################
 
 import numpy as np
 import scipy.stats as st
@@ -37,7 +37,23 @@ from qinfer import utils as u
 
 import warnings
 
-## CLASSES ####################################################################
+## EXPORTS ###################################################################
+
+__all__ = [
+    # Those distributions not yet conforming to the Distribution
+    # contract are excluded from this list.
+    'Distribution',
+    'ProductDistribution',
+    'UniformDistribution',
+    'ConstantDistribution',
+    'NormalDistribution',
+    'MultivariateNormalDistribution',
+    'SlantedNormalDistribution',
+    'LogNormalDistribution',
+    'PostselectedDistribution'
+]
+
+## CLASSES ###################################################################
 
 class Distribution(object):
     """
