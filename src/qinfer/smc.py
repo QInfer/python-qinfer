@@ -33,7 +33,8 @@ from __future__ import division
 __all__ = [
     'SMCUpdater',
     'SMCUpdaterBCRB',
-    'SMCUpdaterABC'
+    'SMCUpdaterABC',
+    'MixedApproximateSMCUpdater'
 ]
 
 ## IMPORTS ####################################################################
