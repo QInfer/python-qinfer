@@ -34,3 +34,5 @@ __version__ = '1.0a1'
 
 from _exceptions import *
 
+from qinfer.gpu_models import *
+from qinfer.perf_testing import *
