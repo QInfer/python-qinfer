@@ -7,7 +7,7 @@
     
 .. _distributions:
     
-.. currentmodule:: qinfer.distributions
+.. currentmodule:: qinfer
 
 Probability Distributions
 =========================

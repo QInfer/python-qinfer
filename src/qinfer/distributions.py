@@ -40,8 +40,6 @@ import warnings
 ## EXPORTS ###################################################################
 
 __all__ = [
-    # Those distributions not yet conforming to the Distribution
-    # contract are excluded from this list.
     'Distribution',
     'ProductDistribution',
     'UniformDistribution',
@@ -50,6 +48,9 @@ __all__ = [
     'MultivariateNormalDistribution',
     'SlantedNormalDistribution',
     'LogNormalDistribution',
+    'GinibreUniform',
+    'HaarUniform',
+    'HilbertSchmidtUniform',
     'PostselectedDistribution'
 ]
 
@@ -315,14 +316,16 @@ class MVUniformDistribution(object):
 class DiscreteUniformDistribution(Distribution):
     def __init__(self, num_bits):
         self._num_bits = num_bits
+
+    @property
+    def n_rvs(self):
+        return 1
         
     def sample(self, n=1):
         z = np.random.randint(2**self._num_bits,n)
         return z
-
-
-# TODO: make the following into Distributions.        
-class HilbertSchmidtUniform(object):
+    
+class HilbertSchmidtUniform(Distribution):
     """
     Creates a new Hilber-Schmidt uniform prior on state space of dimension ``dim``.
     See e.g. [Mez06]_ and [Mis12]_.
@@ -334,6 +337,10 @@ class HilbertSchmidtUniform(object):
         self.paulis1Q = np.array([[[1,0],[0,1]],[[1,0],[0,-1]],[[0,-1j],[1j,0]],[[0,1],[1,0]]])
         
         self.paulis = self.make_Paulis(self.paulis1Q, 4)
+
+    @property
+    def n_rvs(self):
+        return self.dim**2 - 1
         
     def sample(self):
         #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)        
@@ -352,8 +359,8 @@ class HilbertSchmidtUniform(object):
         rho = np.dot(np.dot(np.identity(self.dim)+U,np.dot(z,z.conj().transpose())),np.identity(self.dim)+U.conj().transpose())
         rho = rho/np.trace(rho)
         
-        x = np.zeros([self.dim**2-1])
-        for idx in xrange(self.dim**2-1):
+        x = np.zeros([self.n_rvs])
+        for idx in xrange(self.n_rvs):
             x[idx] = np.real(np.trace(np.dot(rho,self.paulis[idx+1])))
               
         return x
@@ -368,14 +375,18 @@ class HilbertSchmidtUniform(object):
             return self.make_Paulis(temp,d*2)
             
         
-class HaarUniform(object):
+class HaarUniform(Distribution):
     """
     Creates a new Haar uniform prior on state space of dimension ``dim``.
 
     :param int dim: Dimension of the state space.
     """
-    def __init__(self,dim = 2):
+    def __init__(self, dim=2):
         self.dim = dim
+
+    @property
+    def n_rvs(self):
+        return 3    
     
     def sample(self):
         #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)        
@@ -397,7 +408,7 @@ class HaarUniform(object):
         
         return np.array([x,y,z])
 
-class GinibreUniform(object):
+class GinibreUniform(Distribution):
     """
     Creates a prior on state space of dimension dim according to the Ginibre
     ensemble with parameter ``k``.
@@ -405,9 +416,13 @@ class GinibreUniform(object):
     
     :param int dim: Dimension of the state space.
     """
-    def __init__(self,dim = 2, k = 2):
+    def __init__(self,dim=2, k=2):
         self.dim = dim
         self.k = k
+
+    @property
+    def n_rvs(self):
+        return 3        
         
     def sample(self):
         #Generate random matrix        

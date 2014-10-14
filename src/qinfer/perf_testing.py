@@ -102,21 +102,22 @@ def perf_test(
     number of particles, a prior distribution and an experiment design
     heuristic.
 
-    :param qinfer.abstract_models.Model model: Model whose parameters are to
+    :param qinfer.Model model: Model whose parameters are to
         be estimated.
     :param int n_particles: Number of SMC particles to use.
-    :param qinfer.distributions.Distribution prior: Prior to use in selecting
+    :param qinfer.Distribution prior: Prior to use in selecting
         SMC particles.
     :param int n_exp: Number of experimental data points to draw from the
         model.
-    :param qinfer.exp_design.Heuristic heuristic_class: Constructor function
+    :param qinfer.Heuristic heuristic_class: Constructor function
         for the experiment design heuristic to be used.
-    :param qinfer.abstract_models.Model true_model: Model to be used in
+    :param qinfer.Model true_model: Model to be used in
         generating experimental data. If ``None``, assumed to be ``model``.
-    :param qinfer.distributions.Distribution true_prior: Prior to be used in
+    :param qinfer.Distribution true_prior: Prior to be used in
         selecting the true model parameters. If ``None``, assumed to be
         ``prior``.
-    :rtype np.ndarray:
+    :rtype np.ndarray: See :ref:`perf_testing_struct` for more details on 
+        the type returned by this function.
     :return: A record array of performance metrics, indexed by the number
         of experiments performed.
     """

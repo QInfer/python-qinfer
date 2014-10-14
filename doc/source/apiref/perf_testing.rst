@@ -36,3 +36,35 @@ Function Reference
 ------------------
 
 .. autofunction:: perf_test
+
+.. _perf_testing_struct:
+
+Performance Results Structure
+-----------------------------
+
+Perfromance results, as collected by :func:`perf_test`, are returned as
+a `record array`_ with several fields, each describing a different
+metric collected by QInfer about the performance. For a single performance
+trial, the shape of this array is ``(n_exp, )``, such that ``perf[idx_exp]``
+returns metrics describing the performance immediately following collecting
+the datum ``idx_exp``.
+
++----------------+-------+----------------------------------------------------+
+| Field          | Type  | Description                                        |
++================+=======+====================================================+
+| elapsed_time   | float | Time (in seconds) elapsed during                   |
+|                |       | the SMC update for this experiment.                |
+|                |       | Includes resampling, but excludes experiment       |
+|                |       | design, generation of "true" data and calculation  |
+|                |       | of performance metrics.                            |
++----------------+-------+----------------------------------------------------+
+| loss           | float | Decision-theoretic loss incured by the estimate    |
+|                |       | after updating with this experiment, given by the  |
+|                |       | quadratic loss :math:`\Tr(Q (\hat{\vec{x}} -       |
+|                |       | \vec{x}) (\hat{\vec{x}} - \vec{x})^{\mathrm{T}})`. |
++----------------+-------+----------------------------------------------------+
+| resample_count | int   | Number of times that resampling was performed on   |
+|                |       | the SMC updater.                                   |
++----------------+-------+----------------------------------------------------+
+
+.. _record array: http://docs.scipy.org/doc/numpy/user/basics.rec.html
