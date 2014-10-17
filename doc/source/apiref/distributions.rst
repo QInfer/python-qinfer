@@ -7,7 +7,7 @@
     
 .. _distributions:
     
-.. currentmodule:: qinfer.distributions
+.. currentmodule:: qinfer
 
 Probability Distributions
 =========================
@@ -48,5 +48,5 @@ ones.
     :members:
 
 .. autoclass:: PostselectedDistribution
-    :members
+    :members:
 

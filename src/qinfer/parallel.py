@@ -23,17 +23,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ####################################################################
+## FEATURES ##################################################################
 
 from __future__ import division # Ensures that a/b is always a float.
 
-## IMPORTS #####################################################################
+## EXPORTS ###################################################################
+
+__all__ = ['DirectViewParallelizedModel']
+
+## IMPORTS ###################################################################
 
 import numpy as np
 import IPython.parallel
-from abstract_model import Model
+from qinfer.abstract_model import Model
+
+## LOGGING ###################################################################
+
+import logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
     
-## CLASSES #####################################################################
+## CLASSES ###################################################################
 
 class DirectViewParallelizedModel(Model):
     r"""
@@ -45,13 +55,21 @@ class DirectViewParallelizedModel(Model):
     that no other processes will send tasks during the lifetime of the Model.
     
     TODO: describe parameters.
+
+    :param bool purge_client: If ``True``, then this model will purge results
+        and metadata from the IPython client whenever the model cache is cleared.
+        This is useful for solving memory leaks caused by very large numbers of
+        calls to ``likelihood``. By default, this is disabled, since enabling
+        this option can cause data loss if the client is being sent other tasks
+        during the operation of this model.
     """
     
     ## INITIALIZER ##
     
-    def __init__(self, serial_model, direct_view):
+    def __init__(self, serial_model, direct_view, purge_client=False):
         self._serial_model = serial_model
         self._dv = direct_view
+        self._purge_client = purge_client
         
         super(DirectViewParallelizedModel, self).__init__()
     
@@ -93,6 +111,15 @@ class DirectViewParallelizedModel(Model):
     
     def clear_cache(self):
         self._serial_model.clear_cache()
+        try:
+            logger.info('DirectView results has {} items. Clearing.'.format(
+                len(self._dv.results)
+            ))
+            self._dv.purge_results('all')
+            if self._purge_client:
+                self._dv.client.purge_everything()
+        except:
+            pass
 
     def are_models_valid(self, modelparams):
         return self._serial_model.are_models_valid(modelparams)
@@ -129,5 +156,6 @@ class DirectViewParallelizedModel(Model):
             [outcomes] * self.n_engines,
             [expparams] * self.n_engines,
         )
+
         return np.concatenate(L, axis=1)
 
