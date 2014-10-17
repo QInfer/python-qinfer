@@ -33,6 +33,8 @@ from __future__ import division
 __all__ = [
     'ExperimentDesigner',
     'Heuristic',
+    'ExpSparseHeuristic',
+    'PGH',
     'OptimizationAlgorithms'
 ]
 
@@ -59,19 +61,64 @@ class Heuristic(object):
     optimization of the risk. As an example, the :math:`t_k = (9/8)^k`
     heuristic discussed by [FGC12]_ does not make explicit reference to the
     risk, and so would be appropriate as a `Heuristic` subclass.
-    
+    In particular, the [FGC12]_ heuristic is implemented by the
+    :class:`ExpSparseHeuristic` class.
+
     Note that the design of this abstract base class is still being decided,
     such that it is a placeholder for now.
     """
     __metaclass__ = ABCMeta
     
-    def __init__(self):
-        raise NotImplementedError("Not yet implemented.")
+    def __init__(self, updater):
+        self._updater = updater
     
     @abstractmethod
     def __call__(self, *args):
         raise NotImplementedError("Not yet implemented.")
         
+class ExpSparseHeuristic(Heuristic):
+    r"""
+    Implements the exponentially-sparse time evolution heuristic
+    of [FGC12]_, under which :math:`t_k = A b^k`, where :math:`A`
+    and :math:`b` are parameters of the heuristic.
+
+    :param qinfer.smc.SMCUpdater updater: Posterior updater for which
+        experiments should be heuristicly designed.
+    :param float scale: The value of :math:`A`, implicitly setting
+        the frequency scale for the problem.
+    :param float base: The base of the exponent; in general, should
+        be closer to 1 for higher-dimensional models.
+    :param str t_field: Name of the expparams field representing time.
+        If None, then the generated expparams are taken to be scalar,
+        and not a record.
+    :param dict other_fields: Values of the other fields to be used
+        in designed experiments.
+    """
+
+    def __init__(self,
+            updater, scale=1, base=9/8,
+            t_field=None, other_fields=None
+        ):
+        super(ExpSparseHeuristic, self).__init__(updater)
+        self._scale = scale
+        self._base = base
+        self._t_field = t_field
+        self._other_fields = other_fields
+
+    def __call__(self):
+        n_exps = len(self._updater.data_record)
+        t = self._scale * (self._base ** n_exps)
+        dtype = self._updater.model.expparams_dtype
+
+        if self._t_field is None:
+            return np.array([t], dtype=dtype)
+        else:
+            eps = np.empty((1,), dtype=dtype)
+            for field, value in self._other_fields.iteritems():
+                eps[field] = value
+            eps[self._t_field] = t
+            return eps
+
 class PGH(Heuristic):
     """
     Implements the *particle guess heuristic* (PGH) of [WGFC13a]_, which
@@ -108,7 +155,7 @@ class PGH(Heuristic):
     """
     
     def __init__(self, updater, inv_field='x_', t_field='t', inv_func=lambda x: x, maxiters=10, other_fields=None):
-        self._updater = updater
+        super(PGH, self).__init__(updater)
         self._x_ = inv_field
         self._t = t_field
         self._inv_func = inv_func

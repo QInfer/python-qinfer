@@ -7,7 +7,7 @@
     
 .. _expdesign:
     
-.. currentmodule:: qinfer.expdesign
+.. currentmodule:: qinfer
 
 ============================
 Experiment Design Algorithms
@@ -34,6 +34,12 @@ Heuristics
 .. autoclass:: Heuristic
     :members:
     
+:class:`ExpSparseHeuristic` - Exponentially-sparse time-sampling heuristic.
+---------------------------------------------------------------------------
+
+.. autoclass:: ExpSparseHeuristic
+	:members:
+
 :class:`PGH` - Particle Guess Heuristic
 ---------------------------------------
     

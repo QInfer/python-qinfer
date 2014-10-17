@@ -23,11 +23,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ###################################################################
+## FEATURES ##################################################################
 
 from __future__ import division # Ensures that a/b is always a float.
 
-## ALL ########################################################################
+## EXPORTS ###################################################################
 
 __all__ = [
     'SimplePrecessionModel',
@@ -35,7 +35,7 @@ __all__ = [
     'NDieModel'
 ]
 
-## IMPORTS ####################################################################
+## IMPORTS ###################################################################
 
 import numpy as np
 
@@ -43,7 +43,7 @@ from utils import binomial_pdf
 
 from abstract_model import Model, DifferentiableModel
     
-## CLASSES ####################################################################
+## CLASSES ###################################################################
 
 class SimplePrecessionModel(DifferentiableModel):
     r"""
