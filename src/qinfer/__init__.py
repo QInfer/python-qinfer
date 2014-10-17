@@ -41,3 +41,5 @@ from qinfer.test_models import *
 from qinfer.distributions import *
 from qinfer.abstract_model import *
 from qinfer.parallel import *
+from qinfer.score import *
+from qinfer.rb import *
