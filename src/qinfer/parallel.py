@@ -34,8 +34,19 @@ __all__ = ['DirectViewParallelizedModel']
 ## IMPORTS ###################################################################
 
 import numpy as np
-import IPython.parallel
 from qinfer.abstract_model import Model
+
+try:
+    import IPython.parallel as ipp
+    interactive = ipp.interactive
+except ImportError:
+    import warnings
+    warnings.warn(
+        "Could not import IPython parallel. "
+        "Parallelization support will be disabled."
+    )
+    ipp = None
+    interactive = lambda fn: fn
 
 ## LOGGING ###################################################################
 
@@ -67,6 +78,12 @@ class DirectViewParallelizedModel(Model):
     ## INITIALIZER ##
     
     def __init__(self, serial_model, direct_view, purge_client=False):
+        if ipp is None:
+            raise RuntimeError(
+                "This model requires IPython parallelization support, "
+                "but an error was raised importing IPython.parallel."
+            )
+
         self._serial_model = serial_model
         self._dv = direct_view
         self._purge_client = purge_client
@@ -141,7 +158,7 @@ class DirectViewParallelizedModel(Model):
 
         # Need to decorate with interactive to overcome namespace issues with
         # remote engines.
-        @IPython.parallel.interactive
+        @interactive
         def serial_likelihood(mps, sm, os, eps):
             return sm.likelihood(os, mps, eps)
 
