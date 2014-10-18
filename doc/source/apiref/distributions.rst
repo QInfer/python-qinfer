@@ -26,6 +26,12 @@ Specific Distributions
 .. autoclass:: UniformDistribution
     :members:
 
+.. autoclass:: NormalDistribution
+    :members:
+
+.. autoclass:: MultivariateNormalDistribution
+    :members:
+
 .. autoclass:: ConstantDistribution
     :members:
 

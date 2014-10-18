@@ -212,11 +212,24 @@ class UniformDistributionWith0(Distribution):
 
 
 class NormalDistribution(Distribution):
-    def __init__(self, mean, var):
+    """
+
+    :param tuple trunc: Limits at which the PDF of this
+        distribution should be truncated, or ``None`` if
+        the distribution is to have infinite support.
+    """
+    def __init__(self, mean, var, trunc=None):
         self.mean = mean
         self.var = var
-        
-        self.dist = st.norm(mean, np.sqrt(var))        
+
+        if trunc is not None:
+            low, high = trunc
+            sigma = np.sqrt(var)
+            a = (low - mean) / sigma
+            b = (high - mean) / sigma
+            self.dist = st.truncnorm(a, b, loc=mean, scale=np.sqrt(var))
+        else:
+            self.dist = st.norm(mean, np.sqrt(var))        
 
     @property
     def n_rvs(self):
