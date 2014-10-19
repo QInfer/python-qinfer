@@ -30,17 +30,17 @@ from __future__ import division
 ## ACTIVATION GUARD ##########################################################
 
 if __name__ == "__main__":
-	print (
-		"MacroPy modules cannot be run directly, but must be imported by a "
-		"plain Python module. To run this example: \n"
-		">>> import macropy.activate\n"
-		">>> import qinfer.experimental.examples.macro_models as mm\n"
-		">>> mm.main()\n"
-		"Alternatively, run the run_macro_models module:\n"
-		"$ python -m qinfer.experimental.examples.run_macro_models"
-	)
-	import sys
-	sys.exit(1)
+    print (
+        "MacroPy modules cannot be run directly, but must be imported by a "
+        "plain Python module. To run this example: \n"
+        ">>> import macropy.activate\n"
+        ">>> import qinfer.experimental.examples.macro_models as mm\n"
+        ">>> mm.main()\n"
+        "Alternatively, run the run_macro_models module:\n"
+        "$ python -m qinfer.experimental.examples.run_macro_models"
+    )
+    import sys
+    sys.exit(1)
 
 ## MACRO IMPORTS #############################################################
 
@@ -72,30 +72,30 @@ class SimpleMacroModel():
 
 @modelclass({'t': float, 'wq': float}, [])
 class SSKModel():
-	"""
-	Implements the no-decoherence model of [SSK14]_.
-	"""
-	dW = ep_wq - mp_wr
-	wR = np.sqrt(dW**2 + 4 * mp_g**2)
+    """
+    Implements the no-decoherence model of [SSK14]_.
+    """
+    dW = ep_wq - mp_wr
+    wR = np.sqrt(dW**2 + 4 * mp_g**2)
 
-	(1 / 2) * (
-		((4 * mp_g**2) / wR**2) * np.cos(
-			wR * ep_t
-		) +
-		1 +
-		(dW **2 / wR**2)
-	)
+    (1 / 2) * (
+        ((4 * mp_g**2) / wR**2) * np.cos(
+            wR * ep_t
+        ) +
+        1 +
+        (dW **2 / wR**2)
+    )
 
 ## MAIN ######################################################################
 
 def main():
-	m = SimpleMacroModel()
-	prior = UniformDistribution([[0, 1], [0, 1]])
-	u = SMCUpdater(m, 1000, prior)
-	modelparams = prior.sample()
-	expparams = np.array([(12.0,)], dtype=m.expparams_dtype)
-	datum = m.simulate_experiment(modelparams, expparams)
-	print datum
-	u.update(datum, expparams)
-	print u.est_mean()
-	print m.call_count
+    m = SimpleMacroModel()
+    prior = UniformDistribution([[0, 1], [0, 1]])
+    u = SMCUpdater(m, 1000, prior)
+    modelparams = prior.sample()
+    expparams = np.array([(12.0,)], dtype=m.expparams_dtype)
+    datum = m.simulate_experiment(modelparams, expparams)
+    print datum
+    u.update(datum, expparams)
+    print u.est_mean()
+    print m.call_count

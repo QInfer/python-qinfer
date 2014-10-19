@@ -141,6 +141,7 @@ def modelclass(tree, args, **kw):
             if isinstance(tree.body[0].value, Str):
                 docstring = tree.body[0]
                 del tree.body[0]
+    docstring = docstring.value.s
 
     # Build a list of experiment parameter types.
     expparam_types = {}
@@ -217,7 +218,7 @@ def modelclass(tree, args, **kw):
     # Try our hand at making a new class, perhaps?
     with q as new_class:
         class NewModel(Model):
-            #ast[docstring]
+            u[docstring]
 
             @property
             def n_modelparams(self):
