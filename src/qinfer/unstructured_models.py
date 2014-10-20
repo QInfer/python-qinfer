@@ -24,9 +24,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ###################################################################
+## FEATURES ##################################################################
 
 from __future__ import division # Ensures that a/b is always a float.
+
+## EXPORTS ###################################################################
+
+__all__ = [
+	'UnstructuredFrequencyModel'
+]
 
 ## IMPORTS ###################################################################
 
