@@ -31,6 +31,7 @@ from __future__ import division # Ensures that a/b is always a float.
 
 # We use __all__ to restrict what globals are visible to external modules.
 __all__ = [
+    'DerivedModel',
     'PoisonedModel',
     'BinomialModel'
 ]
@@ -47,9 +48,42 @@ from qinfer.ale import binom_est_error
     
 ## CLASSES #####################################################################
 
+class DerivedModel(Model):
+    """
+    Base class for any model that decorates another model.
+    Provides passthroughs for modelparam_names, n_modelparams, etc.
+    """
+    _underlying_model = None
+    def __init__(self, underlying_model):
+        self._underlying_model = underlying_model
+        super(DerivedModel, self).__init__()
+    
+    @property
+    def underlying_model(self):
+        return self._underlying_model
+
+    @property
+    def n_modelparams(self):
+        # We have as many modelparameters as the underlying model.
+        return self.underlying_model.n_modelparams
+        
+    @property
+    def modelparam_names(self):
+        return self.underlying_model.modelparam_names
+    
+    def clear_cache(self):
+        self.underlying_model.clear_cache()
+    
+    def are_models_valid(self, modelparams):
+        return self.underlying_model.are_models_valid(modelparams)
+
+    def canonicalize(self, modelparams):
+        return self.underlying_model.canonicalize(modelparams)
+
 PoisonModes = enum.enum("ALE", "MLE")
 
 class PoisonedModel(Model):
+    # TODO: refactor to use DerivedModel
     r"""
     Model that simulates sampling error incurred by the MLE or ALE methods of
     reconstructing likelihoods from sample data. The true likelihood given by an
@@ -170,12 +204,12 @@ class PoisonedModel(Model):
     def update_timestep(self, modelparams, expparams):
         return self._model.update_timestep(modelparams, expparams)
 
-class BinomialModel(Model):
+class BinomialModel(DerivedModel):
     """
     Model representing finite numbers of iid samples from another model,
     using the binomial distribution to calculate the new likelihood function.
     
-    :param qinfer.abstract_model.Model decorated_model: An instance of a two-
+    :param qinfer.abstract_model.Model underlying_model: An instance of a two-
         outcome model to be decorated by the binomial distribution.
         
     Note that a new experimental parameter field ``n_meas`` is added by this
@@ -185,28 +219,28 @@ class BinomialModel(Model):
     also admit a field with the name ``n_meas``.
     """
     
-    def __init__(self, decorated_model):
-        self.decorated_model = decorated_model
-        super(BinomialModel, self).__init__()
+    def __init__(self, underlying_model):
+        super(BinomialModel, self).__init__(underlying_model)
         
-        if not (decorated_model.is_n_outcomes_constant and decorated_model.n_outcomes(None) == 2):
+        if not (underlying_model.is_n_outcomes_constant and underlying_model.n_outcomes(None) == 2):
             raise ValueError("Decorated model must be a two-outcome model.")
         
-        if isinstance(decorated_model.expparams_dtype, str):
+        if isinstance(underlying_model.expparams_dtype, str):
             # We default to calling the original experiment parameters "x".
             self._expparams_scalar = True
-            self._expparams_dtype = [('x', decorated_model.expparams_dtype), ('n_meas', 'uint')]
+            self._expparams_dtype = [('x', underlying_model.expparams_dtype), ('n_meas', 'uint')]
         else:
             self._expparams_scalar = False
-            self._expparams_dtype = decorated_model.expparams_dtype + [('n_meas', 'uint')]
+            self._expparams_dtype = underlying_model.expparams_dtype + [('n_meas', 'uint')]
     
     ## PROPERTIES ##
-    
-    @property
-    def n_modelparams(self):
-        # We have as many modelparameters as the underlying model.
-        return self.decorated_model.n_modelparams
         
+    @property
+    def decorated_model(self):
+        # Provided for backcompat only.
+        return self.underlying_model
+    
+
     @property
     def expparams_dtype(self):
         return self._expparams_dtype
@@ -221,18 +255,8 @@ class BinomialModel(Model):
         the lifetime of a Model instance.
         """
         return False
-        
-    @property
-    def modelparam_names(self):
-        return self.decorated_model.modelparam_names
     
     ## METHODS ##
-    
-    def clear_cache(self):
-        self.decorated_model.clear_cache()
-    
-    def are_models_valid(self, modelparams):
-        return self.decorated_model.are_models_valid(modelparams)
     
     def n_outcomes(self, expparams):
         """
@@ -249,7 +273,7 @@ class BinomialModel(Model):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
         super(BinomialModel, self).likelihood(outcomes, modelparams, expparams)
-        pr1 = self.decorated_model.likelihood(
+        pr1 = self.underlying_model.likelihood(
             np.array([1], dtype='uint'),
             modelparams,
             expparams['x'] if self._expparams_scalar else expparams)
@@ -266,7 +290,7 @@ class BinomialModel(Model):
         #super(BinomialModel, self).simulate_experiment(modelparams, expparams)
         
         # Start by getting the pr(1) for the underlying model.
-        pr1 = self.decorated_model.likelihood(
+        pr1 = self.underlying_model.likelihood(
             np.array([1], dtype='uint'),
             modelparams,
             expparams['x'] if self._expparams_scalar else expparams)
@@ -287,7 +311,7 @@ class BinomialModel(Model):
         return os[0,0,0] if os.size == 1 else os
         
     def update_timestep(self, modelparams, expparams):
-        return self.decorated_model.update_timestep(modelparams,
+        return self.underlying_model.update_timestep(modelparams,
             expparams['x'] if self._expparams_scalar else expparams
         )
         
@@ -297,10 +321,10 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
     two-outcome models.
     """
     
-    def __init__(self, decorated_model):
-        if not isinstance(decorated_model, DifferentiableModel):
+    def __init__(self, underlying_model):
+        if not isinstance(underlying_model, DifferentiableModel):
             raise TypeError("Decorated model must also be differentiable.")
-        BinomialModel.__init__(self, decorated_model)
+        BinomialModel.__init__(self, underlying_model)
     
     def score(self, outcomes, modelparams, expparams):
         raise NotImplementedError("Not yet implemented.")
@@ -309,7 +333,7 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
         # Since the FI simply adds, we can multiply the single-shot
         # FI provided by the underlying model by the number of measurements
         # that we perform.
-        two_outcome_fi = self.decorated_model.fisher_information(
+        two_outcome_fi = self.underlying_model.fisher_information(
             modelparams, expparams
         )
         return two_outcome_fi * expparams['n_meas']
