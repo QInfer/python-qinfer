@@ -108,7 +108,7 @@ class SMCUpdater(Distribution):
             debug_resampling=False,
             track_resampling_divergence=False,
             zero_weight_policy='error', zero_weight_thresh=None,
-            canonicalize=False
+            canonicalize=True
             ):
 
         # Initialize zero-element arrays such that n_particles is always
