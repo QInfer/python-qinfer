@@ -27,6 +27,12 @@
 
 from __future__ import division
 
+## ALL ########################################################################
+
+__all__ = [
+    'RandomizedBenchmarkingModel'
+]
+
 ## IMPORTS ####################################################################
 
 from itertools import starmap
@@ -159,7 +165,7 @@ class RandomizedBenchmarkingModel(DifferentiableModel):
         
         return Model.pr0_to_likelihood_array(outcomes, pr0)
         
-    def score(self, outcomes, modelparams, expparams):
+    def score(self, outcomes, modelparams, expparams, return_L=False):
 
         na = np.newaxis
         n_m = modelparams.shape[0]
@@ -179,7 +185,7 @@ class RandomizedBenchmarkingModel(DifferentiableModel):
             A = A.reshape((1, 1, n_m, 1))
             B = B.reshape((1, 1, n_m, 1))
         
-            return (-1)**(1-outcomes) * np.concatenate(np.broadcast_arrays(
+            q = (-1)**(1-outcomes) * np.concatenate(np.broadcast_arrays(
                 A * m * (p ** (m-1)), p**m, np.ones_like(p),
             ), axis=0) / L
             
@@ -196,7 +202,7 @@ class RandomizedBenchmarkingModel(DifferentiableModel):
             A = A.reshape((1, 1, n_m, 1))
             B = B.reshape((1, 1, n_m, 1))
         
-            return (-1)**(1-outcomes) * np.concatenate(np.broadcast_arrays(
+            q = (-1)**(1-outcomes) * np.concatenate(np.broadcast_arrays(
                 np.where(mode, 0, A * m * (p_tilde ** (m - 1)) * (p_ref ** m)),
                 np.where(mode,
                     A * m * (p_ref ** (m - 1)),
@@ -205,3 +211,8 @@ class RandomizedBenchmarkingModel(DifferentiableModel):
                 p**m, np.ones_like(p)
             ), axis=0) / L
         
+        if return_L:
+            # Need to strip off the extra axis we added for broadcasting to q.
+            return q, L[0, ...]
+        else:
+            return q

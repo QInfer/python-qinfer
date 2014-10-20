@@ -142,6 +142,9 @@ class LiuWestResampler(object):
         unless this flag is True.
     :param bool postselect: If `True`, ensures that models are valid by
         postselecting.
+    :param float zero_cov_comp: Amount of covariance to be added to every
+        parameter during resampling in the case that the estimated covariance
+        has zero norm.
         
     .. warning::
     
@@ -150,7 +153,10 @@ class LiuWestResampler(object):
         resampler) if and only if :math:`a^2 + h^2 = 1`, as is set by the
         ``h=None`` keyword argument.
     """
-    def __init__(self, a=0.98, h=None, maxiter=1000, debug=False, postselect=True):
+    def __init__(self,
+            a=0.98, h=None, maxiter=1000, debug=False, postselect=True,
+            zero_cov_comp=1e-10
+        ):
         self.a = a # Implicitly calls the property setter below to set _h.
         if h is not None:
             self._override_h = True
@@ -158,6 +164,7 @@ class LiuWestResampler(object):
         self._maxiter = maxiter
         self._debug = debug
         self._postselect = postselect
+        self._zero_cov_comp = zero_cov_comp
 
     _override_h = False
 
@@ -196,6 +203,18 @@ class LiuWestResampler(object):
         
         # parameters in the Liu and West algorithm            
         a, h = self._a, self._h
+        if la.norm(cov, 'fro') == 0:
+            # The norm of the square root of S is literally zero, such that
+            # the error estimated in the next step will not make sense.
+            # We fix that by adding to the covariance a tiny bit of the
+            # identity.
+            warnings.warn(
+                "Covariance has zero norm; adding in small covariance in "
+                "resampler. Consider increasing n_particles to improve covariance "
+                "estimates.",
+                ResamplerWarning
+            )
+            cov = self._zero_cov_comp * np.eye(cov.shape[0])
         S, S_err = la.sqrtm(cov, disp=False)
         if not np.isfinite(S_err):
             raise ResamplerError(

@@ -34,4 +34,13 @@ __version__ = '1.0a1'
 
 from _exceptions import *
 
+from qinfer.gpu_models import *
+from qinfer.perf_testing import *
+from qinfer.expdesign import *
+from qinfer.test_models import *
+from qinfer.distributions import *
+from qinfer.abstract_model import *
+from qinfer.parallel import *
+from qinfer.score import *
+from qinfer.rb import *
 from qinfer.unstructured_models import UnstructuredFrequencyModel

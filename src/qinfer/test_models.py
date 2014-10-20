@@ -23,11 +23,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## FEATURES ##
+## FEATURES ##################################################################
 
 from __future__ import division # Ensures that a/b is always a float.
 
-## IMPORTS ##
+## EXPORTS ###################################################################
+
+__all__ = [
+    'SimplePrecessionModel',
+    'NoisyCoinModel',
+    'NDieModel'
+]
+
+## IMPORTS ###################################################################
 
 import numpy as np
 
@@ -35,7 +43,7 @@ from utils import binomial_pdf
 
 from abstract_model import Model, DifferentiableModel
     
-## CLASSES #####################################################################
+## CLASSES ###################################################################
 
 class SimplePrecessionModel(DifferentiableModel):
     r"""
@@ -115,16 +123,27 @@ class SimplePrecessionModel(DifferentiableModel):
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)
 
-    def score(self, outcomes, modelparams, expparams):
+    def score(self, outcomes, modelparams, expparams, return_L=False):
         #TODO: vectorize this
 
-        outcomes = outcomes[:, np.newaxis, np.newaxis]
+        if len(modelparams.shape) == 1:
+            modelparams = modelparams[:, np.newaxis]
+
+        outcomes = outcomes.reshape((outcomes.shape[0], 1, 1))
 
         arg = modelparams * expparams / 2        
-        return (
-            ( expparams / np.tan(arg)) ** (outcomes) *
-            (-expparams * np.tan(arg)) ** (1-outcomes)
-        )
+        q = (
+            np.power( expparams / np.tan(arg), outcomes) *
+            np.power(-expparams * np.tan(arg), 1 - outcomes)
+        )[np.newaxis, ...]
+
+        assert q.ndim == 4
+        
+        
+        if return_L:
+            return q, self.likelihood(outcomes, modelparams, expparams)
+        else:
+            return q
         
 class NoisyCoinModel(Model):
     r"""

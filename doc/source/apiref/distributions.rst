@@ -7,7 +7,7 @@
     
 .. _distributions:
     
-.. currentmodule:: qinfer.distributions
+.. currentmodule:: qinfer
 
 Probability Distributions
 =========================
@@ -24,6 +24,12 @@ Specific Distributions
 ----------------------
 
 .. autoclass:: UniformDistribution
+    :members:
+
+.. autoclass:: NormalDistribution
+    :members:
+
+.. autoclass:: MultivariateNormalDistribution
     :members:
 
 .. autoclass:: ConstantDistribution
@@ -48,5 +54,5 @@ ones.
     :members:
 
 .. autoclass:: PostselectedDistribution
-    :members
+    :members:
 
