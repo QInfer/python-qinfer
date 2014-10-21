@@ -52,6 +52,10 @@ class DerivedModel(Model):
     """
     Base class for any model that decorates another model.
     Provides passthroughs for modelparam_names, n_modelparams, etc.
+
+    Many of these passthroughs can and should be overriden by
+    specific subclasses, but it is rare that something will
+    override all of them.
     """
     _underlying_model = None
     def __init__(self, underlying_model):
@@ -66,6 +70,10 @@ class DerivedModel(Model):
     def n_modelparams(self):
         # We have as many modelparameters as the underlying model.
         return self.underlying_model.n_modelparams
+
+    @property
+    def expparams_dtype(self):
+        return self._model.expparams_dtype
         
     @property
     def modelparam_names(self):
@@ -76,13 +84,16 @@ class DerivedModel(Model):
     
     def are_models_valid(self, modelparams):
         return self.underlying_model.are_models_valid(modelparams)
+    
+    def update_timestep(self, modelparams, expparams):
+        return self.underlying_model.update_timestep(modelparams, expparams)
 
     def canonicalize(self, modelparams):
         return self.underlying_model.canonicalize(modelparams)
 
 PoisonModes = enum.enum("ALE", "MLE")
 
-class PoisonedModel(Model):
+class PoisonedModel(DerivedModel):
     # TODO: refactor to use DerivedModel
     r"""
     Model that simulates sampling error incurred by the MLE or ALE methods of
@@ -104,8 +115,7 @@ class PoisonedModel(Model):
     def __init__(self, underlying_model,
         tol=None, n_samples=None, hedge=None
     ):
-        self._model = underlying_model
-        super(PoisonedModel, self).__init__()
+        super(PoisonedModel, self).__init__(underlying_model)
         
         if tol is None != n_samples is None:
             raise ValueError(
@@ -120,50 +130,7 @@ class PoisonedModel(Model):
             self._n_samples = n_samples
             self._hedge = hedge if hedge is not None else 0.0
             
-    ## PROPERTIES ##
-    
-    @property
-    def n_modelparams(self):
-        # We have as many modelparameters as the underlying model.
-        return self._model.n_modelparams
-        
-    @property
-    def expparams_dtype(self):
-        return self._model.expparams_dtype
-    
-    @property
-    def is_n_outcomes_constant(self):
-        """
-        Returns ``True`` if and only if the number of outcomes for each
-        experiment is independent of the experiment being performed.
-        
-        This property is assumed by inference engines to be constant for
-        the lifetime of a Model instance.
-        """
-        return self._model.is_n_outcomes_constant
-        
-    @property
-    def modelparam_names(self):
-        return self._model.modelparam_names
-    
     ## METHODS ##
-    
-    def clear_cache(self):
-        self._model.clear_cache()
-
-    def are_models_valid(self, modelparams):
-        return self._model.are_models_valid(modelparams)
-    
-    def n_outcomes(self, expparams):
-        """
-        Returns an array of dtype ``uint`` describing the number of outcomes
-        for each experiment specified by ``expparams``.
-        
-        :param numpy.ndarray expparams: Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property.
-        """
-        return self._model.n_outcomes(expparams)
     
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
@@ -171,7 +138,7 @@ class PoisonedModel(Model):
         
         # Get the original, undisturbed likelihoods.
         super(PoisonedModel, self).likelihood(outcomes, modelparams, expparams)
-        L = self._model.likelihood(
+        L = self.underlying_model.likelihood(
             outcomes, modelparams, expparams)
             
         # Now get the random variates from a standard normal [N(0, 1)]
@@ -199,10 +166,7 @@ class PoisonedModel(Model):
         of inference algorithms against errors in that assumption.
         """
         super(PoisonedModel, self).simulate_experiment(modelparams, expparams, repeat)
-        return self._model.simulate_experiment(modelparams, expparams, repeat)
-        
-    def update_timestep(self, modelparams, expparams):
-        return self._model.update_timestep(modelparams, expparams)
+        return self.underlying_model.simulate_experiment(modelparams, expparams, repeat)
 
 class BinomialModel(DerivedModel):
     """
