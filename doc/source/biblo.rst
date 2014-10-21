@@ -32,6 +32,8 @@ Biblography
     Magesan E., Gambetta J. M., & Emerson J. Characterizing quantum gates via randomized benchmarking. Physical Review A. **85** 042311 (2012). :doi:`10.1103/PhysRevA.85.042311`. :arxiv:`1109.6887`.
 .. [Mis12]
     Miszczak J. `Generating and using truly random quantum states in Mathematica <http://www.iitis.pl/~miszczak/files/papers/miszczak12generating>`_. Computer Physics Communications **183** 118-124 (2012). :doi:`10.1016/j.cpc.2011.08.002`.
+.. [SSK14]
+    Stenberg M., Sanders Y. R., Wilhelm F. Efficient estimation of resonant coupling between quantum systems. :arxiv:`1407.5631`
 .. [WGFC13a]
     Wiebe N., Granade C. E., Ferrie C. & Cory D. G. Hamiltonian Learning and Certification Using Quantum Resources. :arxiv:`1309.0876`
 .. [WGFC13b]
