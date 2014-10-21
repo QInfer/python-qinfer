@@ -44,3 +44,4 @@ from qinfer.parallel import *
 from qinfer.score import *
 from qinfer.rb import *
 from qinfer.unstructured_models import *
+from qinfer.derived_models import *
