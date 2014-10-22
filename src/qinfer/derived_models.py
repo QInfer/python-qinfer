@@ -67,6 +67,14 @@ class DerivedModel(Model):
         return self._underlying_model
 
     @property
+    def base_model(self):
+        return self._underlying_model.base_model
+
+    @property
+    def model_chain(self):
+        return self._underlying_model.model_chain + (self._underlying_model, )
+
+    @property
     def n_modelparams(self):
         # We have as many modelparameters as the underlying model.
         return self.underlying_model.n_modelparams
@@ -302,7 +310,7 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
         )
         return two_outcome_fi * expparams['n_meas']
         
-class RandomWalkModel(Model):
+class RandomWalkModel(DerivedModel):
     r"""
     Model such that after each time step, a random perturbation is added to
     each model parameter vector according to a given distribution.
@@ -312,58 +320,14 @@ class RandomWalkModel(Model):
     :param Distribution step_distribution: Distribution over step vectors.
     """
     def __init__(self, underlying_model, step_distribution):
-        self._model = underlying_model
         self._step_dist = step_distribution
         
         if self._model.n_modelparams != self._step_dist.n_rvs:
             raise TypeError("Step distribution does not match model dimension.")
         
-        super(RandomWalkModel, self).__init__()
+        super(RandomWalkModel, self).__init__(underlying_model)
             
-    ## PROPERTIES ##
-    
-    @property
-    def n_modelparams(self):
-        # We have as many modelparameters as the underlying model.
-        return self._model.n_modelparams
-        
-    @property
-    def expparams_dtype(self):
-        return self._model.expparams_dtype
-    
-    @property
-    def is_n_outcomes_constant(self):
-        """
-        Returns ``True`` if and only if the number of outcomes for each
-        experiment is independent of the experiment being performed.
-        
-        This property is assumed by inference engines to be constant for
-        the lifetime of a Model instance.
-        """
-        return self._model.is_n_outcomes_constant
-        
-    @property
-    def modelparam_names(self):
-        return self._model.modelparam_names
-    
     ## METHODS ##
-    
-    def clear_cache(self):
-        self._model.clear_cache()
-
-    def are_models_valid(self, modelparams):
-        return self._model.are_models_valid(modelparams)
-    
-    def n_outcomes(self, expparams):
-        """
-        Returns an array of dtype ``uint`` describing the number of outcomes
-        for each experiment specified by ``expparams``.
-        
-        :param numpy.ndarray expparams: Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property.
-        """
-        return self._model.n_outcomes(expparams)
     
     def likelihood(self, outcomes, modelparams, expparams):
         super(RandomWalkModel, self).likelihood(outcomes, modelparams, expparams)

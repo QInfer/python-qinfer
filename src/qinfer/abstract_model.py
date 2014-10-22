@@ -90,7 +90,34 @@ class Simulatable(object):
         This property is assumed by inference engines to be constant for
         the lifetime of a Simulatable instance.
         """
-        return False       
+        return False
+
+    @property
+    def model_chain(self):
+        """
+        Returns a tuple of models upon which this model is based,
+        such that proeprties and methods of underlying models for
+        models that decorate other models can be accessed. For a
+        standalone model, this is always the empty tuple.
+        """
+        return (self, )
+
+    @property
+    def base_model(self):
+        """
+        Returns the most basic model that this model depends on.
+        For standalone models, this property satisfies ``model.base_model is model``.
+        """
+        return self
+
+    @property
+    def underlying_model(self):
+        """
+        Returns the model that this model is based on (decorates)
+        if such a model exists, or ``None`` if this model is
+        independent.
+        """
+        return self.model_chain[-1] else None
     
     @property
     def sim_count(self):

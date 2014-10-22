@@ -35,6 +35,7 @@ __all__ = ['DirectViewParallelizedModel']
 
 import numpy as np
 from qinfer.abstract_model import Model
+from qinfer.derived_models import DerivedModel
 
 try:
     import IPython.parallel as ipp
@@ -56,7 +57,7 @@ logger.addHandler(logging.NullHandler())
     
 ## CLASSES ###################################################################
 
-class DirectViewParallelizedModel(Model):
+class DirectViewParallelizedModel(DerivedModel):
     r"""
     Given an instance of a `Model`, parallelizes execution of that model's
     likelihood by breaking the ``modelparams`` array into segments and
@@ -88,7 +89,7 @@ class DirectViewParallelizedModel(Model):
         self._dv = direct_view
         self._purge_client = purge_client
         
-        super(DirectViewParallelizedModel, self).__init__()
+        super(DirectViewParallelizedModel, self).__init__(serial_model)
     
     ## SPECIAL METHODS ##
     
@@ -103,31 +104,15 @@ class DirectViewParallelizedModel(Model):
         }
     
     ## PROPERTIES ##
-    
-    @property
-    def n_modelparams(self):
-        return self._serial_model.n_modelparams
-        
-    @property
-    def expparams_dtype(self):
-        return self._serial_model.expparams_dtype
-    
-    @property
-    def is_n_outcomes_constant(self):
-        return self._serial_model.is_n_outcomes_constant
 
     @property
     def n_engines(self):
         return len(self._dv) if self._dv is not None else 0
-        
-    @property
-    def modelparam_names(self):
-        return self._serial_model.modelparam_names
-    
+            
     ## METHODS ##
     
     def clear_cache(self):
-        self._serial_model.clear_cache()
+        self.underlying_model.clear_cache()
         try:
             logger.info('DirectView results has {} items. Clearing.'.format(
                 len(self._dv.results)
@@ -137,12 +122,6 @@ class DirectViewParallelizedModel(Model):
                 self._dv.client.purge_everything()
         except:
             pass
-
-    def are_models_valid(self, modelparams):
-        return self._serial_model.are_models_valid(modelparams)
-    
-    def n_outcomes(self, expparams):
-        return self._serial_model.n_outcomes(expparams)
     
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
