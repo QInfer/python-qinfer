@@ -117,7 +117,7 @@ class Simulatable(object):
         if such a model exists, or ``None`` if this model is
         independent.
         """
-        return self.model_chain[-1] else None
+        return self.model_chain[-1] if self.model_chain else None
     
     @property
     def sim_count(self):
