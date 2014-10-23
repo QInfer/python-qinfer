@@ -100,7 +100,7 @@ class Simulatable(object):
         models that decorate other models can be accessed. For a
         standalone model, this is always the empty tuple.
         """
-        return (self, )
+        return ()
 
     @property
     def base_model(self):

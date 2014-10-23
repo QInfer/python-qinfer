@@ -37,6 +37,8 @@ import numpy as np
 from qinfer.abstract_model import Model
 from qinfer.derived_models import DerivedModel
 
+import warnings
+
 try:
     import IPython.parallel as ipp
     interactive = ipp.interactive
@@ -85,7 +87,6 @@ class DirectViewParallelizedModel(DerivedModel):
                 "but an error was raised importing IPython.parallel."
             )
 
-        self._serial_model = serial_model
         self._dv = direct_view
         self._purge_client = purge_client
         
@@ -97,13 +98,28 @@ class DirectViewParallelizedModel(DerivedModel):
         # Since instances of this class will be pickled as they are passed to
         # remote engines, we need to be careful not to include _dv
         return {
-            '_serial_model': self._serial_model,
+            '_underlying_model': self._underlying_model,
             '_dv': None,
             '_call_count': self._call_count,
             '_sim_count': self._sim_count
         }
     
     ## PROPERTIES ##
+
+    # Provide _serial_model as a back-compat.
+    @property
+    def _serial_model(self):
+        warnings.warn("_serial_model is deprecated in favor of _underlying_model.",
+            DeprcationWarning
+        )
+        return self._underlying_model
+    @_serial_model.setter
+    def _serial_model(self, value):
+        warnings.warn("_serial_model is deprecated in favor of _underlying_model.",
+            DeprcationWarning
+        )
+        self._underlying_model = value
+    
 
     @property
     def n_engines(self):
