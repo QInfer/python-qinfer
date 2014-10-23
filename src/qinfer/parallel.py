@@ -110,13 +110,13 @@ class DirectViewParallelizedModel(DerivedModel):
     @property
     def _serial_model(self):
         warnings.warn("_serial_model is deprecated in favor of _underlying_model.",
-            DeprcationWarning
+            DeprecationWarning
         )
         return self._underlying_model
     @_serial_model.setter
     def _serial_model(self, value):
         warnings.warn("_serial_model is deprecated in favor of _underlying_model.",
-            DeprcationWarning
+            DeprecationWarning
         )
         self._underlying_model = value
     
