@@ -164,7 +164,7 @@ class DirectViewParallelizedModel(DerivedModel):
         L = self._dv.map_sync(
             serial_likelihood,
             np.array_split(modelparams, self.n_engines, axis=0),
-            [self._serial_model] * self.n_engines,
+            [self.underlying_model] * self.n_engines,
             [outcomes] * self.n_engines,
             [expparams] * self.n_engines,
         )
