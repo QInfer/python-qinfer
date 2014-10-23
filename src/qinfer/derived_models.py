@@ -89,6 +89,9 @@ class DerivedModel(Model):
     
     def clear_cache(self):
         self.underlying_model.clear_cache()
+
+    def n_outcomes(self, expparams):
+        return self.underlying_model.n_outcomes(expparams)
     
     def are_models_valid(self, modelparams):
         return self.underlying_model.are_models_valid(modelparams)
