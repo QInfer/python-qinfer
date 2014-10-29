@@ -35,6 +35,9 @@ __all__ = ['DirectViewParallelizedModel']
 
 import numpy as np
 from qinfer.abstract_model import Model
+from qinfer.derived_models import DerivedModel
+
+import warnings
 
 try:
     import IPython.parallel as ipp
@@ -56,7 +59,7 @@ logger.addHandler(logging.NullHandler())
     
 ## CLASSES ###################################################################
 
-class DirectViewParallelizedModel(Model):
+class DirectViewParallelizedModel(DerivedModel):
     r"""
     Given an instance of a `Model`, parallelizes execution of that model's
     likelihood by breaking the ``modelparams`` array into segments and
@@ -84,11 +87,10 @@ class DirectViewParallelizedModel(Model):
                 "but an error was raised importing IPython.parallel."
             )
 
-        self._serial_model = serial_model
         self._dv = direct_view
         self._purge_client = purge_client
         
-        super(DirectViewParallelizedModel, self).__init__()
+        super(DirectViewParallelizedModel, self).__init__(serial_model)
     
     ## SPECIAL METHODS ##
     
@@ -96,38 +98,37 @@ class DirectViewParallelizedModel(Model):
         # Since instances of this class will be pickled as they are passed to
         # remote engines, we need to be careful not to include _dv
         return {
-            '_serial_model': self._serial_model,
+            '_underlying_model': self._underlying_model,
             '_dv': None,
             '_call_count': self._call_count,
             '_sim_count': self._sim_count
         }
     
     ## PROPERTIES ##
+
+    # Provide _serial_model as a back-compat.
+    @property
+    def _serial_model(self):
+        warnings.warn("_serial_model is deprecated in favor of _underlying_model.",
+            DeprecationWarning
+        )
+        return self._underlying_model
+    @_serial_model.setter
+    def _serial_model(self, value):
+        warnings.warn("_serial_model is deprecated in favor of _underlying_model.",
+            DeprecationWarning
+        )
+        self._underlying_model = value
     
-    @property
-    def n_modelparams(self):
-        return self._serial_model.n_modelparams
-        
-    @property
-    def expparams_dtype(self):
-        return self._serial_model.expparams_dtype
-    
-    @property
-    def is_n_outcomes_constant(self):
-        return self._serial_model.is_n_outcomes_constant
 
     @property
     def n_engines(self):
         return len(self._dv) if self._dv is not None else 0
-        
-    @property
-    def modelparam_names(self):
-        return self._serial_model.modelparam_names
-    
+            
     ## METHODS ##
     
     def clear_cache(self):
-        self._serial_model.clear_cache()
+        self.underlying_model.clear_cache()
         try:
             logger.info('DirectView results has {} items. Clearing.'.format(
                 len(self._dv.results)
@@ -137,12 +138,6 @@ class DirectViewParallelizedModel(Model):
                 self._dv.client.purge_everything()
         except:
             pass
-
-    def are_models_valid(self, modelparams):
-        return self._serial_model.are_models_valid(modelparams)
-    
-    def n_outcomes(self, expparams):
-        return self._serial_model.n_outcomes(expparams)
     
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
@@ -169,7 +164,7 @@ class DirectViewParallelizedModel(Model):
         L = self._dv.map_sync(
             serial_likelihood,
             np.array_split(modelparams, self.n_engines, axis=0),
-            [self._serial_model] * self.n_engines,
+            [self.underlying_model] * self.n_engines,
             [outcomes] * self.n_engines,
             [expparams] * self.n_engines,
         )

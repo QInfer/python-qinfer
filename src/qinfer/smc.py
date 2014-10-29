@@ -98,13 +98,17 @@ class SMCUpdater(Distribution):
         One of ``["ignore", "skip", "warn", "error", "reset"]``.
     :param float zero_weight_thresh: Value to be used when testing for the
         zero-weight condition.
+    :param bool canonicalize: If `True`, particle locations will be updated
+        to canonical locations as described by the model class after each
+        prior sampling and resampling.
     """
     def __init__(self,
             model, n_particles, prior,
             resample_a=None, resampler=None, resample_thresh=0.5,
             debug_resampling=False,
             track_resampling_divergence=False,
-            zero_weight_policy='error', zero_weight_thresh=None
+            zero_weight_policy='error', zero_weight_thresh=None,
+            canonicalize=True
             ):
 
         # Initialize zero-element arrays such that n_particles is always
@@ -117,6 +121,9 @@ class SMCUpdater(Distribution):
         
         self.model = model
         self.prior = prior
+
+        # Record whether we are to canonicalize or not.
+        self._canonicalize = bool(canonicalize)
 
         ## RESAMPLER CONFIGURATION ##
         # Backward compatibility with the old resample_a keyword argument,
@@ -291,6 +298,10 @@ class SMCUpdater(Distribution):
             sl = np.s_[:, only_params]
 
         self.particle_locations[sl] = self.prior.sample(n=n_particles)[sl]
+
+        # Since this changes particle positions, we must recanonicalize.
+        if self._canonicalize:
+            self.particle_locations[sl] = self.model.canonicalize(self.particle_locations[sl])
 
     ## UPDATE METHODS #########################################################
 
@@ -485,6 +496,10 @@ class SMCUpdater(Distribution):
         # newly placed particles.
         self.particle_weights, self.particle_locations = \
             self.resampler(self.model, self.particle_weights, self.particle_locations)
+
+        # Possibly canonicalize, if we've been asked to do so.
+        if self._canonicalize:
+            self.particle_locations[:, :] = self.model.canonicalize(self.particle_locations)
 
         # Reset the weights to uniform.
         self.particle_weights[:] = (1/self.n_particles)

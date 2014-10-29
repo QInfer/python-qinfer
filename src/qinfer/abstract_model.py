@@ -90,7 +90,34 @@ class Simulatable(object):
         This property is assumed by inference engines to be constant for
         the lifetime of a Simulatable instance.
         """
-        return False       
+        return False
+
+    @property
+    def model_chain(self):
+        """
+        Returns a tuple of models upon which this model is based,
+        such that proeprties and methods of underlying models for
+        models that decorate other models can be accessed. For a
+        standalone model, this is always the empty tuple.
+        """
+        return ()
+
+    @property
+    def base_model(self):
+        """
+        Returns the most basic model that this model depends on.
+        For standalone models, this property satisfies ``model.base_model is model``.
+        """
+        return self
+
+    @property
+    def underlying_model(self):
+        """
+        Returns the model that this model is based on (decorates)
+        if such a model exists, or ``None`` if this model is
+        independent.
+        """
+        return self.model_chain[-1] if self.model_chain else None
     
     @property
     def sim_count(self):
@@ -216,7 +243,27 @@ class Simulatable(object):
             of each model according to each experiment.
         """
         return modelparams[:, :, np.newaxis]
-        
+
+    def canonicalize(self, modelparams):
+        r"""
+        Returns a canonical set of model parameters corresponding to a given
+        possibly non-canonical set. This is used for models in which there
+        exist model parameters :math:`\vec{x}_i` and :\math:`\vec{x}_j` such
+        that
+
+        .. math::
+
+            \Pr(d | \vec{x}_i; \vec{e}) = \Pr(d | \vec{x}_j; \vec{e})
+
+        for all outcomes :math:`d` and experiments :math:`\vec{e}`. For
+        models admitting such an ambiguity, this
+        method should then be overridden to return a consistent choice
+        out of such vectors, hence avoiding supurious model degeneracies.
+
+        Note that, by default, :class:`~qinfer.smc.SMCUpdater` will *not*
+        call this method.
+        """
+        return modelparams
         
         
 class LinearCostModelMixin(Simulatable):
