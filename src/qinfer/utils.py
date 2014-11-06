@@ -178,7 +178,6 @@ def format_uncertainty(value, uncertianty, scinotn_break=4):
         # Zero should be printed as a single digit; that is, as wide as str "1".
         mag_val = int(np.log10(np.abs(value))) if value != 0 else 0
         n_digits = max(mag_val - mag_unc, 0)
-        print mag_val, mag_unc, n_digits
             
 
         if abs(mag_val) < abs(mag_unc) and abs(mag_unc) > scinotn_break:

@@ -898,7 +898,7 @@ class SMCUpdater(Distribution):
 
         return ps, pr
 
-    def plot_posterior_marginal(self, idx_param=0, res=100, smoothing=0, range_min=None, range_max=None):
+    def plot_posterior_marginal(self, idx_param=0, res=100, smoothing=0, range_min=None, range_max=None, label_xaxis=True):
         """
         Plots a marginal of the requested parameter.
         
@@ -908,12 +908,17 @@ class SMCUpdater(Distribution):
             used to smooth; same units as parameter.
         :param float range_min: Minimum range of the output axis.
         :param float range_max: Maximum range of the output axis.
+        :param bool label_xaxis: Labels the :math:`x`-axis with the model parameter name
+            given by this updater's model.
             
         .. seealso::
         
             :meth:`SMCUpdater.posterior_marginal`
         """
-        return plt.plot(*self.posterior_marginal(idx_param, res, smoothing, range_min, range_max))
+        res = plt.plot(*self.posterior_marginal(idx_param, res, smoothing, range_min, range_max))
+        if label_xaxis:
+            plt.xlabel('${}$'.format(self.model.modelparam_names[idx_param]))
+        return res
 
     def posterior_mesh(self, idx_param1=0, idx_param2=1, res1=100, res2=100, smoothing=0.01):
         """
@@ -984,7 +989,7 @@ class SMCUpdater(Distribution):
     
     def _repr_html_(self):
         return r"""
-        <strong>{cls_name} for model of type {model}:</strong>
+        <strong>{cls_name}</strong> for model of type <strong>{model}</strong>:
         <table>
             <caption>Current estimated parameters</caption>
             <thead>
@@ -1001,7 +1006,15 @@ class SMCUpdater(Distribution):
         <em>Resample count:</em> {resample_count}
         """.format(
             cls_name=type(self).__name__, # Useful for subclassing.
-            model=type(self.model).__name__,
+            model=(
+                type(self.model).__name__
+                if not self.model.model_chain else
+                # FIXME: the <strong> here is ugly as sin.
+                "{}</strong> (based on <strong>{}</strong>)<strong>".format(
+                    type(self.model).__name__,
+                    "</strong>, <strong>".join(type(model).__name__ for model in self.model.model_chain)
+                )
+            ),
             
             parameter_names="\n".join(
                 map("<td>${}$</td>".format, self.model.modelparam_names)
