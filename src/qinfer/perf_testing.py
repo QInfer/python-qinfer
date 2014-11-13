@@ -145,7 +145,7 @@ def perf_test(
         delta = updater.est_mean() - true_mps
 
         performance[idx_exp]['elapsed_time'] = t.delta_t
-        performance[idx_exp]['loss'] = np.dot(model.Q, delta**2)
+        performance[idx_exp]['loss'] = np.dot(delta**2, model.Q)
         performance[idx_exp]['resample_count'] = updater.resample_count
 
     return performance
