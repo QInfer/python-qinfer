@@ -109,7 +109,7 @@ class SMCUpdater(Distribution):
             track_resampling_divergence=False,
             zero_weight_policy='error', zero_weight_thresh=None,
             canonicalize=True
-            ):
+        ):
 
         # Initialize zero-element arrays such that n_particles is always
         # a valid property.
@@ -898,7 +898,10 @@ class SMCUpdater(Distribution):
 
         return ps, pr
 
-    def plot_posterior_marginal(self, idx_param=0, res=100, smoothing=0, range_min=None, range_max=None, label_xaxis=True):
+    def plot_posterior_marginal(self, idx_param=0, res=100, smoothing=0,
+            range_min=None, range_max=None, label_xaxis=True,
+            other_plot_args={}
+        ):
         """
         Plots a marginal of the requested parameter.
         
@@ -910,12 +913,17 @@ class SMCUpdater(Distribution):
         :param float range_max: Maximum range of the output axis.
         :param bool label_xaxis: Labels the :math:`x`-axis with the model parameter name
             given by this updater's model.
+        :param dict other_plot_args: Keyword arguments to be passed to
+            matplotlib's ``plot`` function.
             
         .. seealso::
         
             :meth:`SMCUpdater.posterior_marginal`
         """
-        res = plt.plot(*self.posterior_marginal(idx_param, res, smoothing, range_min, range_max))
+        res = plt.plot(*self.posterior_marginal(
+            idx_param, res, smoothing,
+            range_min, range_max
+        ), **other_plot_args)
         if label_xaxis:
             plt.xlabel('${}$'.format(self.model.modelparam_names[idx_param]))
         return res
