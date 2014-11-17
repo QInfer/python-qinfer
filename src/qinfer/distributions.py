@@ -31,6 +31,8 @@ import scipy.linalg as la
 from scipy.interpolate import interp1d
 from scipy.integrate import cumtrapz
 
+from functools import partial
+
 import abc
 
 from qinfer import utils as u
@@ -53,6 +55,15 @@ __all__ = [
     'HilbertSchmidtUniform',
     'PostselectedDistribution'
 ]
+
+## FUNCTIONS #################################################################
+
+def scipy_dist(name, *args, **kwargs):
+    """
+    Wraps calling a scipy.stats distribution to allow for pickling.
+    See https://github.com/scipy/scipy/issues/3125.
+    """
+    return getattr(st, name)(*args, **kwargs)
 
 ## CLASSES ###################################################################
 
@@ -235,16 +246,16 @@ class NormalDistribution(Distribution):
             sigma = np.sqrt(var)
             a = (low - mean) / sigma
             b = (high - mean) / sigma
-            self.dist = st.truncnorm(a, b, loc=mean, scale=np.sqrt(var))
+            self.dist = partial(scipy_dist, 'truncnorm', a, b, loc=mean, scale=np.sqrt(var))
         else:
-            self.dist = st.norm(mean, np.sqrt(var))        
+            self.dist = partial(scipy_dist, 'norm', mean, np.sqrt(var))
 
     @property
     def n_rvs(self):
         return 1
 
     def sample(self, n=1):
-        return self.dist.rvs(size=n)[:, np.newaxis]
+        return self.dist().rvs(size=n)[:, np.newaxis]
         
     def grad_log_pdf(self, x):
         return -(x - self.mean) / self.var
@@ -317,14 +328,14 @@ class LogNormalDistribution(Distribution):
         self.mu = mu # lognormal location parameter
         self.sigma = sigma # lognormal scale parameter
         
-        self.dist = st.lognorm(sigma,0,mu) # scipy distribution location = 0
+        self.dist = partial(scipy_dist, 'lognorm', sigma, 0, mu) # scipy distribution location = 0
 
     @property
     def n_rvs(self):
         return 1
 
     def sample(self, n=1):
-        return self.dist.rvs(size=n)[:,np.newaxis]
+        return self.dist().rvs(size=n)[:, np.newaxis]
 
 class MVUniformDistribution(object):
     
