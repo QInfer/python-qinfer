@@ -233,6 +233,10 @@ def perf_test_multiple(
     dtype, is_scalar_exp = actual_dtype(model)
     performance = np.zeros((n_trials, n_exp), dtype=dtype)
 
+    task = None
+    thread = None
+    wake_event = None
+
     if tskmon_client is not None:
         try:
             name = getattr(type(model), '__name__', 'unknown model')
@@ -243,13 +247,13 @@ def perf_test_multiple(
             )
             wake_event = threading.Event()
             thread = WebProgressThread(task, wake_event)
+            # We shouldn't need this, as it's a bug if it doesn't join, but
+            # we do it to mitigate worst cases.
+            thread.daemon = True
             thread.start()
 
         except Exception as ex:
             print "Failed to start tskmon task: ", ex
-            task = None
-            thread = None
-            wake_event = None
 
     try:
         # Loop through once to dispatch tasks.
@@ -262,7 +266,7 @@ def perf_test_multiple(
                 thread.progress = idx + 1
                 thread.dirty = True
                 wake_event.set()
-                
+
     finally:
         # Make *sure* we've killed the thread.
         if task is not None:
@@ -270,7 +274,12 @@ def perf_test_multiple(
                 thread.done = True
                 wake_event.set()
                 task.delete()
-            except:
-                print "Exception cleaning up tskmon task."
+                # Try and join for 1s. If nothing happens, we
+                # raise and move on.
+                thread.join(1)
+                if thread.is_alive():
+                    print "Thread didn't die. This is a bug."
+            except Exception as ex:
+                print "Exception cleaning up tskmon task.", ex
 
     return performance
