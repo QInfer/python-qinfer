@@ -30,12 +30,14 @@ from __future__ import division
 ## EXPORTS ###################################################################
 
 __all__ = [
-    'timing', 'perf_test'
+    'timing', 'perf_test', 'perf_test_multiple'
 ]
 
 ## IMPORTS ###################################################################
 
 from contextlib import contextmanager
+from functools import partial
+import threading
 import time
 
 import numpy as np
@@ -66,6 +68,30 @@ class Timer(object):
         """
         return (self._toc if self._toc is not None else time.time()) - self._tic
 
+
+class WebProgressThread(threading.Thread):
+    done = False
+    dirty = False
+    progress = 0
+
+    def __init__(self, task, wake_event):
+        super(WebProgressThread, self).__init__()
+        self._task = task
+        self._wake_event = wake_event
+
+    def run(self):
+        while True:
+            if self.done:
+                return
+            if self.dirty:
+                try:
+                    self._task.update(progress=self.progress)
+                    self.dirty = False
+                    self._wake_event.clear()
+                except Exception as ex:
+                    print(ex)
+            self._wake_event.wait()
+
 ## CONTEXT MANAGERS ##########################################################
 
 @contextmanager
@@ -88,14 +114,21 @@ PERFORMANCE_DTYPE = [
     ('loss', float),
     ('resample_count', int),
     ('elapsed_time', float),
+    ('outcome', int)
 ]
 
 ## FUNCTIONS #################################################################
 
+def actual_dtype(model):
+    if isinstance(model.expparams_dtype, str):
+        # They're using simple notation for a single field.
+        return PERFORMANCE_DTYPE + [('experiment', model.expparams_dtype)], True
+    else:
+        return PERFORMANCE_DTYPE + model.expparams_dtype, False
+
 def perf_test(
-        model, n_particles, prior,
-        n_exp, heuristic_class,
-        true_model=None, true_prior=None
+        model, n_particles, prior, n_exp, heuristic_class,
+        true_model=None, true_prior=None, true_mps = None
     ):
     """
     Runs a trial of using SMC to estimate the parameters of a model, given a
@@ -116,6 +149,10 @@ def perf_test(
     :param qinfer.Distribution true_prior: Prior to be used in
         selecting the true model parameters. If ``None``, assumed to be
         ``prior``.
+    :param np.ndarray true_mps: The true model parameters. If ``None``,
+        it will be sampled from ``true_prior``. Note that the performance
+        record can only handle one outcome and therefore ONLY ONE TRUE MODEL.
+        An error will occur if ``true_mps.shape[0] > 1`` returns ``True``.
     :rtype np.ndarray: See :ref:`perf_testing_struct` for more details on 
         the type returned by this function.
     :return: A record array of performance metrics, indexed by the number
@@ -128,9 +165,11 @@ def perf_test(
     if true_prior is None:
         true_prior = prior
 
-    true_mps = true_prior.sample()
+    if true_mps is None:
+        true_mps = true_prior.sample()
 
-    performance = np.zeros((n_exp,), dtype=PERFORMANCE_DTYPE)
+    dtype, is_scalar_exp = actual_dtype(model)
+    performance = np.zeros((n_exp,), dtype=dtype)
 
     updater = SMCUpdater(model, n_particles, prior)
     heuristic = heuristic_class(updater)
@@ -147,5 +186,100 @@ def perf_test(
         performance[idx_exp]['elapsed_time'] = t.delta_t
         performance[idx_exp]['loss'] = np.dot(delta**2, model.Q)
         performance[idx_exp]['resample_count'] = updater.resample_count
+        performance[idx_exp]['outcome'] = datum
+        if is_scalar_exp:
+            performance[idx_exp]['experiment'] = expparams
+        else:
+            for param_name in [param[0] for param in model.expparams_dtype]:
+                performance[idx_exp][param_name] = expparams[param_name]
+
+    return performance
+
+class apply_serial(object):
+    """
+    Applies the function ``fn`` in the main thread. Used
+    to emulate the API exposed by parallelization engines.
+    """
+    _value = None
+    _done = False
+
+    def __init__(self, fn, *args, **kwargs):
+        self._fn = fn
+        self._args = args
+        self._kwargs = kwargs
+    
+    def get(self):
+        if not self._done:
+            self._value = self._fn(*self._args, **self._kwargs)
+            self._done = True
+
+        return self._value
+
+def perf_test_multiple(
+        n_trials,
+        model, n_particles, prior,
+        n_exp, heuristic_class,
+        true_model=None, true_prior=None,
+        apply=apply_serial,
+        tskmon_client=None
+    ):
+    # TODO: write full docstring, but this repeats many times.
+
+    trial_fn = partial(perf_test,
+        model, n_particles, prior,
+        n_exp, heuristic_class, true_model, true_prior
+    )
+
+    dtype, is_scalar_exp = actual_dtype(model)
+    performance = np.zeros((n_trials, n_exp), dtype=dtype)
+
+    task = None
+    thread = None
+    wake_event = None
+
+    if tskmon_client is not None:
+        try:
+            name = getattr(type(model), '__name__', 'unknown model')
+            task = tskmon_client.new_task(
+                description="QInfer Performance Testing",
+                status="Testing {}...".format(name),
+                max_progress=n_trials
+            )
+            wake_event = threading.Event()
+            thread = WebProgressThread(task, wake_event)
+            # We shouldn't need this, as it's a bug if it doesn't join, but
+            # we do it to mitigate worst cases.
+            thread.daemon = True
+            thread.start()
+
+        except Exception as ex:
+            print "Failed to start tskmon task: ", ex
+
+    try:
+        # Loop through once to dispatch tasks.
+        # We'll loop through again to collect results.
+        results = [apply(trial_fn) for idx in xrange(n_trials)]
+
+        for idx, result in enumerate(results):
+            performance[idx, :] = result.get()
+            if thread is not None:
+                thread.progress = idx + 1
+                thread.dirty = True
+                wake_event.set()
+
+    finally:
+        # Make *sure* we've killed the thread.
+        if task is not None:
+            try:
+                thread.done = True
+                wake_event.set()
+                task.delete()
+                # Try and join for 1s. If nothing happens, we
+                # raise and move on.
+                thread.join(1)
+                if thread.is_alive():
+                    print "Thread didn't die. This is a bug."
+            except Exception as ex:
+                print "Exception cleaning up tskmon task.", ex
 
     return performance
