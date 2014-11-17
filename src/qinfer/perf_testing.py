@@ -30,12 +30,14 @@ from __future__ import division
 ## EXPORTS ###################################################################
 
 __all__ = [
-    'timing', 'perf_test'
+    'timing', 'perf_test', 'perf_test_multiple'
 ]
 
 ## IMPORTS ###################################################################
 
 from contextlib import contextmanager
+from functools import partial
+import threading
 import time
 
 import numpy as np
@@ -65,6 +67,30 @@ class Timer(object):
         Returns the time (in seconds) elapsed during the block that was 
         """
         return (self._toc if self._toc is not None else time.time()) - self._tic
+
+
+class WebProgressThread(threading.Thread):
+    done = False
+    dirty = False
+    progress = 0
+
+    def __init__(self, task, wake_event):
+        super(WebProgressThread, self).__init__()
+        self._task = task
+        self._wake_event = wake_event
+
+    def run(self):
+        while True:
+            if self.done:
+                return
+            if self.dirty:
+                try:
+                    self._task.update(progress=self.progress)
+                    self.dirty = False
+                    self._wake_event.clear()
+                except Exception as ex:
+                    print(ex)
+            self._wake_event.wait()
 
 ## CONTEXT MANAGERS ##########################################################
 
@@ -147,5 +173,81 @@ def perf_test(
         performance[idx_exp]['elapsed_time'] = t.delta_t
         performance[idx_exp]['loss'] = np.dot(delta**2, model.Q)
         performance[idx_exp]['resample_count'] = updater.resample_count
+
+    return performance
+
+class apply_serial(object):
+    """
+    Applies the function ``fn`` in the main thread. Used
+    to emulate the API exposed by parallelization engines.
+    """
+    _value = None
+    _done = False
+
+    def __init__(self, *args, **kwargs):
+        self._fn = fn
+        self._args = args
+        self._kwargs = kwargs
+    
+    def get(self):
+        if not self._done:
+            self._value = self._fn(*self._args, **self._kwargs)
+            self._done = True
+
+        return self._value
+
+def perf_test_multiple(
+        n_trials,
+        model, n_particles, prior,
+        n_exp, heuristic_class,
+        true_model=None, true_prior=None,
+        apply=apply_serial,
+        tskmon_client=None
+    ):
+    # TODO: write full docstring, but this repeats many times.
+
+    trial_fn = partial(perf_test,
+        model, n_particles, prior,
+        n_exp, heuristic_class, true_model, true_prior
+    )
+
+    performance = np.zeros((n_trials, n_exp), dtype=PERFORMANCE_DTYPE)
+
+    if tskmon_client is not None:
+        try:
+            name = getattr(type(model), '__name__', 'unknown model')
+            task = tskmon_client.new_task(
+                description="QInfer Performance Testing",
+                status="Testing {}...".format(name),
+                max_progress=n_trials
+            )
+            wake_event = threading.Event()
+            thread = WebProgressThread(task, wake_event)
+            thread.start()
+
+        except Exception as ex:
+            print "Failed to start tskmon task: ", ex
+            task = None
+            thread = None
+            wake_event = None
+
+    # Loop through once to dispatch tasks.
+    # We'll loop through again to collect results.
+    results = [apply(trial_fn) for idx in xrange(n_trials)]
+
+    for idx, result in enumerate(results):
+        performance[idx, :] = result.get()
+        if thread is not None:
+            thread.progress = idx + 1
+            thread.dirty = True
+            wake_event.set()
+
+    if task is not None:
+        try:
+            thread.done = True
+            wake_event.set()
+            task.delete()
+        except:
+            print "Exception cleaning up tskmon task."
 
     return performance
