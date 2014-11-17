@@ -88,14 +88,14 @@ PERFORMANCE_DTYPE = [
     ('loss', float),
     ('resample_count', int),
     ('elapsed_time', float),
+    ('outcome', int)
 ]
 
 ## FUNCTIONS #################################################################
 
 def perf_test(
-        model, n_particles, prior,
-        n_exp, heuristic_class,
-        true_model=None, true_prior=None
+        model, n_particles, prior, n_exp, heuristic_class,
+        true_model=None, true_prior=None, true_mps = None
     ):
     """
     Runs a trial of using SMC to estimate the parameters of a model, given a
@@ -116,6 +116,10 @@ def perf_test(
     :param qinfer.Distribution true_prior: Prior to be used in
         selecting the true model parameters. If ``None``, assumed to be
         ``prior``.
+    :param np.ndarray true_mps: The true model parameters. If ``None``,
+        it will be sampled from ``true_prior``. Note that the performance
+        record can only handle one outcome and therefore ONLY ONE TRUE MODEL.
+        An error will occur if ``true_mps.shape[0] > 1`` returns ``True``.
     :rtype np.ndarray: See :ref:`perf_testing_struct` for more details on 
         the type returned by this function.
     :return: A record array of performance metrics, indexed by the number
@@ -128,9 +132,10 @@ def perf_test(
     if true_prior is None:
         true_prior = prior
 
-    true_mps = true_prior.sample()
+    if true_mps is None:
+        true_mps = true_prior.sample()
 
-    performance = np.zeros((n_exp,), dtype=PERFORMANCE_DTYPE)
+    performance = np.zeros((n_exp,), dtype = PERFORMANCE_DTYPE + model.expparams_dtype)
 
     updater = SMCUpdater(model, n_particles, prior)
     heuristic = heuristic_class(updater)
@@ -147,5 +152,8 @@ def perf_test(
         performance[idx_exp]['elapsed_time'] = t.delta_t
         performance[idx_exp]['loss'] = np.dot(delta**2, model.Q)
         performance[idx_exp]['resample_count'] = updater.resample_count
+        performance[idx_exp]['outcome'] = datum
+        for param_name in [param[0] for param in model.expparams_dtype]:
+            performance[idx_exp][param_name] = expparams[param_name]
 
     return performance
