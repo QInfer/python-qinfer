@@ -119,6 +119,13 @@ PERFORMANCE_DTYPE = [
 
 ## FUNCTIONS #################################################################
 
+def actual_dtype(model):
+    if isinstance(model.expparams_dtype, str):
+        # They're using simple notation for a single field.
+        return PERFORMANCE_DTYPE + [('experiment', model.expparams_dtype)], True
+    else:
+        return PERFORMANCE_DTYPE + model.expparams_dtype, False
+
 def perf_test(
         model, n_particles, prior, n_exp, heuristic_class,
         true_model=None, true_prior=None, true_mps = None
@@ -161,7 +168,8 @@ def perf_test(
     if true_mps is None:
         true_mps = true_prior.sample()
 
-    performance = np.zeros((n_exp,), dtype = PERFORMANCE_DTYPE + model.expparams_dtype)
+    dtype, is_scalar_exp = actual_dtype(model)
+    performance = np.zeros((n_exp,), dtype=dtype)
 
     updater = SMCUpdater(model, n_particles, prior)
     heuristic = heuristic_class(updater)
@@ -179,8 +187,11 @@ def perf_test(
         performance[idx_exp]['loss'] = np.dot(delta**2, model.Q)
         performance[idx_exp]['resample_count'] = updater.resample_count
         performance[idx_exp]['outcome'] = datum
-        for param_name in [param[0] for param in model.expparams_dtype]:
-            performance[idx_exp][param_name] = expparams[param_name]
+        if is_scalar_exp:
+            performance[idx_exp]['experiment'] = expparams
+        else:
+            for param_name in [param[0] for param in model.expparams_dtype]:
+                performance[idx_exp][param_name] = expparams[param_name]
 
     return performance
 
@@ -192,7 +203,7 @@ class apply_serial(object):
     _value = None
     _done = False
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, fn, *args, **kwargs):
         self._fn = fn
         self._args = args
         self._kwargs = kwargs
@@ -219,7 +230,8 @@ def perf_test_multiple(
         n_exp, heuristic_class, true_model, true_prior
     )
 
-    performance = np.zeros((n_trials, n_exp), dtype=PERFORMANCE_DTYPE)
+    dtype, is_scalar_exp = actual_dtype(model)
+    performance = np.zeros((n_trials, n_exp), dtype=dtype)
 
     if tskmon_client is not None:
         try:
@@ -239,23 +251,26 @@ def perf_test_multiple(
             thread = None
             wake_event = None
 
-    # Loop through once to dispatch tasks.
-    # We'll loop through again to collect results.
-    results = [apply(trial_fn) for idx in xrange(n_trials)]
+    try:
+        # Loop through once to dispatch tasks.
+        # We'll loop through again to collect results.
+        results = [apply(trial_fn) for idx in xrange(n_trials)]
 
-    for idx, result in enumerate(results):
-        performance[idx, :] = result.get()
-        if thread is not None:
-            thread.progress = idx + 1
-            thread.dirty = True
-            wake_event.set()
-
-    if task is not None:
-        try:
-            thread.done = True
-            wake_event.set()
-            task.delete()
-        except:
-            print "Exception cleaning up tskmon task."
+        for idx, result in enumerate(results):
+            performance[idx, :] = result.get()
+            if thread is not None:
+                thread.progress = idx + 1
+                thread.dirty = True
+                wake_event.set()
+                
+    finally:
+        # Make *sure* we've killed the thread.
+        if task is not None:
+            try:
+                thread.done = True
+                wake_event.set()
+                task.delete()
+            except:
+                print "Exception cleaning up tskmon task."
 
     return performance
