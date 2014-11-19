@@ -85,7 +85,7 @@ class AcceleratedPrecessionModel(Model):
     to accelerate computation.
     """
     
-    def __init__(self):
+    def __init__(self, context=None):
         super(AcceleratedPrecessionModel, self).__init__()
 
         if cl is None:
@@ -95,7 +95,7 @@ class AcceleratedPrecessionModel(Model):
                 "use this model."
             )
     
-        self._ctx = cl.create_some_context()
+        self._ctx = cl.create_some_context() if context is None else context
         self._queue = cl.CommandQueue(self._ctx)
 
         
