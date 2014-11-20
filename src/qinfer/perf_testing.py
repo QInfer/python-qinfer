@@ -128,7 +128,8 @@ def actual_dtype(model):
 
 def perf_test(
         model, n_particles, prior, n_exp, heuristic_class,
-        true_model=None, true_prior=None, true_mps = None
+        true_model=None, true_prior=None, true_mps=None,
+        extra_updater_args=None
     ):
     """
     Runs a trial of using SMC to estimate the parameters of a model, given a
@@ -153,6 +154,8 @@ def perf_test(
         it will be sampled from ``true_prior``. Note that the performance
         record can only handle one outcome and therefore ONLY ONE TRUE MODEL.
         An error will occur if ``true_mps.shape[0] > 1`` returns ``True``.
+    :param dict extra_updater_args: Extra keyword arguments for the updater,
+        such as resampling and zero-weight policies.
     :rtype np.ndarray: See :ref:`perf_testing_struct` for more details on 
         the type returned by this function.
     :return: A record array of performance metrics, indexed by the number
@@ -168,10 +171,13 @@ def perf_test(
     if true_mps is None:
         true_mps = true_prior.sample()
 
+    if extra_updater_args is None:
+        extra_updater_args = {}
+
     dtype, is_scalar_exp = actual_dtype(model)
     performance = np.zeros((n_exp,), dtype=dtype)
 
-    updater = SMCUpdater(model, n_particles, prior)
+    updater = SMCUpdater(model, n_particles, prior, **extra_updater_args)
     heuristic = heuristic_class(updater)
 
     for idx_exp in xrange(n_exp):
