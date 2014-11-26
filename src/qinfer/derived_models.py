@@ -81,7 +81,7 @@ class DerivedModel(Model):
 
     @property
     def expparams_dtype(self):
-        return self._model.expparams_dtype
+        return self.underlying_model.expparams_dtype
         
     @property
     def modelparam_names(self):
