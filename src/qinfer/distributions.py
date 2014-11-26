@@ -43,6 +43,8 @@ import warnings
 
 __all__ = [
     'Distribution',
+    'SingleSampleMixin',
+    
     'ProductDistribution',
     'UniformDistribution',
     'ConstantDistribution',
@@ -65,7 +67,7 @@ def scipy_dist(name, *args, **kwargs):
     """
     return getattr(st, name)(*args, **kwargs)
 
-## CLASSES ###################################################################
+## ABSTRACT CLASSES AND MIXINS ###############################################
 
 class Distribution(object):
     """
@@ -94,6 +96,26 @@ class Distribution(object):
             random variables.
         """
         pass
+
+class SingleSampleMixin(object):
+    """
+    Mixin class that extends a class so as to generate multiple samples
+    correctly, given a method ``_sample`` that generates one sample at a time.    
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def _sample(self):
+        pass
+    
+    def sample(self, n=1):
+        samples = np.zeros((n, self.n_rvs))
+        for idx in xrange(n):
+            samples[idx, :] = self._sample()
+        return samples
+
+
+## CLASSES ###################################################################
 
 class ProductDistribution(Distribution):
     r"""
@@ -357,7 +379,7 @@ class DiscreteUniformDistribution(Distribution):
         z = np.random.randint(2**self._num_bits,n)
         return z
     
-class HilbertSchmidtUniform(Distribution):
+class HilbertSchmidtUniform(SingleSampleMixin, Distribution):
     """
     Creates a new Hilber-Schmidt uniform prior on state space of dimension ``dim``.
     See e.g. [Mez06]_ and [Mis12]_.
@@ -407,7 +429,7 @@ class HilbertSchmidtUniform(Distribution):
             return self.make_Paulis(temp,d*2)
             
         
-class HaarUniform(Distribution):
+class HaarUniform(SingleSampleMixin, Distribution):
     """
     Creates a new Haar uniform prior on state space of dimension ``dim``.
 
@@ -440,7 +462,7 @@ class HaarUniform(Distribution):
         
         return np.array([x,y,z])
 
-class GinibreUniform(Distribution):
+class GinibreUniform(SingleSampleMixin, Distribution):
     """
     Creates a prior on state space of dimension dim according to the Ginibre
     ensemble with parameter ``k``.
