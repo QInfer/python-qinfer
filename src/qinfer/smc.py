@@ -900,7 +900,7 @@ class SMCUpdater(Distribution):
 
     def plot_posterior_marginal(self, idx_param=0, res=100, smoothing=0,
             range_min=None, range_max=None, label_xaxis=True,
-            other_plot_args={}
+            other_plot_args={}, true_model=None
         ):
         """
         Plots a marginal of the requested parameter.
@@ -915,6 +915,8 @@ class SMCUpdater(Distribution):
             given by this updater's model.
         :param dict other_plot_args: Keyword arguments to be passed to
             matplotlib's ``plot`` function.
+        :param np.ndarray true_model: Plots a given model parameter vector
+            as the "true" model for comparison.
             
         .. seealso::
         
@@ -926,6 +928,12 @@ class SMCUpdater(Distribution):
         ), **other_plot_args)
         if label_xaxis:
             plt.xlabel('${}$'.format(self.model.modelparam_names[idx_param]))
+        if true_model is not None:
+            true_model = true_model[0, idx_param] if true_model.ndim == 2 else true_model[idx_param]
+            old_ylim = plt.ylim()
+            plt.vlines(true_model, old_ylim[0] - 0.1, old_ylim[1] + 0.1, color='k', linestyles='--')
+            plt.ylim(old_ylim)
+
         return res
 
     def posterior_mesh(self, idx_param1=0, idx_param2=1, res1=100, res2=100, smoothing=0.01):
