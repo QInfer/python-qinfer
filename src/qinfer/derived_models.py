@@ -33,7 +33,9 @@ from __future__ import division # Ensures that a/b is always a float.
 __all__ = [
     'DerivedModel',
     'PoisonedModel',
-    'BinomialModel'
+    'BinomialModel',
+    'MLEModel',
+    'RandomWalkModel'
 ]
 
 ## IMPORTS ####################################################################
@@ -312,7 +314,30 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
             modelparams, expparams
         )
         return two_outcome_fi * expparams['n_meas']
-        
+
+class MLEModel(DerivedModel):
+    r"""
+    Uses the method of [JDD08]_ to approximate the maximum likelihood
+    estimator as the mean of a fictional posterior formed by amplifying the
+    Bayes update by a given power :math:`\gamma`. As :math:`\gamma \to
+    \infty`, this approximation to the MLE improves, but at the cost of
+    numerical stability.
+
+    :param float likelihood_power: Power to which the likelihood calls
+        should be rasied in order to amplify the Bayes update.
+
+    .. [JDD08] Particle methods for maximum likelihood estimation
+        in latent variable models. :doi:`0.1007/s11222-007-9037-8`.
+    """
+
+    def __init__(self, underlying_model, likelihood_power):
+        super(MLEModel, self).__init__(underlying_model)
+        self._pow = likelihood_power
+
+    def likelihood(self, outcomes, modelparams, expparams):
+        L = self.underlying_model.likelihood(outcomes, modelparams, expparams)
+        return L**self._pow
+
 class RandomWalkModel(DerivedModel):
     r"""
     Model such that after each time step, a random perturbation is added to

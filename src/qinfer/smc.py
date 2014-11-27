@@ -68,6 +68,12 @@ except ImportError:
     warnings.warn("Could not import pyplot. Plotting methods will not work.")
     plt = None
 
+try:
+    import mpltools.special as mpls
+except:
+    # Don't even warn in this case.
+    pass
+
 ## LOGGING ####################################################################
 
 import logging
@@ -935,6 +941,40 @@ class SMCUpdater(Distribution):
             plt.ylim(old_ylim)
 
         return res
+
+    def plot_covariance(self, corr=False):
+        """
+        Plots the covariance matrix of the posterior as a Hinton diagram.
+
+        .. note::
+
+            This function requires that mpltools is installed.
+
+        :param bool corr: If `True`, the covariance matrix is first normalized
+            by the outer product of the square root diagonal of the covariance matrix
+            such that the corrleation matrix is plotted instead.
+        """
+        if mpls is None:
+            raise ImportError("Hinton diagrams require mpltools.")
+
+        tick_labels = (
+            range(len(self.model.modelparam_names)),
+            map("${}$".format, self.model.modelparam_names)
+        )
+
+        cov = self.est_covariance_mtx()
+
+        if corr:
+            dstd = np.sqrt(np.diag(cov))
+            cov /= (np.outer(dstd, dstd))
+
+        retval = mpls.hinton(cov)
+        plt.xticks(*tick_labels)
+        plt.yticks(*tick_labels)
+        plt.gca().xaxis.tick_top()
+
+        return retval
+
 
     def posterior_mesh(self, idx_param1=0, idx_param2=1, res1=100, res2=100, smoothing=0.01):
         """
