@@ -777,7 +777,7 @@ class SMCUpdater(Distribution):
 
     ## REGION ESTIMATION METHODS ##############################################
 
-    def est_credible_region(self, level=0.95):
+    def est_credible_region(self, level=0.95, return_outside=False):
         """
         Returns an array containing particles inside a credible region of a
         given level, such that the described region has probability mass
@@ -786,6 +786,11 @@ class SMCUpdater(Distribution):
         Particles in the returned region are selected by including the highest-
         weight particles first until the desired credibility level is reached.
         
+        :param float level: Crediblity level to report.
+        :param bool return_outside: If `True`, the return value is a tuple
+            of the those particles within the credible region, and the rest
+            of the posterior particle cloud.
+
         :rtype: :class:`numpy.ndarray`, shape ``(n_credible, n_modelparams)``,
             where ``n_credible`` is the number of particles in the credible
             region
@@ -811,7 +816,13 @@ class SMCUpdater(Distribution):
         # We now return a slice onto the particle_locations by first permuting
         # the particles according to the sort order, then by selecting the
         # credible particles.
-        return self.particle_locations[id_sort][id_cred]
+        if return_outside:
+            return (
+                self.particle_locations[id_sort][id_cred], 
+                self.particle_locations[id_sort][np.logical_not(id_cred)] 
+            )
+        else:
+            return self.particle_locations[id_sort][id_cred]
     
     def region_est_hull(self, level=0.95):
         """
@@ -942,7 +953,7 @@ class SMCUpdater(Distribution):
 
         return res
 
-    def plot_covariance(self, corr=False):
+    def plot_covariance(self, corr=False, param_slice=None):
         """
         Plots the covariance matrix of the posterior as a Hinton diagram.
 
@@ -953,16 +964,21 @@ class SMCUpdater(Distribution):
         :param bool corr: If `True`, the covariance matrix is first normalized
             by the outer product of the square root diagonal of the covariance matrix
             such that the corrleation matrix is plotted instead.
+        :param slice param_slice: Slice of the modelparameters to
+            be plotted.
         """
         if mpls is None:
             raise ImportError("Hinton diagrams require mpltools.")
 
+        if param_slice is None:
+            param_slice = np.s_[:]
+
         tick_labels = (
-            range(len(self.model.modelparam_names)),
-            map("${}$".format, self.model.modelparam_names)
+            range(len(self.model.modelparam_names[param_slice])),
+            map("${}$".format, self.model.modelparam_names[param_slice])
         )
 
-        cov = self.est_covariance_mtx()
+        cov = self.est_covariance_mtx()[param_slice, param_slice]
 
         if corr:
             dstd = np.sqrt(np.diag(cov))
