@@ -2,6 +2,11 @@
 *~
 *.tmp
 
+## Visual Studio Stuff ##
+# Migration #
+Backup/*
+UpgradeLog.htm
+
 ## IPython Checkpoints ##
 .ipynb_checkpoints
 

@@ -49,12 +49,12 @@ class SimplePrecessionModel(DifferentiableModel):
     r"""
     Describes the free evolution of a single qubit prepared in the
     :math:`\left|+\right\rangle` state under a Hamiltonian :math:`H = \omega \sigma_z / 2`,
-    as explored in [GFWC12]_. (TODO: add other citations.)
+    as explored in [GFWC12]_.
 
     :param float min_freq: Minimum value for :math:`\omega` to accept as valid.
-        This is used for testing techniques that mitigate the effects of degenerate models;
-        there is no "good" reason to ever set this other than zero, other than to
-        test with an explicitly broken model.
+        This is used for testing techniques that mitigate the effects of
+        degenerate models; there is no "good" reason to ever set this other
+        than zero, other than to test with an explicitly broken model.
     """
     
     ## INITIALIZER ##
@@ -107,7 +107,9 @@ class SimplePrecessionModel(DifferentiableModel):
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
-        super(SimplePrecessionModel, self).likelihood(outcomes, modelparams, expparams)
+        super(SimplePrecessionModel, self).likelihood(
+            outcomes, modelparams, expparams
+        )
         
         # Possibly add a second axis to modelparams.
         if len(modelparams.shape) == 1:
