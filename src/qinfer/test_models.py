@@ -30,6 +30,7 @@ from __future__ import division # Ensures that a/b is always a float.
 ## EXPORTS ###################################################################
 
 __all__ = [
+    'SimpleInversionModel',
     'SimplePrecessionModel',
     'NoisyCoinModel',
     'NDieModel'
@@ -60,7 +61,7 @@ class SimpleInversionModel(DifferentiableModel):
     ## INITIALIZER ##
 
     def __init__(self, min_freq=0):
-        super(SimplePrecessionModel, self).__init__()
+        super(SimpleInversionModel, self).__init__()
         self._min_freq = min_freq
 
     ## PROPERTIES ##
