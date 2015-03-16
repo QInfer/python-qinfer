@@ -45,11 +45,11 @@ from abstract_model import Model, DifferentiableModel
     
 ## CLASSES ###################################################################
 
-class SimplePrecessionModel(DifferentiableModel):
+class SimpleInversionModel(DifferentiableModel):
     r"""
     Describes the free evolution of a single qubit prepared in the
     :math:`\left|+\right\rangle` state under a Hamiltonian :math:`H = \omega \sigma_z / 2`,
-    as explored in [GFWC12]_.
+    using the interactive QLE model proposed by [WGFC13a]_.
 
     :param float min_freq: Minimum value for :math:`\omega` to accept as valid.
         This is used for testing techniques that mitigate the effects of
@@ -75,7 +75,7 @@ class SimplePrecessionModel(DifferentiableModel):
         
     @property
     def expparams_dtype(self):
-        return 'float'
+        return [('t', 'float'), ('w_', 'float')]
     
     @property
     def is_n_outcomes_constant(self):
@@ -107,36 +107,38 @@ class SimplePrecessionModel(DifferentiableModel):
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
-        super(SimplePrecessionModel, self).likelihood(
+        super(SimpleInversionModel, self).likelihood(
             outcomes, modelparams, expparams
         )
-        
+
         # Possibly add a second axis to modelparams.
         if len(modelparams.shape) == 1:
             modelparams = modelparams[..., np.newaxis]
+            
+        t = expparams['t']
+        dw = modelparams - expparams['w_']
         
         # Allocating first serves to make sure that a shape mismatch later
         # will cause an error.
         pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
-        
-        arg = np.dot(modelparams, expparams[..., np.newaxis].T) / 2        
-        pr0 = np.cos(arg) ** 2
+        pr0[:, :] = np.cos(t * dw / 2) ** 2
         
         # Now we concatenate over outcomes.
         return Model.pr0_to_likelihood_array(outcomes, pr0)
 
     def score(self, outcomes, modelparams, expparams, return_L=False):
-        #TODO: vectorize this
-
         if len(modelparams.shape) == 1:
             modelparams = modelparams[:, np.newaxis]
+            
+        t = expparams['t']
+        dw = modelparams - expparams['w_']
 
         outcomes = outcomes.reshape((outcomes.shape[0], 1, 1))
 
-        arg = modelparams * expparams / 2        
+        arg = dw * t / 2        
         q = (
-            np.power( expparams / np.tan(arg), outcomes) *
-            np.power(-expparams * np.tan(arg), 1 - outcomes)
+            np.power( t / np.tan(arg), outcomes) *
+            np.power(-t * np.tan(arg), 1 - outcomes)
         )[np.newaxis, ...]
 
         assert q.ndim == 4
@@ -146,7 +148,40 @@ class SimplePrecessionModel(DifferentiableModel):
             return q, self.likelihood(outcomes, modelparams, expparams)
         else:
             return q
+
+
+class SimplePrecessionModel(SimpleInversionModel):
+    r"""
+    Describes the free evolution of a single qubit prepared in the
+    :math:`\left|+\right\rangle` state under a Hamiltonian :math:`H = \omega \sigma_z / 2`,
+    as explored in [GFWC12]_.
+
+    :param float min_freq: Minimum value for :math:`\omega` to accept as valid.
+        This is used for testing techniques that mitigate the effects of
+        degenerate models; there is no "good" reason to ever set this other
+        than zero, other than to test with an explicitly broken model.
+    """
         
+    @property
+    def expparams_dtype(self):
+        return 'float'
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        # Pass the expparams to the superclass as a record array.
+        new_eps = np.empty(expparams.shape, dtype=super(SimplePrecessionModel, self).expparams_dtype)
+        new_eps['w_'] = 0
+        new_eps['t'] = expparams
+
+        return super(SimplePrecessionModel, self).likelihood(outcomes, modelparams, new_eps)
+
+    def score(self, outcomes, modelparams, expparams, return_L=False):
+        # Pass the expparams to the superclass as a record array.
+        new_eps = np.empty(expparams.shape, dtype=super(SimplePrecessionModel, self).expparams_dtype)
+        new_eps['w_'] = 0
+        new_eps['t'] = expparams
+
+        return super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L)
+           
 class NoisyCoinModel(Model):
     r"""
     Implements the "noisy coin" model of [FB12]_, where the model parameter
