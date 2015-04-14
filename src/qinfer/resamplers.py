@@ -145,6 +145,8 @@ class LiuWestResampler(object):
     :param float zero_cov_comp: Amount of covariance to be added to every
         parameter during resampling in the case that the estimated covariance
         has zero norm.
+    :param callable kernel: Callable function ``kernel(*shape)`` that returns samples
+        from a resampling distribution with mean 0 and variance 1.
         
     .. warning::
     
@@ -155,7 +157,8 @@ class LiuWestResampler(object):
     """
     def __init__(self,
             a=0.98, h=None, maxiter=1000, debug=False, postselect=True,
-            zero_cov_comp=1e-10
+            zero_cov_comp=1e-10,
+            kernel=np.random.randn
         ):
         self.a = a # Implicitly calls the property setter below to set _h.
         if h is not None:
@@ -165,6 +168,7 @@ class LiuWestResampler(object):
         self._debug = debug
         self._postselect = postselect
         self._zero_cov_comp = zero_cov_comp
+        self._kernel = kernel
 
     _override_h = False
 
@@ -252,7 +256,7 @@ class LiuWestResampler(object):
             mus[...] = a * l[js,:] + (1 - a) * mean
             
             # Draw x_i from N(mu_i, S).
-            new_locs[idxs_to_resample, :] = mus + np.dot(S, np.random.randn(n_mp, mus.shape[0])).T
+            new_locs[idxs_to_resample, :] = mus + np.dot(S, self._kernel(n_mp, mus.shape[0])).T
             
             # Now we remove from the list any valid models.
             # We write it out in a longer form than is strictly necessary so

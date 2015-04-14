@@ -51,6 +51,10 @@ import warnings
 
 from qinfer.finite_difference import *
 
+## FUNCTIONS ###################################################################
+
+def identity(arg): return arg
+
 ## CLASSES #####################################################################
 
 OptimizationAlgorithms = enum.enum("NULL", "CG", "NCG", "NELDER_MEAD")
@@ -135,6 +139,8 @@ class PGH(Heuristic):
         evolution time.
     :param callable inv_func: Function to be applied to modelparameter vectors
         to produce an inversion field ``x_``.
+    :param callable t_func: Function to be applied to the evolution time to produce a
+         time field ``t``.
     :param int maxiters: Number of times to try and choose distinct particles
         before giving up.
     :param dict other_fields: Values to set for fields not given by the PGH.
@@ -154,11 +160,17 @@ class PGH(Heuristic):
     attempts. If that limit is reached, a `RuntimeError` will be raised.
     """
     
-    def __init__(self, updater, inv_field='x_', t_field='t', inv_func=lambda x: x, maxiters=10, other_fields=None):
+    def __init__(self, updater, inv_field='x_', t_field='t',
+                 inv_func=identity,
+                 t_func=identity,
+                 maxiters=10,
+                 other_fields=None
+                 ):
         super(PGH, self).__init__(updater)
         self._x_ = inv_field
         self._t = t_field
         self._inv_func = inv_func
+        self._t_func = t_func
         self._maxiters = maxiters
         self._other_fields = other_fields if other_fields is not None else {}
         
@@ -177,7 +189,7 @@ class PGH(Heuristic):
             
         eps = np.empty((1,), dtype=self._updater.model.expparams_dtype)
         eps[self._x_] = self._inv_func(x)
-        eps[self._t]  = 1 / self._updater.model.distance(x, xp)
+        eps[self._t]  = self._t_func(1 / self._updater.model.distance(x, xp))
         
         for field, value in self._other_fields.iteritems():
             eps[field] = value

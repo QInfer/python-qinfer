@@ -41,6 +41,7 @@ import threading
 import time
 
 import numpy as np
+import numpy.ma as ma
 
 from qinfer.smc import SMCUpdater
 
@@ -227,17 +228,20 @@ def perf_test_multiple(
         n_exp, heuristic_class,
         true_model=None, true_prior=None,
         apply=apply_serial,
-        tskmon_client=None
+        tskmon_client=None,
+        allow_failures=False,
+        extra_updater_args=None
     ):
     # TODO: write full docstring, but this repeats many times.
 
     trial_fn = partial(perf_test,
         model, n_particles, prior,
-        n_exp, heuristic_class, true_model, true_prior
+        n_exp, heuristic_class, true_model, true_prior,
+        extra_updater_args=extra_updater_args
     )
 
     dtype, is_scalar_exp = actual_dtype(model)
-    performance = np.zeros((n_trials, n_exp), dtype=dtype)
+    performance = (np.zeros if not allow_failures else ma.zeros)((n_trials, n_exp), dtype=dtype)
 
     task = None
     thread = None
@@ -267,7 +271,16 @@ def perf_test_multiple(
         results = [apply(trial_fn) for idx in xrange(n_trials)]
 
         for idx, result in enumerate(results):
-            performance[idx, :] = result.get()
+            # FIXME: This is bad practice, but I don't feel like rewriting to
+            #        avoid right now.
+            try:
+                performance[idx, :] = result.get()
+            except:
+                if allow_failures:
+                    performance.mask[idx, :] = True
+                else:
+                    raise
+
             if thread is not None:
                 thread.progress = idx + 1
                 thread.dirty = True
