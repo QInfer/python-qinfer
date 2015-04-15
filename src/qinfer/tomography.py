@@ -23,6 +23,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+## TODO #######################################################################
+# - Refactor modelparams <-> Qobj into common functions that memoize over
+#   bases for each nq.
+# - Write QST, QPT models using new distributions.
+# - Deprecate old functionality.
+# - Write unit tests for new mps <-> Qobj conversions.
+
 ## FEATURES ###################################################################
 
 from __future__ import division
@@ -33,8 +40,129 @@ import numpy as np
 import scipy.linalg as la
 
 from qinfer.abstract_model import Model
+from qinfer.distributions import Distribution, SingleSampleMixin
+
+try:
+    import qutip as qt
+    from distutils.version import LooseVersion
+    _qt_version = LooseVersion(qt.version.version)
+    if _qt_version < LooseVersion('3.1'):
+        qt = None
+except ImportError:
+    qt = None
+
+## FUNCTIONS #################################################################
+
+def require_qutip():
+    if qt is None:
+        raise ImportError("QuTiP version 3.1.0 or later required.")
+
+def conjugate(B, X):
+    return np.dot(B, np.dot(X, B.conj().transpose()))
+
+def _qubit_superdims(nq):
+    ds = [2] * nq
+    return [[ds, ds]] * 2
 
 ## CLASSES ####################################################################
+
+class GinibreQubitDistribution(SingleSampleMixin, Distribution):
+    """
+    Creates a new uniform prior over density operators on :math:`n` qubits,
+    using the rank-:math:`k` Ginibre distribution. Sampled density operators
+    are represented by vectors in the Pauli basis excluding the traceful
+    element.
+    
+    This class is implemented using QuTiP (v3.1.0 or later), and thus will not
+    work unless QuTiP is installed.
+
+
+    :param int nq: Number of qubits.
+    :param int rank: Rank of density operators to be sampled. If ``None``,
+        full-rank density operators are sampled.
+    """
+    
+    def __init__(self, nq=1, rank=None):
+        require_qutip()
+        self._nq = nq
+        self._rank = rank
+        self._dim = 2**nq
+
+        # This arcane line takes the vectorized Pauli basis transformation
+        # used by QuTiP and converts into a form that's useful for us.
+        # Notably an array (not a matrix!) that excludes the traceful parts.
+        self._paulis = qt.visualization._pauli_basis(nq).data.todense().H[1:, :].view(np.ndarray)
+
+    @property
+    def n_rvs(self):
+        return self._dim ** 2 - 1
+        
+    def _sample(self):
+        # Generate and flatten a density operator, so that we can multiply it
+        # by the transformation defined above.
+        rho = qt.rand_dm_ginibre(self._dim, self._rank).data.todense().view(np.ndarray).flatten(order='C')
+        return np.real(np.dot(self._paulis, rho))
+
+class BCSZQubitDistribution(SingleSampleMixin, Distribution):
+    """
+    Represents the BCSZ prior over CPTP maps of a given Choi (Kraus) rank.
+    The returned model parameters are a vectorization of a supermatrix
+    in the Pauli basis, with the first row omitted.
+
+    :param int nq: Number of qubits on which random variate CPTP maps act.
+    :param int rank: Choi/Kraus rank of the random variate maps. For
+        ``rank = None``, full-rank will be assumed, such that the BCSZ
+        prior is the projection of the Hilbert-Schmidt prior onto the
+        CPTP constraint.
+    :param bool enforce_tp: If ``False``, relaxes the constraint that
+        sampled channels are trace-preserving.
+    """
+    def __init__(self, nq=1, rank=None, enforce_tp=True):
+        require_qutip()
+        self._nq = nq
+        self._basis = (
+            qt.visualization._pauli_basis(nq) / np.sqrt(2**nq)
+        ).data.todense().H.view(np.ndarray)
+        self._dims = 2**nq
+        self._superdims = 4**nq
+        self._rank = rank
+        self._enforce_tp = enforce_tp
+
+    @property
+    def n_rvs(self):
+        # The top "row" of the superoperator in the Pauli basis is completely
+        # determined by the assumption of a CPTP map (S_{0i} = delta_{0i}),
+        # and so we strip it off, removing d² params.
+        return self._superdims ** 2 - self._superdims
+
+    def _sample(self):
+        # Since the dense representation of S is a matrix and not an array,
+        # flattening in FORTRAN order gives MATLAB-like behavior (implicitly
+        # two-index). Thus, we need to index away the first axis.
+        return np.real(
+            conjugate(self._basis,
+                qt.rand_super_bcsz(
+                    self._dims, enforce_tp=self._enforce_tp, rank=self._rank
+                ).data.todense().view(np.ndarray)
+            )
+        )[1:, :].flatten(order='F')
+
+    def to_qobj(self, modelparams):
+        return [
+            qt.Qobj(
+                conjugate(
+                    self._basis.conj().transpose(),
+                     np.vstack((
+                         np.hstack((
+                             [1], np.zeros((self._superdims - 1, ))
+                         )),
+                        modelparams.reshape((self._superdims - 1, self._superdims), order='F')
+                    ))
+                ),
+                dims=_qubit_superdims(self._nq)
+            )
+            for x in modelparams
+        ]
 
 class QubitStatePauliModel(Model):
     """
