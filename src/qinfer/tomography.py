@@ -51,6 +51,12 @@ try:
 except ImportError:
     qt = None
 
+## EXPORTS ###################################################################
+
+__all__ = [
+    'BCSZQubitDistribution', 'GinibreQubitDistribution'
+] if qt is not None else []
+
 ## FUNCTIONS #################################################################
 
 def require_qutip():

@@ -42,6 +42,7 @@ from qinfer.distributions import *
 from qinfer.abstract_model import *
 from qinfer.parallel import *
 from qinfer.score import *
+from qinfer.tomography import *
 from qinfer.rb import *
 from qinfer.unstructured_models import *
 from qinfer.derived_models import *
