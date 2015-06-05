@@ -350,7 +350,7 @@ class LogNormalDistribution(Distribution):
         self.mu = mu # lognormal location parameter
         self.sigma = sigma # lognormal scale parameter
         
-        self.dist = partial(scipy_dist, 'lognorm', sigma, 0, mu) # scipy distribution location = 0
+        self.dist = partial(scipy_dist, 'lognorm', 1, mu, sigma) # scipy distribution location = 0
 
     @property
     def n_rvs(self):
