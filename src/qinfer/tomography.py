@@ -40,7 +40,6 @@ import numpy as np
 import scipy.linalg as la
 
 from collections import defaultdict
-from functools import partial
 
 from qinfer.abstract_model import Model
 from qinfer.distributions import Distribution, SingleSampleMixin
@@ -57,8 +56,7 @@ except ImportError:
 ## EXPORTS ###################################################################
 
 __all__ = [
-    'BCSZQubitDistribution', 'GinibreQubitDistribution',
-    'QubitStateTomographyModel'
+    'BCSZQubitDistribution', 'GinibreQubitDistribution'
 ] if qt is not None else []
 
 ## GLOBALS (ew) ##############################################################
@@ -147,68 +145,6 @@ class GinibreQubitDistribution(SingleSampleMixin, Distribution):
         # by the transformation defined above.
         return np.real(dm_to_mps(qt.rand_dm_ginibre(self._dim), nq=self._nq))
 
-class QubitStateTomographyModel(Model):
-    """
-    Represents an experimental system with unknown quantum state,
-    and a limited visibility projective measurement.
-    
-    States are represented in the Pauli representation.
-    """
-
-    ## INITIALIZER ##
-
-    def __init__(self, nq=1):
-        self._nq  = nq
-        self._dim = 2 ** nq
-        super(QubitStateTomographyModel, self).__init__()
-    
-    ## QINFER MODEL CONTRACT ##
-    
-    @property
-    def n_modelparams(self):
-        return self._dim ** 2 - 1
-        
-    @property
-    def expparams_dtype(self):
-        return [('meas', float, self.n_modelparams)]
-
-    def are_models_valid(self, modelparams):
-        return np.apply_along_axis(
-            partial(np.linalg.norm, ord=2),
-            1,
-            modelparams
-        ) <= np.sqrt(self._dim)
-    
-    def n_outcomes(self, expparams):
-        return 2
-        
-    def likelihood(self, outcomes, modelparams, expparams):
-        """
-        Calculates the likelihood function at the states specified 
-        by modelparams and measurement specified by expparams.
-        This is given by the Born rule and is the probability of
-        outcomes given the state and measurement operator.
-        
-        Parameters
-        ----------
-        outcomes = 
-            measurement outcome
-        expparams = 
-            Bloch vector of measurement axis and visibility
-        modelparams = 
-            quantum state Bloch vector
-        """
-        
-        # By calling the superclass implementation, we can consolidate
-        # call counting there.
-        super(QubitStateTomographyModel, self).likelihood(outcomes, modelparams, expparams)
-        
-        pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
-        pr0[:, :] = 0.5*(1 + np.sum(modelparams[:, np.newaxis, :] * expparams['meas'], axis=2))
-        
-        # Now we concatenate over outcomes.
-        return Model.pr0_to_likelihood_array(outcomes, pr0)   
-
 class BCSZQubitDistribution(SingleSampleMixin, Distribution):
     """
     Represents the BCSZ prior over CPTP maps of a given Choi (Kraus) rank.
@@ -266,7 +202,67 @@ class BCSZQubitDistribution(SingleSampleMixin, Distribution):
                 dims=_qubit_superdims(self._nq)
             )
             for x in modelparams
-        ]     
+        ]
+
+class QubitStatePauliModel(Model):
+    """
+    Represents an experimental system with unknown quantum state,
+    and a limited visibility projective measurement.
+    
+    States are represented in the Pauli representation.
+    """    
+    
+    @property
+    def n_modelparams(self):
+        return 3
+        
+    @property
+    def expparams_dtype(self):
+        # return 'float' <---- This implies a two-index array of scalars,
+        #                      but we need a one-index array of records.
+        return [('axis', '3f4'), ('vis', 'float')]
+        #                 ^
+        #                 |
+        #                 3 floats, each four bytes wide
+
+    @staticmethod
+    def are_models_valid(modelparams):
+        return modelparams[:, 0]**2 + modelparams[:, 1]**2 + modelparams[:, 2]**2 <= 1
+    
+    def n_outcomes(self, expparams):
+        return 2
+        
+    def likelihood(self, outcomes, modelparams, expparams):
+        """
+        Calculates the likelihood function at the states specified 
+        by modelparams and measurement specified by expparams.
+        This is given by the Born rule and is the probability of
+        outcomes given the state and measurement operator.
+        
+        Parameters
+        ----------
+        outcomes = 
+            measurement outcome
+        expparams = 
+            Bloch vector of measurement axis and visibility
+        modelparams = 
+            quantum state Bloch vector
+        """
+        
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(QubitStatePauliModel, self).likelihood(outcomes, modelparams, expparams)
+        
+        # Note that expparams['axis'] has shape (n_exp, 3).
+        pr0 = 0.5*(1 + np.sum(modelparams*expparams['axis'],1))
+        
+        # Note that expparams['vis'] has shape (n_exp, ).
+        pr0 = expparams['vis'] * pr0 + (1 - expparams['vis']) * 0.5
+
+        pr0 = pr0[:,np.newaxis]
+
+        # Now we concatenate over outcomes.
+        return Model.pr0_to_likelihood_array(outcomes, pr0)        
 
 class RebitStatePauliModel(Model):
     """
