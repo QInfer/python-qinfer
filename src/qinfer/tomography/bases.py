@@ -1,0 +1,246 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+##
+# bases.py: Representations of Hermitian bases for tomography.
+##
+# © 2015 Chris Ferrie (csferrie@gmail.com) and
+#        Christopher E. Granade (cgranade@cgranade.com).
+# Based on work with Joshua Combes (joshua.combes@gmail.com).
+#     
+# This file is a part of the Qinfer project.
+# Licensed under the AGPL version 3.
+##
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+##
+
+# TODO: docstrings!
+# TODO: unit tests!
+
+## FEATURES ##################################################################
+
+from __future__ import division
+
+## IMPORTS ###################################################################
+
+import itertools as it
+
+import numpy as np
+
+# Since the rest of QInfer does not require QuTiP,
+# we need to import it in a way that we don't propagate exceptions if QuTiP
+# is missing or is too early a version.
+try:
+    import qutip as qt
+    from distutils.version import LooseVersion
+    _qt_version = LooseVersion(qt.version.version)
+    if _qt_version < LooseVersion('3.1'):
+        qt = None
+except ImportError:
+    qt = None
+
+## EXPORTS ###################################################################
+
+__all__ = [
+    'gell_mann_basis',
+    'pauli_basis',
+    'tensor_product_basis',
+    'TomographyBasis'
+]
+
+## FUNCTIONS #################################################################
+
+def gell_mann_basis(dim):
+    """    
+    Returns a :ref:`~qinfer.tomography.TomographyBasis` on dim dimensions
+    using the generalized Gell-Mann matrices.
+
+    This implementation is based on a MATLAB-language implementation
+    provided by Carlos Riofrío, Seth Merkel and Andrew Silberfarb.
+    Used with permission.
+
+    :param int dim: Dimension of the individual matrices making up
+        the returned basis.
+    :return qinfer.tomography.TomographyBasis basis: A basis
+        of ``dim * dim`` Gell-Mann matrices.
+    """
+    # Start by making an empty array of the right shape to
+    # hold the matrices that we construct.
+    basis = np.zeros((dim**2, dim, dim), dtype=complex)
+
+    # The first matrix should be the identity.
+    basis[0, :, :] = np.eye(dim) / np.sqrt(dim)
+
+    # The next dim basis elements should be diagonal,
+    # with all by one element nonnegative.
+    for idx_basis in xrange(1, dim):
+        basis[idx_basis, :, :] = np.diag(np.concatenate([
+            np.ones((idx_basis, )),
+            [-idx_basis],
+            np.zeros((dim - idx_basis - 1, ))
+        ])) / np.sqrt(idx_basis + idx_basis**2)
+
+    # Finally, we get the off-diagonal matrices.
+    # These rely on some index gymnastics I don't yet fully
+    # understand.
+    y_offset = dim * (dim - 1) // 2
+    for idx_i in xrange(1, dim):
+        for idx_j in xrange(idx_i):
+            idx_basis = (idx_i - 1) * (idx_i) // 2 + idx_j + dim
+            basis[idx_basis, [idx_i, idx_j], [idx_j, idx_i]] = 1 / np.sqrt(2)
+            basis[idx_basis + y_offset, [idx_i, idx_j], [idx_j, idx_i]] = [1j / np.sqrt(2), -1j / np.sqrt(2)]
+
+    return TomographyBasis(basis, [dim], r'\gamma')
+
+def tensor_product_basis(*bases):
+    """
+    Returns a TomographyBasis formed by the tensor
+    product of two or more factor bases. Each basis element
+    is the tensor product of basis elements from the underlying
+    factors.
+    """
+    dim = np.prod([basis.data.shape[1] for basis in bases])
+    tp_basis = np.zeros((dim**2, dim, dim), dtype=complex)
+
+    for idx_factors, factors in enumerate(it.product(*[basis.data for basis in bases])):
+        tp_basis[idx_factors, :, :] = reduce(np.kron, factors)
+
+    return TomographyBasis(tp_basis,
+        sum((
+            factor.dims for factor in bases
+        ), []),
+        map(
+        r"\otimes".join,
+        it.product(*[
+            basis.labels for basis in bases
+        ])
+    ))
+
+def pauli_basis(nq=1):
+    """
+    Returns a TomographyBasis for the Pauli basis on ``nq``
+    qubits.
+
+    :param int nq: Number of qubits on which the returned
+        basis is defined.
+    """
+    return tensor_product_basis(*[
+        TomographyBasis(
+            gell_mann_basis(2).data[[0, 2, 3, 1]],
+            [2],
+            [r'\id', r'\sigma_x', r'\sigma_y', r'\sigma_z']
+        )
+    ] * nq)
+
+## CLASSES ###################################################################
+
+class TomographyBasis(object):
+    """
+    A basis of Hermitian operators used for representing tomographic
+    objects (states and channels) as vectors of real elements. By assumption,
+    a tomographic basis is taken to have an initial (0th) element proportional
+    to the identity, and all other elements are taken to be traceless. For
+    example, the Pauli matrices form a tomographic basis for qubits.
+
+    Instances of TomographyBasis convert between representations of
+    tomographic objects as real vectors of model parameters and QuTiP ``Qobj``
+    instances. The latter is convienent for working with other libraries, and
+    for reasoning about fidelities and other metrics, while model parameter
+    representations are useful for defining prior distributions and
+    tomographic models.
+
+    :param np.ndarray data: Dense array of shape ``(dim ** 2, dim, dim)``
+        containing all elements of the new tomographic basis. ``data[alpha, i, j]``
+        is the ``(i, j)``th element of the ``alpha``th matrix of the new basis.
+    :param list dims: Dimensions specification used in converting to QuTiP
+        representations. The product of all elements of ``dims`` must equal
+        the dimension of axes 1 and 2 of ``data``. For instance, ``[2, 3]``
+        specifies that the basis is over the tensor product of a qubit
+        and a qutrit space.
+    :param labels: LaTeX-formatted labels for each basis element. If a single
+        `str`, a subscript is added to each basis element's label.
+    :type labels: :obj:`str` or :obj:`list` of :obj:`str`
+    """
+    
+    #: Dense matrix... TODO: document indices!
+    data = None
+    #: Dimensions of each index, used when converting to QuTiP Qobjs.
+    dims = None
+    #: Labels for each basis element.
+    labels = None
+
+    def __init__(self, data, dims, labels=None):
+        self.data = data
+        self.dims = dims
+
+        dim = self.dim
+
+        if isinstance(labels, str):
+            self.labels = map("{}_{{}}".format(labels).format, xrange(dim**2))
+        else:
+            self.labels = map(r'B_{}'.format, xrange(dim**2)) if labels is None else labels
+
+        self._flat = self.data.reshape((self.data.shape[0], -1))
+
+    def __repr__(self):
+        return "<TomographyBasis dims={} at {}>".format(self.dims, id(self))
+
+    def __getitem__(self, idx):
+        if isinstance(idx, int):
+            return qt.Qobj(self.data[idx], [self.dims, self.dims])
+        elif isinstance(idx, list):
+            return [self[inner_idx] for inner_idx in idx]
+        else:
+            raise TypeError("Expected int or list index, not {}.".format(type(idx)))
+
+    @property
+    def dim(self):
+        # TODO
+        return np.prod(self.dims)
+
+    def flat(self):
+        """
+        Returns a NumPy array that represents this operator basis
+        in a flattened manner, such that ``basis.flat()[i, j]`` is
+        the ``j``th element of the flattened ``i``th basis operator.
+        """
+        return self._flat
+    
+
+    def state_to_modelparams(self, state):
+        basis = self.flat()
+        data = state.data.todense().view(np.ndarray).flatten()
+
+        # NB: assumes Hermitian state and basis!
+        return np.real(np.dot(basis, data))
+
+    def modelparams_to_state(self, modelparams):
+        if modelparams.ndim == 1:
+            return qt.Qobj(
+                np.tensordot(modelparams, self.data.conj(), 1),
+                dims=[self.dims, self.dims]
+            )
+        else:
+            return map(self.modelparams, modelparams)
+
+    def covariance_mtx_to_superop(self, mtx):
+        """
+        Converts a covariance matrix to the corresponding
+        superoperator, represented as a QuTiP Qobj
+        with ``type="super"``.
+        """
+        M = self.flat()
+        return qt.Qobj(
+            np.dot(np.dot(M.conj().T, mtx), M),
+            dims=[[self.dims] * 2] * 2
+        )

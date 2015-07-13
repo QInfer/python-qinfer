@@ -24,6 +24,7 @@ setup(
         'qinfer._lib',
         'qinfer.examples',
         'qinfer.ui',
-        'qinfer.experimental'
+        'qinfer.experimental',
+        'qinfer.tomography'
     ]
 )

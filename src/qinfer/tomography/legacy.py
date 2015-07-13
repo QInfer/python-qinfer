@@ -4,7 +4,7 @@
 # SMC.py: Tomgraphic models module
 ##
 # © 2012 Chris Ferrie (csferrie@gmail.com) and
-#        Christopher E. Granade (cgranade@gmail.com)
+#        Christopher E. Granade (cgranade@gmail.com).
 #     
 # This file is a part of the Qinfer project.
 # Licensed under the AGPL version 3.
