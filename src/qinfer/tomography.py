@@ -39,8 +39,6 @@ from __future__ import division
 import numpy as np
 import scipy.linalg as la
 
-from collections import defaultdict
-
 from qinfer.abstract_model import Model
 from qinfer.distributions import Distribution, SingleSampleMixin
 
@@ -59,22 +57,7 @@ __all__ = [
     'BCSZQubitDistribution', 'GinibreQubitDistribution'
 ] if qt is not None else []
 
-## GLOBALS (ew) ##############################################################
-
-_PAULI_BASES = {}
-
 ## FUNCTIONS #################################################################
-
-def pauli_basis(nq):
-    if nq in _PAULI_BASES:
-        return _PAULI_BASES[nq]
-    else:
-        B = (
-            qt.visualization._pauli_basis(nq).data.todense().H.view(np.ndarray) /
-            np.sqrt(2**nq)
-        )
-        _PAULI_BASES[nq] = B
-        return B
 
 def require_qutip():
     if qt is None:
@@ -86,31 +69,6 @@ def conjugate(B, X):
 def _qubit_superdims(nq):
     ds = [2] * nq
     return [[ds, ds]] * 2
-
-def dm_to_mps(dm, nq=None):
-    """
-    Converts a density operator to a vector of model paramters by
-    representing the operator as a Pauli vector and removing the traceful
-    element. For a single qubit, this produces the Bloch vector.
-    """
-    if nq is None:
-        # FIXME: currently, this assumes that all subsystems are qubits!
-        nq = len(dm.dims[0])
-    B = pauli_basis(nq)[1:, :]
-    x = dm.data.todense().view(np.ndarray).flatten(order='C')
-    return np.dot(B, x)
-
-def mps_to_dm(mps, nq=None):
-    # TODO: document!
-    if nq is None:
-        nq = int(np.log2(mps.shape[-1] + 1) / 2)
-    B = pauli_basis(nq)
-    xs = np.dot(B.conj().T,
-        np.concatenate((
-            np.ones((mps.shape[0], 1)) / np.sqrt(2**nq), mps
-        ), axis=-1).T
-    ).T
-    return [qt.vector_to_operator(qt.Qobj(x, dims=[[[2] * nq] * 2, [1]])) for x in xs]
 
 ## CLASSES ####################################################################
 
@@ -136,6 +94,11 @@ class GinibreQubitDistribution(SingleSampleMixin, Distribution):
         self._rank = rank
         self._dim = 2**nq
 
+        # This arcane line takes the vectorized Pauli basis transformation
+        # used by QuTiP and converts into a form that's useful for us.
+        # Notably an array (not a matrix!) that excludes the traceful parts.
+        self._paulis = qt.visualization._pauli_basis(nq).data.todense().H[1:, :].view(np.ndarray)
+
     @property
     def n_rvs(self):
         return self._dim ** 2 - 1
@@ -143,7 +106,8 @@ class GinibreQubitDistribution(SingleSampleMixin, Distribution):
     def _sample(self):
         # Generate and flatten a density operator, so that we can multiply it
         # by the transformation defined above.
-        return np.real(dm_to_mps(qt.rand_dm_ginibre(self._dim), nq=self._nq))
+        rho = qt.rand_dm_ginibre(self._dim, self._rank).data.todense().view(np.ndarray).flatten(order='C')
+        return np.real(np.dot(self._paulis, rho))
 
 class BCSZQubitDistribution(SingleSampleMixin, Distribution):
     """
@@ -162,7 +126,9 @@ class BCSZQubitDistribution(SingleSampleMixin, Distribution):
     def __init__(self, nq=1, rank=None, enforce_tp=True):
         require_qutip()
         self._nq = nq
-        self._basis = _PAULI_BASES[nq]
+        self._basis = (
+            qt.visualization._pauli_basis(nq) / np.sqrt(2**nq)
+        ).data.todense().H.view(np.ndarray)
         self._dims = 2**nq
         self._superdims = 4**nq
         self._rank = rank
