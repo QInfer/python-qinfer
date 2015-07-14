@@ -122,18 +122,22 @@ class TomographyModel(Model):
 
     def trunc_neg_eigs(self, particle):
         arr = np.tensordot(particle, self._basis.data.conj(), 1)
-        v, w = np.linalg.eig(arr)
-        if np.all(v >= 0):
+        w, v = np.linalg.eig(arr)
+        if np.all(w >= 0):
             return particle
         else:
-            v[v <= 0] = 0
-            return np.real(np.dot(self._basis.flat(), np.dot(w, np.diag(v)).flatten()))
+            w[w < 0] = 0
+            new_arr = np.dot(v * w, v.conj().T)
+            new_particle = np.real(np.dot(self._basis.flat(), new_arr.flatten()))
+            assert new_particle[0] > 0
+            return new_particle
 
     def renormalize(self, modelparams):
         # The 0th basis element (identity) should have
         # a value 1 / sqrt{dim}, since the trace of that basis
         # element is fixed to be sqrt{dim} by convention.
         norm = modelparams[:, 0] * np.sqrt(self._dim)
+        assert not np.sum(norm == 0)
         return modelparams / norm[:, None]
 
     def likelihood(self, outcomes, modelparams, expparams):
