@@ -108,10 +108,11 @@ class DensityOperatorDistribution(SingleSampleMixin, Distribution):
     @property
     def basis(self):
         return self._basis
-    
 
     def _sample(self):
-        return self.basis.state_to_modelparams(self._sample_dm())
+        sample_dm = self._sample_dm()
+        sample_dm /= sample_dm.tr()
+        return self.basis.state_to_modelparams(sample_dm)
 
 class TensorProductDistribution(DensityOperatorDistribution):
     # TODO: add basis support!
@@ -158,8 +159,9 @@ class GinibreReditDistribution(DensityOperatorDistribution):
 
 class BCSZChoiDistribution(DensityOperatorDistribution):
     """
-    Samples Choi matrices for CP or CPTP maps, as generated
-    by the BCSZ prior.
+    Samples Choi states for CP or CPTP maps, as generated
+    by the BCSZ prior. The sampled states are normalized
+    as states (trace 1).
     """
     def __init__(self, basis, rank=None, enforce_tp=True):
         if isinstance(basis, int):
@@ -167,33 +169,49 @@ class BCSZChoiDistribution(DensityOperatorDistribution):
         self._hdim = basis.dim
 
         # TODO: take basis on underlying space, tensor up?
-        super(BCSZChoiDistribution, self).__init__(tensor_product_basis(basis, basis))
+        channel_basis = tensor_product_basis(basis, basis)
+        # FIXME: this is a hack to get another level of nesting.
+        channel_basis.dims = [basis.dims, basis.dims]
+        channel_basis.superrep = 'choi'
+        super(BCSZChoiDistribution, self).__init__(channel_basis)
         self._rank = rank
         self._enforce_tp = enforce_tp
 
     def _sample_dm(self):
         return qt.to_choi(
-            rand_super_bcsz(self._hdim, self._enforce_tp, self._rank)
-        )
+            qt.rand_super_bcsz(self._hdim, self._enforce_tp, self._rank)
+        ).unit()
 
 class GADFLIDistribution(DensityOperatorDistribution):
     def __init__(self, fiducial_distribution, mean):
         super(GADFLIDistribution, self).__init__(fiducial_distribution.basis)
         self._fid = fiducial_distribution
+        mean = (
+            qt.to_choi(mean).unit()
+            if mean.type == 'super' and not mean.superrep == 'choi' else
+            mean
+        )
         self._mean = mean
 
         alpha = 1
         lambda_min = min(mean.eigenenergies())
+        if lambda_min < 0:
+            raise ValueError("Negative eigenvalue {} in informative mean.".format(lambda_min))
         d = self.dim
         beta = (
             1 / (d * lambda_min - 1) - 1
         ) if lambda_min > 0.5 else (
             (d * lambda_min) / (1 - d * lambda_min)
         )
+        if beta < 0:
+            raise ValueError("Beta < 0 for informative mean.")
         self._alpha = alpha
         self._beta = beta
+
+        eye = qt.qeye(self._dim).unit()
+        eye.dims = mean.dims
         self._rho_star = (alpha + beta) / alpha * (
-            mean - (beta) / (alpha + beta) * qt.qeye(self._dim).unit()
+            mean - (beta) / (alpha + beta) * eye.unit()
         )
 
     def _sample_dm(self):
