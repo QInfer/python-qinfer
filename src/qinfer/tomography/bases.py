@@ -170,6 +170,8 @@ class TomographyBasis(object):
     :param labels: LaTeX-formatted labels for each basis element. If a single
         `str`, a subscript is added to each basis element's label.
     :type labels: :obj:`str` or :obj:`list` of :obj:`str`
+    :param str superrep: Superoperator representation to pass to QuTiP
+        when reconstructing states.
     """
     
     #: Dense matrix... TODO: document indices!
@@ -179,9 +181,10 @@ class TomographyBasis(object):
     #: Labels for each basis element.
     labels = None
 
-    def __init__(self, data, dims, labels=None):
+    def __init__(self, data, dims, labels=None, superrep=None):
         self.data = data
         self.dims = dims
+        self.superrep = superrep
 
         dim = self.dim
 
@@ -226,12 +229,15 @@ class TomographyBasis(object):
 
     def modelparams_to_state(self, modelparams):
         if modelparams.ndim == 1:
-            return qt.Qobj(
+            qobj = qt.Qobj(
                 np.tensordot(modelparams, self.data.conj(), 1),
                 dims=[self.dims, self.dims]
             )
+            if self.superrep is not None:
+                qobj.superrep = self.superrep
+            return qobj
         else:
-            return map(self.modelparams, modelparams)
+            return map(self.modelparams_to_state, modelparams)
 
     def covariance_mtx_to_superop(self, mtx):
         """
