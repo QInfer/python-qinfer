@@ -183,7 +183,7 @@ def plot_rebit_prior(prior, rebit_axes=REBIT_AXES, n_samples=2000, true_state=No
     plt.legend(loc='lower left', ncol=3, scatterpoints=1)
 
 
-def plot_rebit_posterior(updater, prior, true_state, n_std=3, rebit_axes=REBIT_AXES):
+def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_axes=REBIT_AXES):
     """
     Plots posterior distributions over rebits, including covariance ellipsoids
 
@@ -236,6 +236,6 @@ def plot_rebit_posterior(updater, prior, true_state, n_std=3, rebit_axes=REBIT_A
         color=pallette[0], fill=False, lw=4,
         label='Posterior Cov Ellipse ($Z = {}$)'.format(n_std)
     )
-    plot_decorate_rebits(prior.basis)
+    plot_decorate_rebits(updater.model.base_model._basis)
     plt.legend(loc='lower left', ncol=4, scatterpoints=1)
 
