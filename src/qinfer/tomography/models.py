@@ -70,6 +70,24 @@ class RandomBasisHeuristic(Heuristic):
         
         return expparams
 
+class WorstBasisHeuristic(Heuristic):
+    # TODO: move this one!
+    def __init__(self, updater, other_fields=None):
+        self._up = updater
+        self._other_fields = {} if other_fields is None else other_fields
+        self._dim = updater.model.base_model.dim
+
+    def __call__(self):
+        cov = np.diag(self._up.est_covariance_mtx())
+        idx_worst = np.argmax(cov)
+        expparams = np.zeros((1,), dtype=self._up.model.expparams_dtype)
+        expparams['meas'][0, [0, idx_worst]] = 1 / np.sqrt(self._dim)
+
+        for field, value in self._other_fields.iteritems():
+                expparams[field] = value
+        
+        return expparams
+
 class TomographyModel(Model):
     def __init__(self, basis, allow_subnormalized=False):
         self._dim = basis.dim
