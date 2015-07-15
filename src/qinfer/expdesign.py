@@ -33,6 +33,7 @@ from __future__ import division
 __all__ = [
     'ExperimentDesigner',
     'Heuristic',
+    'EnsembleHeuristic',
     'ExpSparseHeuristic',
     'PGH',
     'OptimizationAlgorithms'
@@ -79,6 +80,24 @@ class Heuristic(object):
     @abstractmethod
     def __call__(self, *args):
         raise NotImplementedError("Not yet implemented.")
+
+class EnsembleHeuristic(Heuristic):
+    r"""
+    Heuristic that randomly chooses one of several other
+    heuristics.
+
+    :param list ensemble: List of tuples ``(heuristic, pr)``
+        specifying the probability of choosing each member
+        heuristic.
+    """
+
+    def __init__(self, ensemble):
+        self._pr = np.array([pr for heuristic, pr in ensemble])
+        self._heuristics = ([heuristic for heuristic, pr in ensemble])
+
+    def __call__(self, *args):
+        idx_heuristic = np.random.choice(len(self._heuristics), p=self._pr)
+        return self._heuristics[idx_heuristic](*args)
         
 class ExpSparseHeuristic(Heuristic):
     r"""
