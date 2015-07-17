@@ -38,7 +38,7 @@ from __future__ import division
 
 ## IMPORTS ###################################################################
 
-from qinfer import Model, Heuristic
+from qinfer import Model
 
 import numpy as np
 
@@ -52,41 +52,60 @@ Bases are always assumed to have exactly one traceful element— in particular,
 the zeroth basis element.
 """
 
+## FUNCTIONS #################################################################
+
+# TODO: document, contribute to QuTiP?
+def heisenberg_weyl_operators(d=2):
+    w = np.exp(2 * np.pi * 1j / d)
+    X = qt.Qobj([
+        qt.basis(d, (idx + 1) % d).data.todense().view(np.ndarray)[:, 0] for idx in xrange(d)
+    ])
+    Z = qt.Qobj(np.diag(w ** np.arange(d)))
+    
+    return [X**i * Z**j for i in xrange(d) for j in xrange(d)]
+
 ## CLASSES ###################################################################
 
-class RandomBasisHeuristic(Heuristic):
-    # TODO: move this one!
-    def __init__(self, updater, other_fields=None):
-        self._up = updater
-        self._other_fields = {} if other_fields is None else other_fields
-        self._dim = updater.model.base_model.dim
+# TODO: work from qt.ket2dm(np.random.choice(np.random.choice(heisenberg_weyl_operators(3)).eigenstates()[1])).
 
-    def __call__(self):
-        expparams = np.zeros((1,), dtype=self._up.model.expparams_dtype)
-        expparams['meas'][0, [0, 1 + np.random.randint(self._dim ** 2 - 1)]] = 1 / np.sqrt(self._dim)
+# class RandomMeasurementHeuristic(Heuristic):
+#     """
+#     Samples state tomography experiments which measure against a randomly
+#     chosen measurement effect, drawn from a provided list.
+#     """
+#     def __init__(self, updater, measurment_effects, other_fields=None):
+#         self._up = updater
+#         self._effects = measurment_effects
+#         self._other_fields = {} if other_fields is None else other_fields
+#         self._dim = updater.model.base_model.dim
+#         self._basis = self.model.base_model.basis
 
-        for field, value in self._other_fields.iteritems():
-                expparams[field] = value
+#     def __call__(self):
+#         expparams = np.zeros((1,), dtype=self._up.model.expparams_dtype)
+#         expparams['meas'][0, :] = self._basis.state_to_modelparams(
+#             np.random.choice(self._effects)
+#         )
+
+#         for field, value in self._other_fields.iteritems():
+#                 expparams[field] = value
         
-        return expparams
+#         return expparams
 
-class WorstBasisHeuristic(Heuristic):
-    # TODO: move this one!
-    def __init__(self, updater, other_fields=None):
-        self._up = updater
-        self._other_fields = {} if other_fields is None else other_fields
-        self._dim = updater.model.base_model.dim
+# class RandomBasisHeuristic(Heuristic):
+#     # TODO: move this one!
+#     def __init__(self, updater, other_fields=None):
+#         self._up = updater
+#         self._other_fields = {} if other_fields is None else other_fields
+#         self._dim = updater.model.base_model.dim
 
-    def __call__(self):
-        cov = np.diag(self._up.est_covariance_mtx())
-        idx_worst = np.argmax(cov)
-        expparams = np.zeros((1,), dtype=self._up.model.expparams_dtype)
-        expparams['meas'][0, [0, idx_worst]] = 1 / np.sqrt(self._dim)
+#     def __call__(self):
+#         expparams = np.zeros((1,), dtype=self._up.model.expparams_dtype)
+#         expparams['meas'][0, [0, 1 + np.random.randint(self._dim ** 2 - 1)]] = np.sqrt(self._dim)
 
-        for field, value in self._other_fields.iteritems():
-                expparams[field] = value
+#         for field, value in self._other_fields.iteritems():
+#                 expparams[field] = value
         
-        return expparams
+#         return expparams
 
 class TomographyModel(Model):
     def __init__(self, basis, allow_subnormalized=False):
