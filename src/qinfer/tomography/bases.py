@@ -232,7 +232,7 @@ class TomographyBasis(object):
         data = state.data.todense().view(np.ndarray).flatten()
 
         # NB: assumes Hermitian state and basis!
-        return np.real(np.dot(basis, data))
+        return np.real(np.dot(basis.conj(), data))
 
     def modelparams_to_state(self, modelparams):
         if modelparams.ndim == 1:

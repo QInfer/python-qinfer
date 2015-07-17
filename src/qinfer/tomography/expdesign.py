@@ -123,20 +123,19 @@ class RandomStabilizerStateHeuristic(StateTomographyHeuristic):
                 self._hw_group
             ).eigenstates()[1])
         )
-    
+
 
 class RandomPauliHeuristic(StateTomographyHeuristic):
     """
     Randomly chooses a Pauli measurement. Defined for qubits only.
     """
-    
     # This heuristic is likewise a bit silly, as it draws a
     # random Pauli then decomposes it into what is almost
     # certainly a Pauli basis. We do this, however, in the interest
     # of generality. Someone could have used a different basis
     # to define their tomography model, after all.
     def __init__(self, updater, basis=None, other_fields=None):
-        super(RandomStabilizerStateHeuristic, self).__init__(
+        super(RandomPauliHeuristic, self).__init__(
             updater, basis, other_fields
         )
         
@@ -148,7 +147,12 @@ class RandomPauliHeuristic(StateTomographyHeuristic):
         self._pauli_basis = pauli_basis(nq)
         
     def _next_measurement(self):
-        return np.random.choice(self._pauli_basis)
+        # Remember, the basis elements are normalized to 1 / sqrt(d).
+        return (
+            self._pauli_basis[0] +
+            self._pauli_basis[1 + np.random.choice(len(self._pauli_basis) - 1)]
+        ) * np.sqrt(self._dim) / 2
+
 
 class ProcessTomographyHeuristic(Heuristic):
     def __init__(self, updater, basis, other_fields=None):     
