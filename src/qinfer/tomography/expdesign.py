@@ -77,11 +77,13 @@ def heisenberg_weyl_operators(d=2):
 
 class StateTomographyHeuristic(Heuristic):
     # TODO: docstring
-    def __init__(self, updater, other_fields=None):        
+    # for when I write that docstring, basis is provided so that this can
+    # be used to define measurement parts of the process tomography experiments.
+    def __init__(self, updater, basis=None, other_fields=None):     
         self._up = updater
         self._other_fields = {} if other_fields is None else other_fields
         self._dim = updater.model.base_model.dim
-        self._basis = updater.model.base_model.basis
+        self._basis = updater.model.base_model.basis if basis is None else basis
         
     def __call__(self):
         expparams = np.zeros((1,), dtype=self._up.model.expparams_dtype)
@@ -108,12 +110,12 @@ class RandomStabilizerStateHeuristic(StateTomographyHeuristic):
     # gets called far less than the likelihood itself, so that shouldn't
     # dominate.
     
-    def __init__(self, updater, other_fields=None):
+    def __init__(self, updater, basis=None, other_fields=None):
         super(RandomStabilizerStateHeuristic, self).__init__(
-            updater, other_fields
+            updater, basis, other_fields
         )
     
-        self._hw_group = heisenberg_weyl_operators(self._dim)
+        self._hw_group = heisenberg_weyl_operators(self._basis.dim)
     
     def _next_measurement(self):
         return qt.ket2dm(
@@ -133,9 +135,9 @@ class RandomPauliHeuristic(StateTomographyHeuristic):
     # certainly a Pauli basis. We do this, however, in the interest
     # of generality. Someone could have used a different basis
     # to define their tomography model, after all.
-    def __init__(self, updater, other_fields=None):
+    def __init__(self, updater, basis=None, other_fields=None):
         super(RandomStabilizerStateHeuristic, self).__init__(
-            updater, other_fields
+            updater, basis, other_fields
         )
         
         nq = int(np.log2(self._dim))
@@ -148,6 +150,58 @@ class RandomPauliHeuristic(StateTomographyHeuristic):
     def _next_measurement(self):
         return np.random.choice(self._pauli_basis)
 
+class ProcessTomographyHeuristic(Heuristic):
+    def __init__(self, updater, basis, other_fields=None):     
+        self._up = updater
+        self._other_fields = {} if other_fields is None else other_fields
+        self._dim = updater.model.base_model.dim
+        self._basis = basis
+        self._channel_basis = updater.model.base_model.basis
+        
+    def __call__(self):
+        expparams = np.zeros((1,), dtype=self._up.model.expparams_dtype)
+        expparams['meas'][0, :] = self._channel_basis.state_to_modelparams(
+            # By PBT (Apx A), we need to multiply the state by a factor of
+            # D for this to work. Here, however, dim means the channel,
+            # so we need a square root.
+            np.sqrt(self._dim) * qt.tensor(*self._next_prepmeas())
+        )
+
+        for field, value in self._other_fields.iteritems():
+                expparams[field] = value
+        
+        return expparams
+    
+    @abstractmethod
+    def _next_prepmeas(self):
+        """
+        Implementing subclasses should return a tuple ``(preparation, measurement)``
+        of two Qobjs, normalized in the 1- and ∞-norms, respectively.
+        """
+        pass
+    
+class ProductHeuristic(ProcessTomographyHeuristic):
+    """
+    Takes two heuristic classes, one for preparations
+    and one for measurements, then returns a sample from
+    each. The preparation heuristic is assumed to return only
+    trace-1 Hermitian operators.
+    """
+    
+    def __init__(self,
+            updater, basis, prep_heuristic_class,
+            meas_heuristic_class, other_fields=None
+    ):
+        super(ProductHeuristic, self).__init__(updater, basis, other_fields)
+        self._ph = prep_heuristic_class(updater, basis=basis)
+        self._mh = meas_heuristic_class(updater, basis=basis)
+        
+    def _next_prepmeas(self):
+        prep = self._ph._next_measurement().unit()
+        meas = self._mh._next_measurement()
+        
+        return prep, meas
+    
 class BestOfKMetaheuristic(Heuristic):
     """
     Draws :math:`k` different state or tomography
@@ -155,16 +209,28 @@ class BestOfKMetaheuristic(Heuristic):
     expected value under the action of the covariance superoperator
     for the current posterior.
     """
-    def __init__(self, updater, base_heuristic, k=3):
+    def __init__(self, updater, base_heuristic, k=3, other_fields=None):
         self._up = updater
         self._base_heuristic = base_heuristic
         self._k = k
+        # TODO: consolidate this other_fields madness into
+        #       a base heuristic class, not even just a tomography one!!
+        self._other_fields = {} if other_fields is None else other_fields
         
     def __call__(self):
         expparams = np.array([
-            self._base_heuristic() for _ in xrange(self._k)
+            self._base_heuristic()[0] for _ in xrange(self._k)
         ], dtype=self._up.model.expparams_dtype)
         meas = expparams['meas']
-        cov_expectations = np.dot(meas, self._up.est_covariance_mtx(), meas.T)
+        cov_expectations = np.einsum('ei,ij,ej->e',
+            meas, self._up.est_covariance_mtx(), meas
+        )
         
-        return expparams[np.argmax(cov_expectations), None, :]
+        expparams = expparams[np.argmax(cov_expectations), None]
+
+        for field, value in self._other_fields.iteritems():
+                expparams[field] = value
+                
+        return expparams
+
+   
