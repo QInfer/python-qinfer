@@ -206,6 +206,13 @@ class TomographyBasis(object):
         else:
             raise TypeError("Expected int or list index, not {}.".format(type(idx)))
 
+    def __iter__(self):
+        for idx in xrange(len(self)):
+            yield self[idx]
+
+    def __len__(self):
+        return self.dim ** 2
+
     @property
     def dim(self):
         # TODO
