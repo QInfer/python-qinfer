@@ -128,7 +128,10 @@ class TomographyModel(Model):
 
     @property
     def modelparam_names(self):
-        return map(r'\rho_{{{}}}'.format, xrange(self.n_modelparams))
+        return map(
+            ur'\langle\!\langle{} | \rho\rangle\!\rangle'.format,
+            self.basis.labels
+        )
 
     @property
     def is_n_outcomes_constant(self):
@@ -208,7 +211,7 @@ class DiffusiveTomographyModel(TomographyModel):
 
     @property
     def modelparam_names(self):
-        return super(DiffusiveTomographyModel, self) + [r'\epsilon']
+        return super(DiffusiveTomographyModel, self).modelparam_names + [r'\epsilon']
 
     def are_models_valid(self, modelparams):
         return np.logical_and(

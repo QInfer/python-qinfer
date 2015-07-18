@@ -138,7 +138,7 @@ def pauli_basis(nq=1):
         TomographyBasis(
             gell_mann_basis(2).data[[0, 2, 3, 1]],
             [2],
-            [r'\id', r'\sigma_x', r'\sigma_y', r'\sigma_z']
+            [u'𝟙', r'\sigma_x', r'\sigma_y', r'\sigma_z']
         )
     ] * nq)
 

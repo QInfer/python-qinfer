@@ -229,9 +229,9 @@ def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_ax
     # Multiplying by sqrt{2} to rescale to Bloch ball.
     cov = 2 * updater.est_covariance_mtx()
     # Use fancy indexing to cut out all but the desired submatrix.
-    cov = cov[REBIT_AXES, :][:, REBIT_AXES]
+    cov = cov[rebit_axes, :][:, rebit_axes]
     plot_cov_ellipse(
-        cov, updater.est_mean()[REBIT_AXES] * np.sqrt(2),
+        cov, updater.est_mean()[rebit_axes] * np.sqrt(2),
         nstd=n_std,
         color=pallette[0], fill=False, lw=4,
         label='Posterior Cov Ellipse ($Z = {}$)'.format(n_std)
