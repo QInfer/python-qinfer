@@ -26,7 +26,7 @@
 
 ## FEATURES ##################################################################
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 ## EXPORTS ###################################################################
 
@@ -96,7 +96,7 @@ class Simulatable(object):
     def model_chain(self):
         """
         Returns a tuple of models upon which this model is based,
-        such that proeprties and methods of underlying models for
+        such that properties and methods of underlying models for
         models that decorate other models can be accessed. For a
         standalone model, this is always the empty tuple.
         """
@@ -148,6 +148,26 @@ class Simulatable(object):
         model, formatted as LaTeX strings.
         """
         return map("x_{{{}}}".format, xrange(self.n_modelparams))
+
+    ## CONCRETE METHODS ##
+
+    def _repr_html_(self, suppress_base=False):
+        s = ur"""
+            <strong>{type.__name__}</strong> at 0x{id:0x}: {n_mp} model parameters
+        """.format(
+            id=id(self), type=type(self),
+            n_mp=self.n_modelparams
+        )
+        if not suppress_base and self.model_chain:
+            s += ur"""<br>
+            <p>Model chain:</p>
+            <ul>{}
+            </ul>
+            """.format(ur"\n".join(
+                u"<li>{}</li>".format(model._repr_html_(suppress_base=True))
+                for model in self.model_chain
+            ))
+        return s
     
     ## ABSTRACT METHODS ##
     

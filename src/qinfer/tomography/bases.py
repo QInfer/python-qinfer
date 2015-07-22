@@ -142,6 +142,28 @@ def pauli_basis(nq=1):
         )
     ] * nq)
 
+def _format_float_as_latex(c, tol=1e-10):
+    if abs(c - int(c)) <= tol:
+        return unicode(int(c))
+    elif 1e-3 <= abs(c) <= 1e3:
+        return u"{:0.3f}".format(c)
+    else:
+        return (u"{:0.3e}".format(c)).replace("e", ur"\times10^{") + "}"
+
+
+def _format_complex_as_latex(c, tol=1e-10):
+    if abs(c.imag) <= tol:
+        # Purely real.
+        return _format_float_as_latex(c.real, tol=tol)
+    elif abs(c.real) <= tol:
+        return _format_float_as_latex(c.imag, tol=tol) + ur"\mathrm{i}"
+    else:
+        return ur"{} + {}\mathrm{{i}}".format(
+            _format_float_as_latex(c.real, tol=tol),
+            _format_float_as_latex(c.imag, tol=tol)
+        )
+
+
 ## CLASSES ###################################################################
 
 class TomographyBasis(object):
@@ -197,6 +219,47 @@ class TomographyBasis(object):
 
     def __repr__(self):
         return "<TomographyBasis dims={} at {}>".format(self.dims, id(self))
+
+    def _repr_html_(self):
+
+        if self.dim <= 10:
+            element_strings = [ur"""
+                {label} =                   
+                \left(\begin{{matrix}}
+                    {rows}
+                \end{{matrix}}\right)
+                """.format(
+                    rows=u"\\\\".join([
+                        u"&".join(map(_format_complex_as_latex, row))
+                        for row in element
+                    ]),
+                    label=label
+                )
+                for element, label in zip(self.data, self.labels)
+            ]
+
+            return ur"""
+            <strong>TomographyBasis:</strong>
+                dims=${dims}$
+            <p>
+                \begin{{equation}}
+                    {elements}
+                \end{{equation}}
+            </p>
+            """.format(
+                dims=ur"\times".join(map(str, self.dims)),
+                labels=u",".join(self.labels),
+                elements=u",".join(element_strings)
+            )
+        else:
+            return ur"""
+            <strong>TomographyBasis:</strong>
+                dims=${dims}$,
+                labels=$\\{{{labels}\\}}$
+            """.format(
+                dims=ur"\times".join(map(str, self.dims)),
+                labels=u",".join(self.labels)
+            )
 
     def __getitem__(self, idx):
         if isinstance(idx, int):
