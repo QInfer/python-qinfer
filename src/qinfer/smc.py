@@ -953,7 +953,7 @@ class SMCUpdater(Distribution):
 
         return res
 
-    def plot_covariance(self, corr=False, param_slice=None, tick_labels=None):
+    def plot_covariance(self, corr=False, param_slice=None, tick_labels=None, tick_params=None):
         """
         Plots the covariance matrix of the posterior as a Hinton diagram.
 
@@ -989,8 +989,8 @@ class SMCUpdater(Distribution):
             cov /= (np.outer(dstd, dstd))
 
         retval = mpls.hinton(cov)
-        plt.xticks(*tick_labels)
-        plt.yticks(*tick_labels)
+        plt.xticks(*tick_labels, **(tick_params if tick_params is not None else {}))
+        plt.yticks(*tick_labels, **(tick_params if tick_params is not None else {}))
         plt.gca().xaxis.tick_top()
 
         return retval

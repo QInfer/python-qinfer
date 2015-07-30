@@ -142,7 +142,11 @@ def plot_cov_ellipse(cov, pos, nstd=2, ax=None, **kwargs):
     return ellip
 
 
-def plot_rebit_prior(prior, rebit_axes=REBIT_AXES, n_samples=2000, true_state=None):
+def plot_rebit_prior(prior, rebit_axes=REBIT_AXES,
+        n_samples=2000, true_state=None, true_size=250,
+        legend=True,
+        mean_color_index=2
+    ):
     """
     Plots rebit states drawn from a given prior.
 
@@ -166,13 +170,14 @@ def plot_rebit_prior(prior, rebit_axes=REBIT_AXES, n_samples=2000, true_state=No
     if true_state is not None:
         plot_rebit_modelparams(true_state,
             c=pallette[1],
-            label='True', marker='*', s=250
+            label='True', marker='*', s=true_size,
+            rebit_axes=rebit_axes
         )
 
     if hasattr(prior, '_mean'):
         plot_rebit_modelparams(
             prior._basis.state_to_modelparams(prior._mean)[None, :],
-            edgecolors=pallette[2], s=250, facecolors='none', linewidth=3,
+            edgecolors=pallette[mean_color_index], s=250, facecolors='none', linewidth=3,
             label='Mean',
             rebit_axes=rebit_axes
         )
@@ -180,10 +185,13 @@ def plot_rebit_prior(prior, rebit_axes=REBIT_AXES, n_samples=2000, true_state=No
     plot_decorate_rebits(prior.basis,
         rebit_axes=rebit_axes
     )
-    plt.legend(loc='lower left', ncol=3, scatterpoints=1)
+    if legend:
+        plt.legend(loc='lower left', ncol=3, scatterpoints=1)
 
 
-def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_axes=REBIT_AXES):
+def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_axes=REBIT_AXES, true_size=250,
+            legend=True
+    ):
     """
     Plots posterior distributions over rebits, including covariance ellipsoids
 
@@ -208,7 +216,7 @@ def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_ax
 
     plot_rebit_modelparams(true_state,
         c=pallette[1],
-        label='True', marker='*', s=250,
+        label='True', marker='*', s=true_size,
         rebit_axes=rebit_axes
     )
 
@@ -237,5 +245,6 @@ def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_ax
         label='Posterior Cov Ellipse ($Z = {}$)'.format(n_std)
     )
     plot_decorate_rebits(updater.model.base_model._basis)
-    plt.legend(loc='lower left', ncol=4, scatterpoints=1)
+    if legend:
+        plt.legend(loc='lower left', ncol=4, scatterpoints=1)
 
