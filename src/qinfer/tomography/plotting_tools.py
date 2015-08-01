@@ -144,6 +144,7 @@ def plot_cov_ellipse(cov, pos, nstd=2, ax=None, **kwargs):
 
 def plot_rebit_prior(prior, rebit_axes=REBIT_AXES,
         n_samples=2000, true_state=None, true_size=250,
+        force_mean=None,
         legend=True,
         mean_color_index=2
     ):
@@ -174,9 +175,10 @@ def plot_rebit_prior(prior, rebit_axes=REBIT_AXES,
             rebit_axes=rebit_axes
         )
 
-    if hasattr(prior, '_mean'):
+    if hasattr(prior, '_mean') or force_mean is not None:
+        mean = force_mean if force_mean is not None else prior._mean
         plot_rebit_modelparams(
-            prior._basis.state_to_modelparams(prior._mean)[None, :],
+            prior._basis.state_to_modelparams(mean)[None, :],
             edgecolors=pallette[mean_color_index], s=250, facecolors='none', linewidth=3,
             label='Mean',
             rebit_axes=rebit_axes
@@ -211,7 +213,8 @@ def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_ax
         c=pallette[0],
         label='Posterior',
         s=12 * np.sqrt(updater.particle_weights * len(updater.particle_weights)),
-        rebit_axes=rebit_axes
+        rebit_axes=rebit_axes,
+        zorder=-10
     )
 
     plot_rebit_modelparams(true_state,
@@ -241,7 +244,10 @@ def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_ax
     plot_cov_ellipse(
         cov, updater.est_mean()[rebit_axes] * np.sqrt(2),
         nstd=n_std,
-        color=pallette[0], fill=False, lw=4,
+        edgecolor='k', fill=True, lw=2,
+        facecolor=pallette[0],
+        alpha=0.4,
+        zorder=-9,
         label='Posterior Cov Ellipse ($Z = {}$)'.format(n_std)
     )
     plot_decorate_rebits(updater.model.base_model._basis)
