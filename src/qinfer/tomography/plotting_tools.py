@@ -250,7 +250,9 @@ def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_ax
         zorder=-9,
         label='Posterior Cov Ellipse ($Z = {}$)'.format(n_std)
     )
-    plot_decorate_rebits(updater.model.base_model._basis)
+    plot_decorate_rebits(updater.model.base_model._basis,
+        rebit_axes=rebit_axes
+    )
     if legend:
         plt.legend(loc='lower left', ncol=4, scatterpoints=1)
 
