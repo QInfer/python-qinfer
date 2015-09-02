@@ -40,16 +40,20 @@ from qinfer.derived_models import DerivedModel
 import warnings
 
 try:
-    import IPython.parallel as ipp
+    import ipyparallel as ipp
     interactive = ipp.interactive
 except ImportError:
-    import warnings
-    warnings.warn(
-        "Could not import IPython parallel. "
-        "Parallelization support will be disabled."
-    )
-    ipp = None
-    interactive = lambda fn: fn
+    try:
+        import IPython.parallel as ipp
+        interactive = ipp.interactive
+    except ImportError, KeyError:
+        import warnings
+        warnings.warn(
+            "Could not import IPython parallel. "
+            "Parallelization support will be disabled."
+        )
+        ipp = None
+        interactive = lambda fn: fn
 
 ## LOGGING ###################################################################
 
