@@ -109,6 +109,21 @@ def timing():
     yield t
     t.stop()
 
+@contextmanager
+def numpy_err_policy(**kwargs):
+    """
+    Uses :ref:`np.seterr` to set an error policy for NumPy functions
+    called during the context manager block. For example::
+
+    >>> with numpy_err_policy(divide='raise'):
+    ...     # NumPy divsion errors here are exceptions.
+    >>> # NumPy division errors here follow the previous policy.
+    """
+
+    old_errs = np.seterr(**kwargs)
+    yield
+    np.seterr(**old_errs)
+
 ## CONSTANTS #################################################################
 
 PERFORMANCE_DTYPE = [
@@ -121,11 +136,15 @@ PERFORMANCE_DTYPE = [
 ## FUNCTIONS #################################################################
 
 def actual_dtype(model):
+    model_dtype = [
+        ('true', float, model.n_modelparams),
+        ('est',  float, model.n_modelparams),
+    ]
     if isinstance(model.expparams_dtype, str):
         # They're using simple notation for a single field.
-        return PERFORMANCE_DTYPE + [('experiment', model.expparams_dtype)], True
+        return PERFORMANCE_DTYPE + model_dtype + [('experiment', model.expparams_dtype)], True
     else:
-        return PERFORMANCE_DTYPE + model.expparams_dtype, False
+        return PERFORMANCE_DTYPE + model_dtype + model.expparams_dtype, False
 
 def perf_test(
         model, n_particles, prior, n_exp, heuristic_class,
@@ -181,6 +200,8 @@ def perf_test(
     updater = SMCUpdater(model, n_particles, prior, **extra_updater_args)
     heuristic = heuristic_class(updater)
 
+    performance['true'] = true_mps
+
     for idx_exp in xrange(n_exp):
         expparams = heuristic()
         datum = true_model.simulate_experiment(true_mps, expparams)
@@ -188,12 +209,15 @@ def perf_test(
         with timing() as t:
             updater.update(datum, expparams)
 
-        delta = updater.est_mean() - true_mps
+        est_mean = updater.est_mean()
+        delta = est_mean - true_mps
+        loss = np.dot(delta**2, model.Q)
 
         performance[idx_exp]['elapsed_time'] = t.delta_t
-        performance[idx_exp]['loss'] = np.dot(delta**2, model.Q)
+        performance[idx_exp]['loss'] = loss
         performance[idx_exp]['resample_count'] = updater.resample_count
         performance[idx_exp]['outcome'] = datum
+        performance[idx_exp]['est'] = est_mean
         if is_scalar_exp:
             performance[idx_exp]['experiment'] = expparams
         else:
@@ -230,7 +254,8 @@ def perf_test_multiple(
         apply=apply_serial,
         tskmon_client=None,
         allow_failures=False,
-        extra_updater_args=None
+        extra_updater_args=None,
+        progressbar=None
     ):
     # TODO: write full docstring, but this repeats many times.
 
@@ -266,25 +291,33 @@ def perf_test_multiple(
             print "Failed to start tskmon task: ", ex
 
     try:
-        # Loop through once to dispatch tasks.
-        # We'll loop through again to collect results.
-        results = [apply(trial_fn) for idx in xrange(n_trials)]
+        if progressbar is not None:
+            prog = progressbar()
+            prog.start(n_trials)
 
-        for idx, result in enumerate(results):
-            # FIXME: This is bad practice, but I don't feel like rewriting to
-            #        avoid right now.
-            try:
-                performance[idx, :] = result.get()
-            except:
-                if allow_failures:
-                    performance.mask[idx, :] = True
-                else:
-                    raise
+        # Make sure that everything we do catches NaNs as exceptions,
+        # such that we can correctly record them as failures.
+        with numpy_err_policy(divide='raise'):
+            # Loop through once to dispatch tasks.
+            # We'll loop through again to collect results.
+            results = [apply(trial_fn) for idx in xrange(n_trials)]
 
-            if thread is not None:
-                thread.progress = idx + 1
-                thread.dirty = True
-                wake_event.set()
+            for idx, result in enumerate(results):
+                # FIXME: This is bad practice, but I don't feel like rewriting to
+                #        avoid right now.
+                try:
+                    performance[idx, :] = result.get()
+                    prog.update(idx)
+                except:
+                    if allow_failures:
+                        performance.mask[idx, :] = True
+                    else:
+                        raise
+
+                if thread is not None:
+                    thread.progress = idx + 1
+                    thread.dirty = True
+                    wake_event.set()
 
     finally:
         # Make *sure* we've killed the thread.
@@ -300,5 +333,7 @@ def perf_test_multiple(
                     print "Thread didn't die. This is a bug."
             except Exception as ex:
                 print "Exception cleaning up tskmon task.", ex
+
+        prog.finished()
 
     return performance

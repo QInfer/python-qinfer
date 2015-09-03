@@ -25,7 +25,7 @@
 
 ## FEATURES ###################################################################
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 ## ALL ########################################################################
 
@@ -953,7 +953,7 @@ class SMCUpdater(Distribution):
 
         return res
 
-    def plot_covariance(self, corr=False, param_slice=None):
+    def plot_covariance(self, corr=False, param_slice=None, tick_labels=None, tick_params=None):
         """
         Plots the covariance matrix of the posterior as a Hinton diagram.
 
@@ -966,6 +966,8 @@ class SMCUpdater(Distribution):
             such that the corrleation matrix is plotted instead.
         :param slice param_slice: Slice of the modelparameters to
             be plotted.
+        :param list tick_labels: List of tick labels for each component;
+            by default, these are drawn from the model itself.
         """
         if mpls is None:
             raise ImportError("Hinton diagrams require mpltools.")
@@ -975,7 +977,9 @@ class SMCUpdater(Distribution):
 
         tick_labels = (
             range(len(self.model.modelparam_names[param_slice])),
-            map("${}$".format, self.model.modelparam_names[param_slice])
+            tick_labels
+            if tick_labels is not None else
+            map(u"${}$".format, self.model.modelparam_names[param_slice])
         )
 
         cov = self.est_covariance_mtx()[param_slice, param_slice]
@@ -985,8 +989,8 @@ class SMCUpdater(Distribution):
             cov /= (np.outer(dstd, dstd))
 
         retval = mpls.hinton(cov)
-        plt.xticks(*tick_labels)
-        plt.yticks(*tick_labels)
+        plt.xticks(*tick_labels, **(tick_params if tick_params is not None else {}))
+        plt.yticks(*tick_labels, **(tick_params if tick_params is not None else {}))
         plt.gca().xaxis.tick_top()
 
         return retval
