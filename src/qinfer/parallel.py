@@ -46,7 +46,7 @@ except ImportError:
     try:
         import IPython.parallel as ipp
         interactive = ipp.interactive
-    except ImportError, KeyError:
+    except (ImportError, AttributeError):
         import warnings
         warnings.warn(
             "Could not import IPython parallel. "
