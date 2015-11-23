@@ -300,7 +300,7 @@ class TomographyBasis(object):
     def modelparams_to_state(self, modelparams):
         if modelparams.ndim == 1:
             qobj = qt.Qobj(
-                np.tensordot(modelparams, self.data.conj(), 1),
+                np.tensordot(modelparams, self.data, 1),
                 dims=[self.dims, self.dims]
             )
             if self.superrep is not None:
