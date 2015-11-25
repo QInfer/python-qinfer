@@ -142,6 +142,13 @@ class GinibreDistribution(DensityOperatorDistribution):
             raise ValueError("rank must not exceed basis dimension.")
         self._rank = rank
 
+    def __repr__(self):
+        return "<GinibreDistribution dims={}, rank={}, basis={}>".format(
+            self.dim,
+            self._rank if self._rank is not None else self.dim,
+            self.basis.name
+        )
+
     def _sample_dm(self):
         # Generate and flatten a density operator, so that we can multiply it
         # by the transformation defined above.
