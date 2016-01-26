@@ -6,3 +6,5 @@ ipython
 pytest
 pytest-cov
 pytest-xdist
+
+coveralls
