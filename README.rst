@@ -2,6 +2,9 @@
 Welcome to QInfer
 =================
 
+.. image:: https://zenodo.org/badge/19664/QInfer/python-qinfer.svg
+   :target: https://zenodo.org/badge/latestdoi/19664/QInfer/python-qinfer
+
 **QInfer** is a library using Bayesian sequential Monte Carlo for quantum
 parameter estimation.
 

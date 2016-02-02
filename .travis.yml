@@ -1,0 +1,28 @@
+sudo: false
+language: python
+python:
+  - "2.7"
+
+virtualenv:
+  system_site_packages: true
+
+notifications:
+  email: false
+
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b -p $HOME/miniconda
+  - export PATH=$HOME/miniconda/bin:$PATH
+  - export PATH=$HOME/miniconda:$PATH
+  - conda update --yes conda
+
+install:
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels scikit-learn
+  - pip install -r requirements.txt
+  - cd ./src/qinfer
+script:
+  - py.test --cov=.
+
+after_success:
+  - coveralls
