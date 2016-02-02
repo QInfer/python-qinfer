@@ -32,7 +32,7 @@ __version__ = '1.0b1'
 ## IMPORTS ####################################################################
 # These imports control what is made available by importing qinfer itself.
 
-from _exceptions import *
+from qinfer._exceptions import *
 
 from qinfer.gpu_models import *
 from qinfer.perf_testing import *

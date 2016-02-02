@@ -7,6 +7,9 @@
 Backup/*
 UpgradeLog.htm
 
+## Pycharm Stuff ##
+.idea
+
 ## IPython Checkpoints ##
 .ipynb_checkpoints
 
