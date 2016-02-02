@@ -5,8 +5,19 @@ Welcome to QInfer
 .. image:: https://zenodo.org/badge/19664/QInfer/python-qinfer.svg
    :target: https://zenodo.org/badge/latestdoi/19664/QInfer/python-qinfer
 
+.. image:: https://travis-ci.org/QInfer/python-qinfer.svg?branch=master
+    :target: https://travis-ci.org/QInfer/python-qinfer
+
+.. image:: https://coveralls.io/repos/github/QInfer/python-qinfer/badge.svg?branch=master
+    :target: https://coveralls.io/github/QInfer/python-qinfer?branch=master 
+
+.. image:: https://codeclimate.com/github/QInfer/python-qinfer/badges/gpa.svg
+   :target: https://codeclimate.com/github/QInfer/python-qinfer
+   :alt: Code Climate
+
 **QInfer** is a library using Bayesian sequential Monte Carlo for quantum
 parameter estimation.
+
 
 Obtaining QInfer
 ================
