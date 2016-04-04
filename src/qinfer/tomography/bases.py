@@ -34,7 +34,8 @@ from __future__ import division
 
 ## IMPORTS ###################################################################
 
-from builtins import range, map
+from builtins import range, map, str
+from functools import reduce
 
 import itertools as it
 
@@ -147,7 +148,7 @@ def pauli_basis(nq=1):
 
 def _format_float_as_latex(c, tol=1e-10):
     if abs(c - int(c)) <= tol:
-        return unicode(int(c))
+        return str(int(c))
     elif 1e-3 <= abs(c) <= 1e3:
         return u"{:0.3f}".format(c)
     else:

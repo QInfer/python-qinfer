@@ -160,7 +160,7 @@ def modelclass(tree, args, **kw):
         # Don't change anything, just find model parameters.
         if type(tree) is Name:
             if tree.id.startswith('mp_'):
-                mp_idx = idxs.next()
+                mp_idx = next(idxs)
                 collect((tree.id, mp_idx))
             elif tree.id.startswith('ep_'):
                 name = tree.id[3:]

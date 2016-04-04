@@ -43,6 +43,7 @@ __all__ = [
 ## IMPORTS ####################################################################
 
 from builtins import range
+from functools import reduce
 
 import numpy as np
 from scipy.stats import binom
