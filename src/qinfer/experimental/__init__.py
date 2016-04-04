@@ -27,6 +27,7 @@ This package exposes experimental features which may change drastically
 at any point.
 """
 
+from __future__ import absolute_import
 import warnings
 warnings.warn(
 	"The features in this package are experimental, "

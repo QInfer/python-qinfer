@@ -25,6 +25,8 @@
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## EXPORTS ###################################################################
@@ -288,7 +290,7 @@ def perf_test_multiple(
             thread.start()
 
         except Exception as ex:
-            print "Failed to start tskmon task: ", ex
+            print("Failed to start tskmon task: ", ex)
 
     try:
         if progressbar is not None:
@@ -330,9 +332,9 @@ def perf_test_multiple(
                 # raise and move on.
                 thread.join(1)
                 if thread.is_alive():
-                    print "Thread didn't die. This is a bug."
+                    print("Thread didn't die. This is a bug.")
             except Exception as ex:
-                print "Exception cleaning up tskmon task.", ex
+                print("Exception cleaning up tskmon task.", ex)
 
         prog.finished()
 

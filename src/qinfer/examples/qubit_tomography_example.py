@@ -44,6 +44,8 @@ Options:
 
 ## FEATURES ####################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## IMPORTS #####################################################################
@@ -61,7 +63,7 @@ from qinfer._lib import docopt
 try:
     from .. import dialogs
 except ImportError:
-    print "[WARN] Could not import dialogs."
+    print("[WARN] Could not import dialogs.")
     dialogs = None
 
 ## SCRIPT ######################################################################

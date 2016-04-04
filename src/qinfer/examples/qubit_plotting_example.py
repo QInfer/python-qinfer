@@ -53,6 +53,8 @@ Usage: qubit_tomography_example.py [options]
 
 ## FEATURES ####################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## IMPORTS #####################################################################
@@ -114,7 +116,7 @@ if __name__ == "__main__":
             weighted=False, quiet=not verbose, **dbscan_args
         )
     elif resamp_algo == 'WDBSCAN-LW':
-        print "[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly."
+        print("[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly.")
         resampler = ClusteringResampler(
             secondary_resampler=LiuWestResampler(**lw_args),
             weighted=True, quiet=not verbose, **dbscan_args
@@ -192,13 +194,13 @@ if __name__ == "__main__":
     toc = time.time() - tic
             
     # Print out summary statistics.    
-    print "True param: {}".format(truemp)    
-    print "Est. mean: {}".format(updater.est_mean())
-    print "Est. cov: {}".format(updater.est_covariance_mtx())
-    print "Error: {}".format(np.sum(np.abs(truemp[0]-updater.est_mean())**2))
-    print "Trace Cov: {}".format(np.trace(updater.est_covariance_mtx()))
-    print "Resample count: {}".format(updater.resample_count)
-    print "Elapsed time: {}".format(toc)
+    print("True param: {}".format(truemp))    
+    print("Est. mean: {}".format(updater.est_mean()))
+    print("Est. cov: {}".format(updater.est_covariance_mtx()))
+    print("Error: {}".format(np.sum(np.abs(truemp[0]-updater.est_mean())**2)))
+    print("Trace Cov: {}".format(np.trace(updater.est_covariance_mtx())))
+    print("Resample count: {}".format(updater.resample_count))
+    print("Elapsed time: {}".format(toc))
     
 
     est_mean = updater.est_mean()

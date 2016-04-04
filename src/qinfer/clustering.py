@@ -25,6 +25,8 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## ALL ########################################################################
@@ -119,10 +121,10 @@ def particle_clusters(
     
     # Print debugging info.
     if not quiet:
-        print "[Clustering] DBSCAN identified {} cluster{}. "\
+        print("[Clustering] DBSCAN identified {} cluster{}. "\
               "{} particles identified as NOISE.".format(
                   n_clusters, "s" if n_clusters > 1 else "", n_noise
-              )
+              ))
         
     # Loop over clusters, calling the secondary resampler for each.
     # The loop should include -1 if noise was found.

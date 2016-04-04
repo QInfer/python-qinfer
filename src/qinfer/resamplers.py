@@ -25,6 +25,7 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## ALL ########################################################################
@@ -40,7 +41,7 @@ import numpy as np
 import scipy.linalg as la
 import warnings
 
-from utils import outer_product, particle_meanfn, particle_covariance_mtx
+from .utils import outer_product, particle_meanfn, particle_covariance_mtx
 
 import qinfer.clustering
 from qinfer._exceptions import ResamplerWarning, ResamplerError

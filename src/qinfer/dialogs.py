@@ -33,6 +33,8 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## ALL ########################################################################
@@ -115,7 +117,7 @@ class ProgressDialog(object):
             else:
                 env["PYTHONPATH"] = qinfer_path
         except ImportError:
-            print "[WARN] Importing qinfer didn't work... progress tracking may fail."
+            print("[WARN] Importing qinfer didn't work... progress tracking may fail.")
         
         # Start the GUI in a new process.
         self._listener, self._port = _get_conn()
@@ -197,7 +199,7 @@ if __name__ == "__main__":
         import tskmon
         tskmon_client = tskmon.TskmonClient()
     except Exception as ex:
-        print "[WARN] Exception {} occured while configuring tskmon.".format(ex)
+        print("[WARN] Exception {} occured while configuring tskmon.".format(ex))
         tskmon_client = None
     
     ## CLASSES ################################################################
@@ -232,7 +234,7 @@ if __name__ == "__main__":
                         max_progress=100
                     )
                 except Exception as ex:
-                    print "[WARN] Problem creating remote task: " + str(ex)
+                    print("[WARN] Problem creating remote task: " + str(ex))
                     self._tskmon = None
 
         @property
@@ -247,7 +249,7 @@ if __name__ == "__main__":
                 try:
                     self._tskmon.set_title(newval)
                 except Exception as ex:
-                    print "[WARN] Problem updating remote task: " + str(ex)
+                    print("[WARN] Problem updating remote task: " + str(ex))
             
         @property
         def task_status(self):
@@ -260,7 +262,7 @@ if __name__ == "__main__":
                 try:
                     self._tskmon.set_status(newval)
                 except Exception as ex:
-                    print "[WARN] Problem updating remote task: " + str(ex)
+                    print("[WARN] Problem updating remote task: " + str(ex))
          
         @property
         def max_progress(self):
@@ -272,7 +274,7 @@ if __name__ == "__main__":
                 try:
                     self._tskmon.set_max(newval)
                 except Exception as ex:
-                    print "[WARN] Problem updating remote task: " + str(ex)
+                    print("[WARN] Problem updating remote task: " + str(ex))
             
         @property
         def task_progress(self):
@@ -286,7 +288,7 @@ if __name__ == "__main__":
                 try:
                     self._tskmon.set_progress(newval)
                 except Exception as ex:
-                    print "[WARN] Problem updating remote task: " + str(ex)
+                    print("[WARN] Problem updating remote task: " + str(ex))
                 
         def _record_time(self):
             t = time.time()

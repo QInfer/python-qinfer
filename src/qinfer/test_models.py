@@ -25,6 +25,7 @@
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
 from __future__ import division # Ensures that a/b is always a float.
 
 ## EXPORTS ###################################################################
@@ -39,9 +40,9 @@ __all__ = [
 
 import numpy as np
 
-from utils import binomial_pdf
+from .utils import binomial_pdf
 
-from abstract_model import Model, DifferentiableModel
+from .abstract_model import Model, DifferentiableModel
     
 ## CLASSES ###################################################################
 

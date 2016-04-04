@@ -35,6 +35,7 @@ buggy as... well, use your imagination.
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## MACRO IMPORTS #############################################################

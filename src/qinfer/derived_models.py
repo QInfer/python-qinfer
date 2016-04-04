@@ -25,6 +25,8 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division # Ensures that a/b is always a float.
 
 ## ALL ########################################################################
@@ -380,7 +382,7 @@ class RandomWalkModel(DerivedModel):
 if __name__ == "__main__":
     
     import operator as op
-    from test_models import SimplePrecessionModel
+    from .test_models import SimplePrecessionModel
     
     m = BinomialModel(SimplePrecessionModel())
     
@@ -391,7 +393,7 @@ if __name__ == "__main__":
     L = m.likelihood(
         os, mps, eps
     )
-    print L
+    print(L)
     
     assert m.call_count == reduce(op.mul, [os.shape[0], mps.shape[0], eps.shape[0]]), "Call count inaccurate."
     assert L.shape == (os.shape[0], mps.shape[0], eps.shape[0]), "Shape mismatch."

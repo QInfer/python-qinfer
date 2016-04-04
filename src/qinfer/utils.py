@@ -25,6 +25,8 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## IMPORTS ####################################################################
@@ -233,7 +235,7 @@ if __name__ == "__main__":
     
     # compute mvee
     A, centroid = mvee(points)
-    print A
+    print(A)
     
     # point it and some other stuff
     U, D, V = la.svd(A)    
