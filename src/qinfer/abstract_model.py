@@ -166,7 +166,7 @@ class Simulatable(object):
             </ul>
             """.format(u"\n".join(
                 u"<li>{}</li>".format(model._repr_html_(suppress_base=True))
-                for model in self.model_chain
+                for model in reversed(self.model_chain)
             ))
         return s
     
