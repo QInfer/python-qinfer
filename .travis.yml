@@ -1,11 +1,8 @@
 sudo: false
 language: python
 python:
-  - "2.7"
+  - "2.7_with_system_site_packages"
   - "3.4"
-
-virtualenv:
-  system_site_packages: true
 
 notifications:
   email: false
