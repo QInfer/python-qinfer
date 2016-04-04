@@ -39,7 +39,7 @@ from __future__ import division
 
 ## IMPORTS ###################################################################
 
-from builtins import range
+from builtins import range, map
 
 from qinfer import Model
 
@@ -131,10 +131,10 @@ class TomographyModel(Model):
 
     @property
     def modelparam_names(self):
-        return map(
+        return list(map(
             ur'\langle\!\langle{} | \rho\rangle\!\rangle'.format,
             self.basis.labels
-        )
+        ))
 
     @property
     def is_n_outcomes_constant(self):

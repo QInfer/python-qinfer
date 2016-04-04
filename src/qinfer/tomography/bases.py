@@ -34,7 +34,7 @@ from __future__ import division
 
 ## IMPORTS ###################################################################
 
-from builtins import range
+from builtins import range, map
 
 import itertools as it
 
@@ -122,12 +122,12 @@ def tensor_product_basis(*bases):
         sum((
             factor.dims for factor in bases
         ), []),
-        map(
+        list(map(
         r"\otimes".join,
         it.product(*[
             basis.labels for basis in bases
         ])
-    ))
+    )))
 
 def pauli_basis(nq=1):
     """
@@ -214,9 +214,9 @@ class TomographyBasis(object):
         dim = self.dim
 
         if isinstance(labels, str):
-            self.labels = map("{}_{{}}".format(labels).format, range(dim**2))
+            self.labels = list(map("{}_{{}}".format(labels).format, range(dim**2)))
         else:
-            self.labels = map(r'B_{}'.format, range(dim**2)) if labels is None else labels
+            self.labels = list(map(r'B_{}'.format, range(dim**2))) if labels is None else labels
 
         self._flat = self.data.reshape((self.data.shape[0], -1))
 
@@ -310,7 +310,7 @@ class TomographyBasis(object):
                 qobj.superrep = self.superrep
             return qobj
         else:
-            return map(self.modelparams_to_state, modelparams)
+            return list(map(self.modelparams_to_state, modelparams))
 
     def covariance_mtx_to_superop(self, mtx):
         """

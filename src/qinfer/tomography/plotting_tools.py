@@ -34,6 +34,8 @@ from __future__ import division
 
 ## IMPORTS ###################################################################
 
+from builtins import map
+
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -94,10 +96,10 @@ def plot_decorate_rebits(basis=None, rebit_axes=REBIT_AXES):
     ax = plt.gca()
 
     if basis is not None:
-        labels = map(r'$\langle\!\langle {} | \rho \rangle\!\rangle$'.format,
+        labels = list(map(r'$\langle\!\langle {} | \rho \rangle\!\rangle$'.format,
             # Pick out the x and z by default.
             [basis.labels[rebit_axes[0]], basis.labels[rebit_axes[1]]]
-        )
+        ))
         plt.xlabel(labels[0])
         plt.ylabel(labels[1])
 

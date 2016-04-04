@@ -39,7 +39,7 @@ __all__ = [
 
 ## IMPORTS ###################################################################
 
-from builtins import range
+from builtins import range, map
 
 import abc
     # Python standard library package for specifying abstract classes.
@@ -150,7 +150,7 @@ class Simulatable(object):
         Returns the names of the various model parameters admitted by this
         model, formatted as LaTeX strings.
         """
-        return map("x_{{{}}}".format, range(self.n_modelparams))
+        return list(map("x_{{{}}}".format, range(self.n_modelparams)))
 
     ## CONCRETE METHODS ##
 

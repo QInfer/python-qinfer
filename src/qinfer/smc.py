@@ -40,6 +40,8 @@ __all__ = [
 
 ## IMPORTS ####################################################################
 
+from builtins import map
+
 import warnings
 
 import numpy as np
@@ -980,7 +982,7 @@ class SMCUpdater(Distribution):
             list(range(len(self.model.modelparam_names[param_slice]))),
             tick_labels
             if tick_labels is not None else
-            map(u"${}$".format, self.model.modelparam_names[param_slice])
+            list(map(u"${}$".format, self.model.modelparam_names[param_slice]))
         )
 
         cov = self.est_covariance_mtx()[param_slice, param_slice]

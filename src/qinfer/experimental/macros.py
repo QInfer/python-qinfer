@@ -46,6 +46,8 @@ macros = Macros()
 
 ## IMPORTS ###################################################################
 
+from builtins import map
+
 import itertools as it
 
 import _ast
@@ -265,7 +267,7 @@ def modelclass(tree, args, **kw):
     new_class[0].name = model_name
 
     # Strip off the functiondef and copy over the args definition.
-    tree.body = map(fix_missing_locations, new_class[0].body)
+    tree.body = list(map(fix_missing_locations, new_class[0].body))
     tree.bases = [q[Model]]
 
     return tree
