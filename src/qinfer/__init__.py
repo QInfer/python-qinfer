@@ -45,6 +45,7 @@ from qinfer.score import *
 from qinfer.rb import *
 from qinfer.unstructured_models import *
 from qinfer.derived_models import *
+from qinfer.ipy import *
 
 import qinfer.tomography
 
