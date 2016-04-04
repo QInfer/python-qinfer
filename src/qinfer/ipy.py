@@ -45,6 +45,11 @@ except:
 class IPythonProgressBar(object):
     """
     Represents a progress bar as an IPython widget.
+
+    .. note::
+
+        This progress bar is compatible with QuTiP progress bar
+        classes.
     """
     def __init__(self):
         self.widget = ipw.FloatProgress(
@@ -54,17 +59,32 @@ class IPythonProgressBar(object):
 
     @property
     def description(self):
+        """
+        Text description for the progress bar widget.
+        """
         return self.widget.description
     @description.setter
     def description(self, value):
         self.widget.description = value
 
     def start(self, max):
+        """
+        Displays the progress bar for a given maximum value.
+
+        :param float max: Maximum value of the progress bar.
+        """
         self.widget.max = max
         display(self.widget)
 
     def update(self, n):
+        """
+        Updates the progress bar to display a new value.
+        """
         self.widget.value = n
 
     def finished(self):
+        """
+        Destroys the progress bar. Further calls to update()
+        will result in exceptions.
+        """
         self.widget.close()
