@@ -37,6 +37,8 @@ __all__ = [
 
 ## IMPORTS ###################################################################
 
+from builtins import range
+
 from contextlib import contextmanager
 from functools import partial
 import threading
@@ -204,7 +206,7 @@ def perf_test(
 
     performance['true'] = true_mps
 
-    for idx_exp in xrange(n_exp):
+    for idx_exp in range(n_exp):
         expparams = heuristic()
         datum = true_model.simulate_experiment(true_mps, expparams)
 
@@ -302,7 +304,7 @@ def perf_test_multiple(
         with numpy_err_policy(divide='raise'):
             # Loop through once to dispatch tasks.
             # We'll loop through again to collect results.
-            results = [apply(trial_fn) for idx in xrange(n_trials)]
+            results = [apply(trial_fn) for idx in range(n_trials)]
 
             for idx, result in enumerate(results):
                 # FIXME: This is bad practice, but I don't feel like rewriting to

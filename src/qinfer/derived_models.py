@@ -42,6 +42,8 @@ __all__ = [
 
 ## IMPORTS ####################################################################
 
+from builtins import range
+
 import numpy as np
 from scipy.stats import binom
 
@@ -260,7 +262,7 @@ class BinomialModel(DerivedModel):
         # Now we concatenate over outcomes.
         return np.concatenate([
             binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr1)
-            for idx in xrange(outcomes.shape[0])
+            for idx in range(outcomes.shape[0])
             ]) 
             
     def simulate_experiment(self, modelparams, expparams, repeat=1):
@@ -285,7 +287,7 @@ class BinomialModel(DerivedModel):
         )
         os = np.concatenate([
             sample()
-            for idx in xrange(repeat)
+            for idx in range(repeat)
         ], axis=0)
         return os[0,0,0] if os.size == 1 else os
         

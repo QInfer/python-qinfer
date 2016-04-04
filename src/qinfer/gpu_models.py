@@ -42,6 +42,8 @@ __all__ = [
 
 ## IMPORTS #####################################################################
 
+from builtins import range
+
 try:
     import pyopencl as cl
 except ImportError:
@@ -194,7 +196,7 @@ if __name__ == "__main__":
         
         tic = time.time()
         
-        for idx_exp in xrange(200):
+        for idx_exp in range(200):
             if not (idx_exp % 20):
                 print(idx_exp)
             expparams = np.array([(9 / 8) ** idx_exp])

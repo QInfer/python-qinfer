@@ -39,6 +39,8 @@ from __future__ import division
 
 ## IMPORTS ###################################################################
 
+from builtins import range
+
 from qinfer import Model
 
 import numpy as np
@@ -59,11 +61,11 @@ the zeroth basis element.
 def heisenberg_weyl_operators(d=2):
     w = np.exp(2 * np.pi * 1j / d)
     X = qt.Qobj([
-        qt.basis(d, (idx + 1) % d).data.todense().view(np.ndarray)[:, 0] for idx in xrange(d)
+        qt.basis(d, (idx + 1) % d).data.todense().view(np.ndarray)[:, 0] for idx in range(d)
     ])
     Z = qt.Qobj(np.diag(w ** np.arange(d)))
     
-    return [X**i * Z**j for i in xrange(d) for j in xrange(d)]
+    return [X**i * Z**j for i in range(d) for j in range(d)]
 
 ## CLASSES ###################################################################
 
@@ -240,7 +242,7 @@ class DiffusiveTomographyModel(TomographyModel):
 
         raw_modelparams = modelparams[:, None, :] + steps
         # raw_modelparams[:, :, :-1] = np.apply_along_axis(self.trunc_neg_eigs, 2, raw_modelparams[:, :, :-1])
-        for idx_experiment in xrange(len(expparams)):
+        for idx_experiment in range(len(expparams)):
             raw_modelparams[:, idx_experiment, :] = self.canonicalize(raw_modelparams[:, idx_experiment, :])
         return raw_modelparams.transpose((0, 2, 1))
 

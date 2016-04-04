@@ -34,6 +34,8 @@ from __future__ import division
 
 ## IMPORTS ###################################################################
 
+from builtins import range
+
 import itertools as it
 
 import numpy as np
@@ -84,7 +86,7 @@ def gell_mann_basis(dim):
 
     # The next dim basis elements should be diagonal,
     # with all by one element nonnegative.
-    for idx_basis in xrange(1, dim):
+    for idx_basis in range(1, dim):
         basis[idx_basis, :, :] = np.diag(np.concatenate([
             np.ones((idx_basis, )),
             [-idx_basis],
@@ -95,8 +97,8 @@ def gell_mann_basis(dim):
     # These rely on some index gymnastics I don't yet fully
     # understand.
     y_offset = dim * (dim - 1) // 2
-    for idx_i in xrange(1, dim):
-        for idx_j in xrange(idx_i):
+    for idx_i in range(1, dim):
+        for idx_j in range(idx_i):
             idx_basis = (idx_i - 1) * (idx_i) // 2 + idx_j + dim
             basis[idx_basis, [idx_i, idx_j], [idx_j, idx_i]] = 1 / np.sqrt(2)
             basis[idx_basis + y_offset, [idx_i, idx_j], [idx_j, idx_i]] = [1j / np.sqrt(2), -1j / np.sqrt(2)]
@@ -212,9 +214,9 @@ class TomographyBasis(object):
         dim = self.dim
 
         if isinstance(labels, str):
-            self.labels = map("{}_{{}}".format(labels).format, xrange(dim**2))
+            self.labels = map("{}_{{}}".format(labels).format, range(dim**2))
         else:
-            self.labels = map(r'B_{}'.format, xrange(dim**2)) if labels is None else labels
+            self.labels = map(r'B_{}'.format, range(dim**2)) if labels is None else labels
 
         self._flat = self.data.reshape((self.data.shape[0], -1))
 
@@ -271,7 +273,7 @@ class TomographyBasis(object):
             raise TypeError("Expected int or list index, not {}.".format(type(idx)))
 
     def __iter__(self):
-        for idx in xrange(len(self)):
+        for idx in range(len(self)):
             yield self[idx]
 
     def __len__(self):

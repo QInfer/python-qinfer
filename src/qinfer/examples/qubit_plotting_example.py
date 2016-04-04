@@ -59,6 +59,8 @@ from __future__ import division
 
 ## IMPORTS #####################################################################
 
+from builtins import range
+
 import numpy as np
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
@@ -153,7 +155,7 @@ if __name__ == "__main__":
     tic = time.time()
     
     # Get all Bayesian up in here.
-    for idx_exp in xrange(n_exp):
+    for idx_exp in range(n_exp):
         # Randomly choose one of the three experiments from expparams and make
         # an array containing just that experiment.
         thisexp = expparams[np.newaxis, np.random.randint(0, 3)]
@@ -284,8 +286,8 @@ if __name__ == "__main__":
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
             
-        for idx in xrange(x.shape[0]):
-            for idy in xrange(y.shape[1]):
+        for idx in range(x.shape[0]):
+            for idy in range(y.shape[1]):
                 x[idx, idy], y[idx, idy], z[idx, idy] = \
                     np.dot(
                         np.transpose(V),
@@ -324,8 +326,8 @@ if __name__ == "__main__":
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
             
-        for idx in xrange(x.shape[0]):
-            for idy in xrange(y.shape[1]):
+        for idx in range(x.shape[0]):
+            for idy in range(y.shape[1]):
                 x[idx, idy], y[idx, idy], z[idx, idy] = \
                     np.dot(
                         np.transpose(V),
@@ -352,8 +354,8 @@ if __name__ == "__main__":
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
             
-        for idx in xrange(x.shape[0]):
-            for idy in xrange(y.shape[1]):
+        for idx in range(x.shape[0]):
+            for idy in range(y.shape[1]):
                 x[idx, idy], y[idx, idy], z[idx, idy] = \
                     np.dot(
                         np.transpose(V),

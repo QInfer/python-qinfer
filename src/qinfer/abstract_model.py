@@ -39,6 +39,8 @@ __all__ = [
 
 ## IMPORTS ###################################################################
 
+from builtins import range
+
 import abc
     # Python standard library package for specifying abstract classes.
 import numpy as np
@@ -148,7 +150,7 @@ class Simulatable(object):
         Returns the names of the various model parameters admitted by this
         model, formatted as LaTeX strings.
         """
-        return map("x_{{{}}}".format, xrange(self.n_modelparams))
+        return map("x_{{{}}}".format, range(self.n_modelparams))
 
     ## CONCRETE METHODS ##
 
@@ -385,7 +387,7 @@ class Model(Simulatable):
         
         return np.concatenate([
             pr0 if outcomes[idx] == 0 else pr1
-            for idx in xrange(outcomes.shape[0])
+            for idx in range(outcomes.shape[0])
             ]) 
         
 class DifferentiableModel(Model):

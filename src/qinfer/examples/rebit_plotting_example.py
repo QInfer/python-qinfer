@@ -59,6 +59,8 @@ from __future__ import division
 
 ## IMPORTS #####################################################################
 
+from builtins import range
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -192,7 +194,7 @@ if __name__ == "__main__":
     tic = time.time()
     
     # Get all Bayesian up in here.
-    for idx_exp in xrange(n_exp):
+    for idx_exp in range(n_exp):
         # Randomly choose one of the three experiments from expparams and make
         # an array containing just that experiment.
         thisexp = expparams[np.newaxis, np.random.randint(0, 2)]
@@ -336,7 +338,7 @@ if __name__ == "__main__":
         x = rx * np.cos(u)
         y = ry * np.sin(u)
 
-        for idx in xrange(x.shape[0]):
+        for idx in range(x.shape[0]):
                 x[idx], y[idx] = \
                     np.dot(
                         np.transpose(V),
@@ -356,7 +358,7 @@ if __name__ == "__main__":
         x = rx * np.cos(u)
         y = ry * np.sin(u)
 
-        for idx in xrange(x.shape[0]):
+        for idx in range(x.shape[0]):
                 x[idx], y[idx] = \
                     np.dot(
                         np.transpose(V),

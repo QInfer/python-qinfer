@@ -39,6 +39,8 @@ __all__ = [
 
 ## IMPORTS ####################################################################
 
+from builtins import range
+
 import warnings
 
 import numpy as np
@@ -128,7 +130,7 @@ def particle_clusters(
         
     # Loop over clusters, calling the secondary resampler for each.
     # The loop should include -1 if noise was found.
-    for idx_cluster in xrange(-1 if is_noise else 0, n_clusters):
+    for idx_cluster in range(-1 if is_noise else 0, n_clusters):
         # Grab a boolean array identifying the particles in a  particular
         # cluster.
         this_cluster = cluster_labels == idx_cluster
