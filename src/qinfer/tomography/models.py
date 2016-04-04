@@ -132,7 +132,7 @@ class TomographyModel(Model):
     @property
     def modelparam_names(self):
         return list(map(
-            ur'\langle\!\langle{} | \rho\rangle\!\rangle'.format,
+            u'\langle\!\langle{} | \rho\rangle\!\rangle'.format,
             self.basis.labels
         ))
 

@@ -225,7 +225,7 @@ class LiuWestResampler(object):
             raise ResamplerError(
                 "Infinite error in computing the square root of the "
                 "covariance matrix. Check that n_ess is not too small.")
-    	S = np.real(h * S)
+        S = np.real(h * S)
         n_ms, n_mp = l.shape
         
         new_locs = np.empty(l.shape)        

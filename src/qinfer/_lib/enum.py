@@ -13,11 +13,11 @@
 from __future__ import absolute_import
 
 from builtins import range
+from future.utils import iteritems
 
 
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
-    reverse = dict((value, key) for key, value in enums.iteritems())
+    reverse = dict((value, key) for key, value in iteritems(enums))
     enums['reverse_mapping'] = reverse
     return type('Enum', (), enums)
-

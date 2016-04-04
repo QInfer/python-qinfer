@@ -152,7 +152,7 @@ def _format_float_as_latex(c, tol=1e-10):
     elif 1e-3 <= abs(c) <= 1e3:
         return u"{:0.3f}".format(c)
     else:
-        return (u"{:0.3e}".format(c)).replace("e", ur"\times10^{") + "}"
+        return (u"{:0.3e}".format(c)).replace("e", u"\times10^{") + "}"
 
 
 def _format_complex_as_latex(c, tol=1e-10):
@@ -160,9 +160,9 @@ def _format_complex_as_latex(c, tol=1e-10):
         # Purely real.
         return _format_float_as_latex(c.real, tol=tol)
     elif abs(c.real) <= tol:
-        return _format_float_as_latex(c.imag, tol=tol) + ur"\mathrm{i}"
+        return _format_float_as_latex(c.imag, tol=tol) + u"\mathrm{i}"
     else:
-        return ur"{} + {}\mathrm{{i}}".format(
+        return u"{} + {}\mathrm{{i}}".format(
             _format_float_as_latex(c.real, tol=tol),
             _format_float_as_latex(c.imag, tol=tol)
         )
@@ -227,7 +227,7 @@ class TomographyBasis(object):
     def _repr_html_(self):
 
         if self.dim <= 10:
-            element_strings = [ur"""
+            element_strings = [u"""
                 {label} =                   
                 \left(\begin{{matrix}}
                     {rows}
@@ -242,7 +242,7 @@ class TomographyBasis(object):
                 for element, label in zip(self.data, self.labels)
             ]
 
-            return ur"""
+            return u"""
             <strong>TomographyBasis:</strong>
                 dims=${dims}$
             <p>
@@ -251,17 +251,17 @@ class TomographyBasis(object):
                 \end{{equation}}
             </p>
             """.format(
-                dims=ur"\times".join(map(str, self.dims)),
+                dims=u"\times".join(map(str, self.dims)),
                 labels=u",".join(self.labels),
                 elements=u",".join(element_strings)
             )
         else:
-            return ur"""
+            return u"""
             <strong>TomographyBasis:</strong>
                 dims=${dims}$,
                 labels=$\\{{{labels}\\}}$
             """.format(
-                dims=ur"\times".join(map(str, self.dims)),
+                dims=u"\times".join(map(str, self.dims)),
                 labels=u",".join(self.labels)
             )
 
