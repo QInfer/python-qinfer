@@ -63,7 +63,7 @@ def identity(arg): return arg
 
 OptimizationAlgorithms = enum.enum("NULL", "CG", "NCG", "NELDER_MEAD")
 
-class Heuristic(with_metaclass(abc.ABCMeta, object)):
+class Heuristic(with_metaclass(ABCMeta, object)):
     r"""
     Defines a heuristic used for selecting new experiments without explicit
     optimization of the risk. As an example, the :math:`t_k = (9/8)^k`
