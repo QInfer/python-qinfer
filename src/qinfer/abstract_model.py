@@ -156,18 +156,18 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
     ## CONCRETE METHODS ##
 
     def _repr_html_(self, suppress_base=False):
-        s = ur"""
+        s = r"""
             <strong>{type.__name__}</strong> at 0x{id:0x}: {n_mp} model parameters
         """.format(
             id=id(self), type=type(self),
             n_mp=self.n_modelparams
         )
         if not suppress_base and self.model_chain:
-            s += ur"""<br>
+            s += r"""<br>
             <p>Model chain:</p>
             <ul>{}
             </ul>
-            """.format(ur"\n".join(
+            """.format(r"\n".join(
                 u"<li>{}</li>".format(model._repr_html_(suppress_base=True))
                 for model in self.model_chain
             ))
