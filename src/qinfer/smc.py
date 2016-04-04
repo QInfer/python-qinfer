@@ -977,7 +977,7 @@ class SMCUpdater(Distribution):
             param_slice = np.s_[:]
 
         tick_labels = (
-            range(len(self.model.modelparam_names[param_slice])),
+            list(range(len(self.model.modelparam_names[param_slice]))),
             tick_labels
             if tick_labels is not None else
             map(u"${}$".format, self.model.modelparam_names[param_slice])

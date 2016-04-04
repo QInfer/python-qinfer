@@ -10,6 +10,10 @@
 #     http://stackoverflow.com/a/1695250
 # by Alec Thomas.
 ##
+from __future__ import absolute_import
+
+from builtins import range
+
 
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
