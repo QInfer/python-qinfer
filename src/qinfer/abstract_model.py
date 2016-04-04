@@ -40,6 +40,7 @@ __all__ = [
 ## IMPORTS ###################################################################
 
 from builtins import range, map
+from future.utils import with_metaclass
 
 import abc
     # Python standard library package for specifying abstract classes.
@@ -47,8 +48,8 @@ import numpy as np
     
 ## CLASSES ###################################################################
 
-class Simulatable(object):
-    __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
+class Simulatable(with_metaclass(abc.ABCMeta, object)):
+
     # TODO: docstring!
     
     def __init__(self):
@@ -390,8 +391,7 @@ class Model(Simulatable):
             for idx in range(outcomes.shape[0])
             ]) 
         
-class DifferentiableModel(Model):
-    __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
+class DifferentiableModel(with_metaclass(abc.ABCMeta, Model)):
     
     @abc.abstractmethod
     def score(self, outcomes, modelparams, expparams, return_L=False):

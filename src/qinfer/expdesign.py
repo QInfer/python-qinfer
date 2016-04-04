@@ -42,6 +42,8 @@ __all__ = [
 
 ## IMPORTS ####################################################################
 
+from future.utils import with_metaclass
+
 import numpy as np
 
 # for BCRB and BED classes
@@ -61,7 +63,7 @@ def identity(arg): return arg
 
 OptimizationAlgorithms = enum.enum("NULL", "CG", "NCG", "NELDER_MEAD")
 
-class Heuristic(object):
+class Heuristic(with_metaclass(abc.ABCMeta, object)):
     r"""
     Defines a heuristic used for selecting new experiments without explicit
     optimization of the risk. As an example, the :math:`t_k = (9/8)^k`
@@ -73,8 +75,7 @@ class Heuristic(object):
     Note that the design of this abstract base class is still being decided,
     such that it is a placeholder for now.
     """
-    __metaclass__ = ABCMeta
-    
+
     def __init__(self, updater):
         self._updater = updater
     

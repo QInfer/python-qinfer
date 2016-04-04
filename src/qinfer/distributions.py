@@ -29,6 +29,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 from builtins import range
+from future.utils import with_metaclass
 
 import numpy as np
 import scipy.stats as st
@@ -74,13 +75,12 @@ def scipy_dist(name, *args, **kwargs):
 
 ## ABSTRACT CLASSES AND MIXINS ###############################################
 
-class Distribution(object):
+class Distribution(with_metaclass(abc.ABCMeta, object)):
     """
     Abstract base class for probability distributions on one or more random
     variables.
     """
-    __metaclass__ = abc.ABCMeta
-    
+
     @abc.abstractproperty
     def n_rvs(self):
         """
@@ -102,12 +102,11 @@ class Distribution(object):
         """
         pass
 
-class SingleSampleMixin(object):
+class SingleSampleMixin(with_metaclass(abc.ABCMeta, object)):
     """
     Mixin class that extends a class so as to generate multiple samples
     correctly, given a method ``_sample`` that generates one sample at a time.    
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def _sample(self):
