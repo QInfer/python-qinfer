@@ -67,13 +67,17 @@ class DirectViewParallelizedModel(DerivedModel):
     r"""
     Given an instance of a `Model`, parallelizes execution of that model's
     likelihood by breaking the ``modelparams`` array into segments and
-    executing a segment on each member of a :ref:`~IPython.parallel.DirectView`.
+    executing a segment on each member of a :class:`~ipyparallel.DirectView`.
     
     This :ref:`Model` assumes that it has ownership over the DirectView, such
     that no other processes will send tasks during the lifetime of the Model.
     
-    TODO: describe parameters.
-
+    :param qinfer.Model serial_model: Model to be parallelized. This
+        model will be distributed to the engines in the direct view, such that
+        the model must support pickling.
+    :param ipyparallel.DirectView direct_view: Direct view onto the engines
+        that will be used to parallelize evaluation of the model's likelihood
+        function.
     :param bool purge_client: If ``True``, then this model will purge results
         and metadata from the IPython client whenever the model cache is cleared.
         This is useful for solving memory leaks caused by very large numbers of
@@ -98,7 +102,7 @@ class DirectViewParallelizedModel(DerivedModel):
         self._dv = direct_view
         self._purge_client = purge_client
         self._serial_threshold = (
-            10 * len(direct_view)
+            10 * self.n_engines
             if serial_theshold is None else int(serial_theshold)
         )
         
@@ -136,11 +140,21 @@ class DirectViewParallelizedModel(DerivedModel):
 
     @property
     def n_engines(self):
+        """
+        The number of engines seen by the direct view owned by this parallelized
+        model.
+
+        :rtype int:
+        """
         return len(self._dv) if self._dv is not None else 0
             
     ## METHODS ##
     
     def clear_cache(self):
+        """
+        Clears any cache associated with the serial model and the engines
+        seen by the direct view.
+        """
         self.underlying_model.clear_cache()
         try:
             logger.info('DirectView results has {} items. Clearing.'.format(
@@ -155,6 +169,11 @@ class DirectViewParallelizedModel(DerivedModel):
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
+        """
+        Returns the likelihood for the underlying (serial) model, distributing
+        the model parameter array across the engines controlled by this
+        parallelized model.
+        """
         super(DirectViewParallelizedModel, self).likelihood(outcomes, modelparams, expparams)
 
         if modelparams.shape[1] <= self._serial_threshold:

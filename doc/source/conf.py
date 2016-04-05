@@ -333,7 +333,8 @@ extlinks = {
 intersphinx_mapping = {
     'http://docs.python.org/': None,
     'numpy': ('http://docs.scipy.org/doc/numpy',None),
-    'IPython': ('http://ipython.org/ipython-doc/stable/', None)
+    'IPython': ('http://ipython.org/ipython-doc/stable/', None),
+    'ipyparallel': ('http://ipyparallel.readthedocs.org/en/latest/', None)
 }
 
 autodoc_member_order = 'bysource'
