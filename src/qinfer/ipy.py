@@ -44,7 +44,9 @@ except:
 
 class IPythonProgressBar(object):
     """
-    Represents a progress bar as an IPython widget.
+    Represents a progress bar as an IPython widget. If the widget
+    is closed by the user, or by calling ``finalize()``, any further
+    operations will be ignored.
 
     .. note::
 
@@ -60,12 +62,21 @@ class IPythonProgressBar(object):
     @property
     def description(self):
         """
-        Text description for the progress bar widget.
+        Text description for the progress bar widget,
+        or ``None`` if the widget has been closed.
+
+        :rtype: `str`
         """
-        return self.widget.description
+        try:
+            return self.widget.description
+        except:
+            return None
     @description.setter
     def description(self, value):
-        self.widget.description = value
+        try:
+            self.widget.description = value
+        except:
+            pass
 
     def start(self, max):
         """
@@ -73,18 +84,26 @@ class IPythonProgressBar(object):
 
         :param float max: Maximum value of the progress bar.
         """
-        self.widget.max = max
-        display(self.widget)
+        try:
+            self.widget.max = max
+            display(self.widget)
+        except:
+            pass
 
     def update(self, n):
         """
         Updates the progress bar to display a new value.
         """
-        self.widget.value = n
+        try:
+            self.widget.value = n
+        except:
+            pass
 
     def finished(self):
         """
-        Destroys the progress bar. Further calls to update()
-        will result in exceptions.
+        Destroys the progress bar.
         """
-        self.widget.close()
+        try:
+            self.widget.close()
+        except:
+            pass
