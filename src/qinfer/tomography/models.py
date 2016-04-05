@@ -36,6 +36,7 @@
 
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 
 ## IMPORTS ###################################################################
 
@@ -132,7 +133,7 @@ class TomographyModel(Model):
     @property
     def modelparam_names(self):
         return list(map(
-            u'\langle\!\langle{} | \rho\rangle\!\rangle'.format,
+            r'\langle\!\langle{} | \rho\rangle\!\rangle'.format,
             self.basis.labels
         ))
 
