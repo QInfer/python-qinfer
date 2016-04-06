@@ -94,7 +94,7 @@ class StateTomographyHeuristic(Heuristic):
             self._next_measurement()
         )
 
-        for field, value in self._other_fields.iteritems():
+        for field, value in self._other_fields.items():
                 expparams[field] = value
         
         return expparams
@@ -174,7 +174,7 @@ class ProcessTomographyHeuristic(Heuristic):
             np.sqrt(self._dim) * qt.tensor(*self._next_prepmeas())
         )
 
-        for field, value in self._other_fields.iteritems():
+        for field, value in self._other_fields.items():
                 expparams[field] = value
         
         return expparams
@@ -235,7 +235,7 @@ class BestOfKMetaheuristic(Heuristic):
         
         expparams = expparams[np.argmax(cov_expectations), None]
 
-        for field, value in self._other_fields.iteritems():
+        for field, value in self._other_fields.items():
                 expparams[field] = value
                 
         return expparams
