@@ -40,7 +40,7 @@ Options:
                    supported. [default: 1]
     --parallelize  If set, trials will be parallelized over available
                    cores using ipyparallel. [default: False]
-    --n-trials=N   Number of simulated runs to average over. [default: 1000]
+    --n-trials=N   Number of simulated runs to average over. [default: 40]
 """
 
 ## FEATURES ####################################################################
@@ -103,7 +103,7 @@ if __name__ == "__main__":
             import ipyparallel
             client = ipyparallel.Client()
             lbview = client.load_balanced_view()
-            args = {'apply': lbview.apply}
+            perf_args = {'apply': lbview.apply}
             print("Successfully connected to {} engines.".format(len(client)))
 
         except Exception as ex:
@@ -112,13 +112,16 @@ if __name__ == "__main__":
                 "Serially evaluating instead.".format(ex)
             )
             parallelize = False
+            perf_args = {}
+    else:
+        perf_args = {}
 
     performance = perf_test_multiple(
         n_trials,
         model, n_particles, prior,
         n_exp, heuristic_class,
         progressbar=qt.ui.EnhancedTextProgressBar,
-        **args
+        **perf_args
     )
 
     plt.plot(performance['loss'].mean(axis=0))
