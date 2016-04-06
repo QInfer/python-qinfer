@@ -38,8 +38,14 @@ from builtins import map
 
 import numpy as np
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
+except ImportError:
+    import warnings
+    warnings.warn("Could not import matplotlib.")
+    plt = None
+    Ellipse = None
 
 # Since the rest of QInfer does not require QuTiP,
 # we need to import it in a way that we don't propagate exceptions if QuTiP
