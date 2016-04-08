@@ -21,22 +21,21 @@ across multiple nodes using standard parallelization tools.
 Distributed Computation with IPython
 ------------------------------------
 
-`IPython`_ provides facilities for parallelizing computation across multiple
-cores and/or nodes via the :mod:`IPython.parallel` package. IPython's
-parallelization support separates computation into a *controller* that is
-responsible for one or more *engines*, and a *client* that sends commands to
-these engines via the controller. **QInfer** can use a client to send
-likelihood evaluation calls to engines, via the
-:class:`DirectViewParallelizedModel` class.
+The `ipyparallel`_ package (previously ``IPython.parallel``) provides
+facilities for parallelizing computation across multiple cores and/or nodes.
+`ipyparallel`_ separates computation into a *controller* that is responsible
+for one or more *engines*, and a *client* that sends commands to these engines
+via the controller. **QInfer** can use a client to send likelihood evaluation
+calls to engines, via the :class:`DirectViewParallelizedModel` class.
 
-This class takes a :class:`~IPython.parallel.client.view.DirectView` onto one
+This class takes a :class:`~ipyparallel.DirectView` onto one
 or more engines, typically obtained with an expression similar to
-``client[:]``, and splits calls to :meth:`~qinfer.smc.SMCUpdater.likelihood`
-across the engines accessible from the `DirectView`.
+``client[:]``, and splits calls to :meth:`~qinfer.Model.likelihood`
+across the engines accessible from the :class:`~ipyparallel.DirectView`.
 
->>> from IPython.parallel import Client # doctest: +SKIP
->>> from qinfer.test_models import SimplePrecessionModel # doctest: +SKIP
->>> from qinfer.parallel import DirectViewParallelizedModel # doctest: +SKIP
+>>> from ipyparallel import Client # doctest: +SKIP
+>>> from qinfer import SimplePrecessionModel # doctest: +SKIP
+>>> from qinfer import DirectViewParallelizedModel # doctest: +SKIP
 >>> c = Client() # doctest: +SKIP
 >>> serial_model = SimplePrecessionModel() # doctest: +SKIP
 >>> parallel_model = DirectViewParallelizedModel(serial_model, c[:]) # doctest: +SKIP
@@ -54,7 +53,27 @@ per-experiment or per-outcome cost.
     over engines, such that the behavior is unpredictable if any further
     commands are sent to the engines from outside the class.
 
-.. _IPython: http://ipython.org/
+Distributed Performance Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As an alternative to distributing a single likelihood call across multiple
+engines, **QInfer** also supports distributed performance testing. Under this
+model, each engine performs an independent trial of an estimation procedure,
+which is then collected by the client process. Distributed performance testing
+is implemented using the :func:`~qinfer.perf_test_multiple` function, with the
+keyword argument ``apply`` provided. For instance, the `ipyparallel`_ package
+offers a :class:`~ipyparallel.LoadBalancedView` class whose
+:meth:`~ipyparallel.LoadBalancedView.apply` method sends tasks to engines
+according to their respective loads.
+
+>>> lbview = client.load_balanced_view() # doctest: +SKIP
+>>> performance = qi.perf_test_multiple(
+...     100, serial_model, 6000, prior, 200, heuristic_class,
+...     apply=lbview.apply
+... ) # doctest: +SKIP
+
+Examples of both approaches to parallelization are provided as a
+`Jupyter Notebook <http://nbviewer.jupyter.org/github/QInfer/python-qinfer/blob/master/examples/parallelization.ipynb>`_.
 
 GPGPU-based Likelihood Computation with PyOpenCL
 ------------------------------------------------
@@ -71,5 +90,6 @@ Note that for sufficiently fast models, the overhead of copying data between
 the CPU and GPU may overwhelm any speed benefits obtained by this
 parallelization.
 
+.. _ipyparallel: https://ipyparallel.readthedocs.org/en/latest/
 .. _PyOpenCL: http://documen.tician.de/pyopencl/
 
