@@ -153,19 +153,20 @@ class Simulatable(object):
 
     def _repr_html_(self, suppress_base=False):
         s = ur"""
-            <strong>{type.__name__}</strong> at 0x{id:0x}: {n_mp} model parameters
+            <strong>{type.__name__}</strong> at 0x{id:0x}: {n_mp} model parameter{plural}
         """.format(
             id=id(self), type=type(self),
-            n_mp=self.n_modelparams
+            n_mp=self.n_modelparams,
+            plural="" if self.n_modelparams == 1 else "s"
         )
         if not suppress_base and self.model_chain:
             s += ur"""<br>
             <p>Model chain:</p>
             <ul>{}
             </ul>
-            """.format(ur"\n".join(
+            """.format(u"\n".join(
                 u"<li>{}</li>".format(model._repr_html_(suppress_base=True))
-                for model in self.model_chain
+                for model in reversed(self.model_chain)
             ))
         return s
     
