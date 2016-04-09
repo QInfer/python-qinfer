@@ -157,10 +157,11 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
 
     def _repr_html_(self, suppress_base=False):
         s = r"""
-            <strong>{type.__name__}</strong> at 0x{id:0x}: {n_mp} model parameters
+            <strong>{type.__name__}</strong> at 0x{id:0x}: {n_mp} model parameter{plural}
         """.format(
             id=id(self), type=type(self),
-            n_mp=self.n_modelparams
+            n_mp=self.n_modelparams,
+            plural="" if self.n_modelparams == 1 else "s"
         )
         if not suppress_base and self.model_chain:
             s += r"""<br>
@@ -169,7 +170,7 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
             </ul>
             """.format(r"\n".join(
                 u"<li>{}</li>".format(model._repr_html_(suppress_base=True))
-                for model in self.model_chain
+                for model in reversed(self.model_chain)
             ))
         return s
     

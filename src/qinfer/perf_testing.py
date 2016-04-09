@@ -275,10 +275,15 @@ def perf_test_multiple(
     task = None
     thread = None
     wake_event = None
+    prog = None
+
+    try:
+        name = getattr(type(model), '__name__', 'unknown model')
+    except:
+        name = 'unknown model'
 
     if tskmon_client is not None:
         try:
-            name = getattr(type(model), '__name__', 'unknown model')
             task = tskmon_client.new_task(
                 description="QInfer Performance Testing",
                 status="Testing {}...".format(name),
@@ -298,6 +303,10 @@ def perf_test_multiple(
         if progressbar is not None:
             prog = progressbar()
             prog.start(n_trials)
+            if hasattr(prog, 'description'):
+                prog.description = 'Performance testing {} (0 / {})...'.format(
+                    name, n_trials
+                )
 
         # Make sure that everything we do catches NaNs as exceptions,
         # such that we can correctly record them as failures.
@@ -311,7 +320,13 @@ def perf_test_multiple(
                 #        avoid right now.
                 try:
                     performance[idx, :] = result.get()
-                    prog.update(idx)
+                    if prog is not None:
+                        prog.update(idx)
+                        if hasattr(prog, 'description'):
+                            prog.description = 'Performance testing {} ({} / {})...'.format(
+                                name, idx, n_trials
+                            )
+
                 except:
                     if allow_failures:
                         performance.mask[idx, :] = True
@@ -338,6 +353,7 @@ def perf_test_multiple(
             except Exception as ex:
                 print("Exception cleaning up tskmon task.", ex)
 
-        prog.finished()
+        if prog is not None:
+            prog.finished()
 
     return performance
