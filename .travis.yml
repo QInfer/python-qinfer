@@ -19,9 +19,10 @@ before_install:
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels scikit-learn
   - pip install -r requirements.txt
-  - cd ./src/qinfer
+  - cd ./src
 script:
-  - py.test --cov=.
+  - py.test --cov=qinfer
+  - pylint --py3k qinfer/
 
 after_success:
   - coveralls
