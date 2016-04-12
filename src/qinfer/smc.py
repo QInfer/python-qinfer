@@ -636,13 +636,14 @@ class SMCUpdater(Distribution):
         # "o" refers to an outcome, "p" to a particle, and
         # "i" to a model parameter.
         # Thus, mu[o,i] is the sum over all particles of w[o,p] * x[i,p].
-        mu = np.einsum('op,ip', w, xs)
-        
+    
+        mu = np.transpose(np.tensordot(w,xs,axes=(1,1)))
         var = (
             # This sum is a reduction over the particle index and thus
             # represents an expectation value over the diagonal of the
             # outer product $x . x^T$.
-            np.einsum('op,ip', w, xs**2)
+            
+            np.transpose(np.tensordot(w,xs**2,axes=(1,1)))
             # We finish by subracting from the above expectation value
             # the diagonal of the outer product $mu . mu^T$.
             - mu**2).T
