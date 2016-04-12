@@ -1,4 +1,5 @@
 [report]
 omit =
-    src/qinfer/_lib/*
-    src/qinfer/experimental/*
+    qinfer/_lib/*
+    qinfer/experimental/*
+    qinfer/examples/*
