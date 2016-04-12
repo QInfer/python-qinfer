@@ -12,8 +12,11 @@ import qinfer
 
 from distutils.core import setup
 
-with open('README.rst', 'r') as readme:
-    long_description = readme.read()
+try:
+    with open('README.rst', 'r') as readme:
+        long_description = readme.read()
+except:
+    long_description = ''
 
 setup(
     name='QInfer',
