@@ -30,6 +30,8 @@ model to the pure-NumPy model implemented in the QInfer project.
 
 ## FEATURES ####################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## EXPORTS #####################################################################
@@ -39,6 +41,8 @@ __all__ = [
 ]
 
 ## IMPORTS #####################################################################
+
+from builtins import range
 
 try:
     import pyopencl as cl
@@ -192,10 +196,10 @@ if __name__ == "__main__":
         
         tic = time.time()
         
-        for idx_exp in xrange(200):
+        for idx_exp in range(200):
             if not (idx_exp % 20):
-                print idx_exp
+                print(idx_exp)
             expparams = np.array([(9 / 8) ** idx_exp])
             updater.update(simple_model.simulate_experiment(true, expparams), expparams)
             
-        print model, updater.est_mean(), true, time.time() - tic
+        print(model, updater.est_mean(), true, time.time() - tic)

@@ -26,9 +26,12 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## IMPORTS ####################################################################
+
+from builtins import range
 
 import numpy as np
     
@@ -94,7 +97,7 @@ class ScoreMixin(object):
         
         # just loop over the model parameter as there usually won't be so many
         # of them that vectorizing would be worth the effort.
-        for mp_idx in xrange(self.n_modelparams):
+        for mp_idx in range(self.n_modelparams):
             h_perturb[:] = np.zeros(modelparams.shape)
             h_perturb[:, mp_idx] = self.h[mp_idx]
             # use the chain rule since taking the numerical derivative of a 

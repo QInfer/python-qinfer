@@ -27,6 +27,7 @@
 # In keeping with PEP-396, we define a version number of the form
 # {major}.{minor}[.{postrelease}]{prerelease-tag}
 
+from __future__ import absolute_import
 __version__ = '1.0b1'
 
 ## IMPORTS ####################################################################

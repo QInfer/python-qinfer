@@ -6,6 +6,8 @@
  * Copyright (c) 2013 Vladimir Keleshev, vladimir@keleshev.com
 
 """
+from __future__ import print_function
+from __future__ import absolute_import
 import sys
 import re
 
@@ -478,7 +480,7 @@ def formal_usage(printable_usage):
 
 def extras(help, version, options, doc):
     if help and any((o.name in ('-h', '--help')) and o.value for o in options):
-        print(doc.strip("\n"))
+        print((doc.strip("\n")))
         sys.exit()
     if version and any(o.name == '--version' and o.value for o in options):
         print(version)

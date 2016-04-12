@@ -2,9 +2,11 @@ numpy
 scipy
 scikit-learn
 ipython
+future>=0.15
 
 pytest
 pytest-cov
 pytest-xdist
 
 coveralls
+pylint

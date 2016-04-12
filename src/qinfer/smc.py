@@ -25,6 +25,7 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division, unicode_literals
 
 ## ALL ########################################################################
@@ -39,11 +40,13 @@ __all__ = [
 
 ## IMPORTS ####################################################################
 
+from builtins import map, zip
+
 import warnings
 
 import numpy as np
 
-from itertools import izip
+# from itertools import zip
 
 from scipy.spatial import Delaunay
 import scipy.linalg as la
@@ -464,7 +467,7 @@ class SMCUpdater(Distribution):
             raise ValueError("The number of outcomes and experiments must match.")
 
         # Loop over experiments and update one at a time.
-        for idx_exp, (outcome, experiment) in enumerate(izip(iter(outcomes), iter(expparams))):
+        for idx_exp, (outcome, experiment) in enumerate(zip(iter(outcomes), iter(expparams))):
             self.update(outcome, experiment, check_for_resample=False)
             if (idx_exp + 1) % resample_interval == 0:
                 self._maybe_resample()
@@ -977,10 +980,10 @@ class SMCUpdater(Distribution):
             param_slice = np.s_[:]
 
         tick_labels = (
-            range(len(self.model.modelparam_names[param_slice])),
+            list(range(len(self.model.modelparam_names[param_slice]))),
             tick_labels
             if tick_labels is not None else
-            map(u"${}$".format, self.model.modelparam_names[param_slice])
+            list(map(u"${}$".format, self.model.modelparam_names[param_slice]))
         )
 
         cov = self.est_covariance_mtx()[param_slice, param_slice]
