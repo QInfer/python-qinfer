@@ -21,7 +21,7 @@ install:
   - pip install -r requirements.txt
   - cd ./src
 script:
-  - py.test --cov=qinfer
+  - py.test --cov-config .coveragerc --cov=qinfer
   - pylint --py3k qinfer/
 
 after_success:
