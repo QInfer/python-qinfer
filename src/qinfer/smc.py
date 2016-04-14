@@ -1295,14 +1295,14 @@ class SMCUpdaterBCRB(SMCUpdater):
                 axis=0
             ) / self.n_particles
         else:
-            self.current_bim = kwargs['initial_bim']
+            self._current_bim = kwargs['initial_bim']
             
         # Also track the adaptive BIM, if we've been asked to.
         if "adaptive" in kwargs and kwargs["adaptive"]:
             self._track_adaptive = True
             # Both the prior- and posterior-averaged BIMs start
             # from the prior.
-            self.adaptive_bim = self.current_bim.copy()
+            self._adaptive_bim = self.current_bim
         else:
             self._track_adaptive = False
     
@@ -1338,28 +1338,110 @@ class SMCUpdaterBCRB(SMCUpdater):
             bim = np.einsum("m,ijme->ije", modelweights, fi)
             
         return bim
-        
+    
+
+    @property
+    def current_bim(self):
+        """
+        Returns a copy of the current Bayesian Information Matrix (BIM)
+        of the :class:`SMCUpdaterBCRB`
+
+        :returns: `np.array` of shape [idx_modelparams,idx_modelparams]
+        """
+        return np.copy(self._current_bim)
+
+    @property
+    def adapative_bim(self):
+        """
+        Returns a copy of the adaptive Bayesian Information Matrix (BIM)
+        of the :class:`SMCUpdaterBCRB`. Will raise an error if 
+        `method`:`SMCUpdaterBCRB.track_adaptive` is `False`. 
+
+        :returns: `np.array` of shape [idx_modelparams,idx_modelparams]
+        """
+        if not self.track_adaptive:
+            raise ValueError('To track the adaptive_bim, the adaptive keyword argument'
+                'must be set True when initializing class.')
+        return np.copy(self._adapative_bim)
+    
+    @property
+    def track_adaptive(self):
+        """
+        If `True` the :class:`SMCUpdaterBCRB` will track the adaptive BIM. Set by 
+        keyword argument `adaptive` to :method:`SMCUpdaterBCRB.__init__`.
+
+        :returns: `bool`
+        """
+        return self._track_adaptive
+    
+    
+    
+    
     def prior_bayes_information(self, expparams, n_samples=None):
+        """
+        Evaluates the local Bayesian Information Matrix (BIM) for a set of 
+        samples from the SMC particle set, with uniform weights. 
+
+        :param expparams: Parameters describing the experiment that was
+            performed.
+        :type expparams: :class:`~numpy.ndarray` of dtype given by the
+            :attr:`~qinfer.abstract_model.Model.expparams_dtype` property
+            of the underlying model
+
+        :param n_samples int: Number of samples to draw from particle distribution,
+                        to evaluate BIM over. 
+        """
+
         if n_samples is None:
             n_samples = self.particle_locations.shape[0]
         return self._bim(self.prior.sample(n_samples), expparams)
         
     def posterior_bayes_information(self, expparams):
+        """
+        Evaluates the local Bayesian Information Matrix (BIM) over all particles
+        of the current posterior distribution with corresponding weights. 
+
+        :param expparams: Parameters describing the experiment that was
+            performed.
+        :type expparams: :class:`~numpy.ndarray` of dtype given by the
+            :attr:`~qinfer.abstract_model.Model.expparams_dtype` property
+            of the underlying model
+
+        :param n_samples int: Number of samples to draw from particle distribution,
+                        to evaluate BIM over. 
+        """
         return self._bim(
             self.particle_locations, expparams,
             modelweights=self.particle_weights
         )
         
     def update(self, outcome, expparams):
+        """
+        Given an experiment and an outcome of that experiment, updates the
+        posterior distribution to reflect knowledge of that experiment.
+
+        After updating, resamples the posterior distribution if necessary.
+
+        :param int outcome: Label for the outcome that was observed, as defined
+            by the :class:`~qinfer.abstract_model.Model` instance under study.
+        :param expparams: Parameters describing the experiment that was
+            performed.
+        :type expparams: :class:`~numpy.ndarray` of dtype given by the
+            :attr:`~qinfer.abstract_model.Model.expparams_dtype` property
+            of the underlying model
+        :param bool check_for_resample: If :obj:`True`, after performing the
+            update, the effective sample size condition will be checked and
+            a resampling step may be performed.
+        """
         # Before we update, we need to commit the new Bayesian information
         # matrix corresponding to the measurement we just made.
-        self.current_bim += self.prior_bayes_information(expparams)[:, :, 0]
+        self._current_bim += self.prior_bayes_information(expparams)[:, :, 0]
         
         # If we're tracking the information content accessible to adaptive
         # algorithms, then we must use the current posterior as the prior
         # for the next step, then add that accordingly.
         if self._track_adaptive:
-            self.adaptive_bim += self.posterior_bayes_information(expparams)[:, :, 0]
+            self._adaptive_bim += self.posterior_bayes_information(expparams)[:, :, 0]
         
         # We now can update as normal.
         SMCUpdater.update(self, outcome, expparams)
