@@ -1290,7 +1290,7 @@ class SMCUpdaterBCRB(SMCUpdater):
         #       modelparams[i, :].
         if 'initial_bim' not in kwargs or kwargs['initial_bim'] is None:
             gradients = self.prior.grad_log_pdf(self.particle_locations)
-            self.current_bim = np.sum(
+            self._current_bim = np.sum(
                 gradients[:, :, np.newaxis] * gradients[:, np.newaxis, :],
                 axis=0
             ) / self.n_particles
@@ -1351,7 +1351,7 @@ class SMCUpdaterBCRB(SMCUpdater):
         return np.copy(self._current_bim)
 
     @property
-    def adapative_bim(self):
+    def adaptive_bim(self):
         """
         Returns a copy of the adaptive Bayesian Information Matrix (BIM)
         of the :class:`SMCUpdaterBCRB`. Will raise an error if 
@@ -1362,7 +1362,7 @@ class SMCUpdaterBCRB(SMCUpdater):
         if not self.track_adaptive:
             raise ValueError('To track the adaptive_bim, the adaptive keyword argument'
                 'must be set True when initializing class.')
-        return np.copy(self._adapative_bim)
+        return np.copy(self._adaptive_bim)
     
     @property
     def track_adaptive(self):
@@ -1415,7 +1415,7 @@ class SMCUpdaterBCRB(SMCUpdater):
             modelweights=self.particle_weights
         )
         
-    def update(self, outcome, expparams):
+    def update(self, outcome, expparams,check_for_resample=True):
         """
         Given an experiment and an outcome of that experiment, updates the
         posterior distribution to reflect knowledge of that experiment.
@@ -1444,7 +1444,7 @@ class SMCUpdaterBCRB(SMCUpdater):
             self._adaptive_bim += self.posterior_bayes_information(expparams)[:, :, 0]
         
         # We now can update as normal.
-        SMCUpdater.update(self, outcome, expparams)
+        SMCUpdater.update(self, outcome, expparams,check_for_resample=True)
         
 
 class SMCUpdaterABC(SMCUpdater):
