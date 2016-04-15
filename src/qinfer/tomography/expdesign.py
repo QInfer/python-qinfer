@@ -35,9 +35,12 @@
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## IMPORTS ###################################################################
+
+from builtins import range
 
 from qinfer import Heuristic
 from qinfer.tomography.bases import pauli_basis
@@ -67,11 +70,11 @@ except ImportError:
 def heisenberg_weyl_operators(d=2):
     w = np.exp(2 * np.pi * 1j / d)
     X = qt.Qobj([
-        qt.basis(d, (idx + 1) % d).data.todense().view(np.ndarray)[:, 0] for idx in xrange(d)
+        qt.basis(d, (idx + 1) % d).data.todense().view(np.ndarray)[:, 0] for idx in range(d)
     ])
     Z = qt.Qobj(np.diag(w ** np.arange(d)))
     
-    return [X**i * Z**j for i in xrange(d) for j in xrange(d)]
+    return [X**i * Z**j for i in range(d) for j in range(d)]
 
 ## CLASSES ####################################################################
 
@@ -91,7 +94,7 @@ class StateTomographyHeuristic(Heuristic):
             self._next_measurement()
         )
 
-        for field, value in self._other_fields.iteritems():
+        for field, value in self._other_fields.items():
                 expparams[field] = value
         
         return expparams
@@ -171,7 +174,7 @@ class ProcessTomographyHeuristic(Heuristic):
             np.sqrt(self._dim) * qt.tensor(*self._next_prepmeas())
         )
 
-        for field, value in self._other_fields.iteritems():
+        for field, value in self._other_fields.items():
                 expparams[field] = value
         
         return expparams
@@ -223,7 +226,7 @@ class BestOfKMetaheuristic(Heuristic):
         
     def __call__(self):
         expparams = np.array([
-            self._base_heuristic()[0] for _ in xrange(self._k)
+            self._base_heuristic()[0] for _ in range(self._k)
         ], dtype=self._up.model.expparams_dtype)
         meas = expparams['meas']
         cov_expectations = np.einsum('ei,ij,ej->e',
@@ -232,7 +235,7 @@ class BestOfKMetaheuristic(Heuristic):
         
         expparams = expparams[np.argmax(cov_expectations), None]
 
-        for field, value in self._other_fields.iteritems():
+        for field, value in self._other_fields.items():
                 expparams[field] = value
                 
         return expparams

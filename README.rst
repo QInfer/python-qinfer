@@ -32,6 +32,14 @@ Once obtained in this way, **QInfer** may be updated by pulling from GitHub::
 
     $ git pull
 
+Using Python 3?
+~~~~~~~~~~~~~~~
+
+Python 3 support is on its way. To try out QInfer with Python 3, check out
+the ``python3_support`` branch after cloning QInfer::
+
+    $ git checkout python3_support
+
 Installing QInfer
 =================
 

@@ -25,6 +25,12 @@
 
 ## IMPORTS ###################################################################
 
+from __future__ import division
+from __future__ import absolute_import
+
+from builtins import range
+from future.utils import with_metaclass
+
 import numpy as np
 import scipy.stats as st
 import scipy.linalg as la
@@ -69,13 +75,12 @@ def scipy_dist(name, *args, **kwargs):
 
 ## ABSTRACT CLASSES AND MIXINS ###############################################
 
-class Distribution(object):
+class Distribution(with_metaclass(abc.ABCMeta, object)):
     """
     Abstract base class for probability distributions on one or more random
     variables.
     """
-    __metaclass__ = abc.ABCMeta
-    
+
     @abc.abstractproperty
     def n_rvs(self):
         """
@@ -97,12 +102,11 @@ class Distribution(object):
         """
         pass
 
-class SingleSampleMixin(object):
+class SingleSampleMixin(with_metaclass(abc.ABCMeta, object)):
     """
     Mixin class that extends a class so as to generate multiple samples
     correctly, given a method ``_sample`` that generates one sample at a time.    
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def _sample(self):
@@ -110,7 +114,7 @@ class SingleSampleMixin(object):
     
     def sample(self, n=1):
         samples = np.zeros((n, self.n_rvs))
-        for idx in xrange(n):
+        for idx in range(n):
             samples[idx, :] = self._sample()
         return samples
 
@@ -414,7 +418,7 @@ class HilbertSchmidtUniform(SingleSampleMixin, Distribution):
         rho = rho/np.trace(rho)
         
         x = np.zeros([self.n_rvs])
-        for idx in xrange(self.n_rvs):
+        for idx in range(self.n_rvs):
             x[idx] = np.real(np.trace(np.dot(rho,self.paulis[idx+1])))
               
         return x
@@ -424,7 +428,7 @@ class HilbertSchmidtUniform(SingleSampleMixin, Distribution):
             return paulis
         else:
             temp = np.zeros([d**2,d,d],dtype='complex128')
-            for idx in xrange(temp.shape[0]):
+            for idx in range(temp.shape[0]):
                 temp[idx,:] = np.kron(paulis[np.trunc(idx/d)], self.paulis1Q[idx % 4])
             return self.make_Paulis(temp,d*2)
             

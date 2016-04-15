@@ -27,6 +27,7 @@
 
 # The following line is needed to activate all MacroPy features. Nothing will
 # work without this import. It's basically magic.
+from __future__ import absolute_import
 import macropy.activate
 
 # We can export code as macros are applied, such that we don't need to depend

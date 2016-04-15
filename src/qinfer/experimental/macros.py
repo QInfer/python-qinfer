@@ -35,6 +35,7 @@ buggy as... well, use your imagination.
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## MACRO IMPORTS #############################################################
@@ -44,6 +45,8 @@ from macropy.core.quotes import macros, q, u, ast
 macros = Macros()
 
 ## IMPORTS ###################################################################
+
+from builtins import map
 
 import itertools as it
 
@@ -157,7 +160,7 @@ def modelclass(tree, args, **kw):
         # Don't change anything, just find model parameters.
         if type(tree) is Name:
             if tree.id.startswith('mp_'):
-                mp_idx = idxs.next()
+                mp_idx = next(idxs)
                 collect((tree.id, mp_idx))
             elif tree.id.startswith('ep_'):
                 name = tree.id[3:]
@@ -264,7 +267,7 @@ def modelclass(tree, args, **kw):
     new_class[0].name = model_name
 
     # Strip off the functiondef and copy over the args definition.
-    tree.body = map(fix_missing_locations, new_class[0].body)
+    tree.body = list(map(fix_missing_locations, new_class[0].body))
     tree.bases = [q[Model]]
 
     return tree

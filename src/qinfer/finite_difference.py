@@ -26,6 +26,7 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## ALL ########################################################################
@@ -36,6 +37,8 @@ __all__ = [
 ]
 
 ## IMPORTS ####################################################################
+
+from builtins import range
 
 import numpy as np
 
@@ -68,7 +71,7 @@ class FiniteDifference(object):
         grad = np.zeros((self.n_args,))
         f = self.func
         
-        for idx_arg in xrange(self.n_args):
+        for idx_arg in range(self.n_args):
             step = np.zeros((self.n_args,))
             step[idx_arg] = self.h[idx_arg]
             grad[idx_arg] = f(xs + step / 2) - f(xs - step / 2)
