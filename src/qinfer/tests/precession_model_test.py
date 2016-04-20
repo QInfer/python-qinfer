@@ -85,18 +85,14 @@ class TestSMCUpdater(DerandomizedTestCase):
 		self.num_updater_bayes.batch_update(self.outcomes,self.expparams)
 
 		#Assert that models have learned true model parameters from data 
-		assert_almost_equal(self.updater.est_mean(),TestSMCUpdater.MODELPARAMS,2)
-		assert_almost_equal(self.updater_bayes.est_mean(),TestSMCUpdater.MODELPARAMS,2)
-		assert_almost_equal(self.num_updater.est_mean(),TestSMCUpdater.MODELPARAMS,2)
-		assert_almost_equal(self.num_updater_bayes.est_mean(),TestSMCUpdater.MODELPARAMS,2)
-
-
 		#test means
 		assert_almost_equal(self.updater.est_mean(),TestSMCUpdater.MODELPARAMS,2)
 		assert_almost_equal(self.updater_bayes.est_mean(),TestSMCUpdater.MODELPARAMS,2)
 		assert_almost_equal(self.num_updater.est_mean(),TestSMCUpdater.MODELPARAMS,2)
 		assert_almost_equal(self.num_updater_bayes.est_mean(),TestSMCUpdater.MODELPARAMS,2)
 
+
+		#Assert that covariances have been reduced below thresholds
 		#test covs 
 		assert_array_less(self.updater.est_covariance_mtx(),TestSMCUpdater.TEST_TARGET_COV)
 		assert_array_less(self.updater_bayes.est_covariance_mtx(),TestSMCUpdater.TEST_TARGET_COV)

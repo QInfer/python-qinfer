@@ -1411,8 +1411,6 @@ class SMCUpdaterBCRB(SMCUpdater):
             :attr:`~qinfer.abstract_model.Model.expparams_dtype` property
             of the underlying model
 
-        :param n_samples int: Number of samples to draw from particle distribution,
-                        to evaluate BIM over. 
         """
         return self._bim(
             self.particle_locations, expparams,
@@ -1448,7 +1446,7 @@ class SMCUpdaterBCRB(SMCUpdater):
             self._adaptive_bim += self.posterior_bayes_information(expparams)[:, :, 0]
         
         # We now can update as normal.
-        SMCUpdater.update(self, outcome, expparams,check_for_resample=True)
+        SMCUpdater.update(self, outcome, expparams,check_for_resample=check_for_resample)
         
 
 class SMCUpdaterABC(SMCUpdater):
