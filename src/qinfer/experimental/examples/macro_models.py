@@ -25,6 +25,8 @@
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## ACTIVATION GUARD ##########################################################
@@ -95,7 +97,7 @@ def main():
     modelparams = prior.sample()
     expparams = np.array([(12.0,)], dtype=m.expparams_dtype)
     datum = m.simulate_experiment(modelparams, expparams)
-    print datum
+    print(datum)
     u.update(datum, expparams)
-    print u.est_mean()
-    print m.call_count
+    print(u.est_mean())
+    print(m.call_count)

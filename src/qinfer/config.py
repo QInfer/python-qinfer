@@ -26,6 +26,7 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## ALL ########################################################################
@@ -43,7 +44,7 @@ __all__ = [
 ## IMPORTS ####################################################################
 
 import sys, os
-import ConfigParser
+import configparser
 
 ## FUNCTIONS ##################################################################
 
@@ -67,7 +68,7 @@ def preffilename():
     
 def read_config():
     #
-    parser = ConfigParser.SafeConfigParser()
+    parser = configparser.SafeConfigParser()
     parser.read(preffilename())
     return parser
     

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from qinfer.tomography.distributions import *
 from qinfer.tomography.models import *
 from qinfer.tomography.plotting_tools import *

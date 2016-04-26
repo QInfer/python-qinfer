@@ -1,0 +1,5 @@
+[report]
+omit =
+    qinfer/_lib/*
+    qinfer/experimental/*
+    qinfer/examples/*
