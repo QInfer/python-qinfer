@@ -16,7 +16,7 @@ Welcome to QInfer
    :alt: Code Climate
 
 **QInfer** is a library using Bayesian sequential Monte Carlo for quantum
-parameter estimation.
+parameter estimation. Works with Python 2.7, 3.3 and 3.4.
 
 
 Obtaining QInfer
@@ -31,14 +31,6 @@ repository::
 Once obtained in this way, **QInfer** may be updated by pulling from GitHub::
 
     $ git pull
-
-Using Python 3?
-~~~~~~~~~~~~~~~
-
-Python 3 support is on its way. To try out QInfer with Python 3, check out
-the ``python3_support`` branch after cloning QInfer::
-
-    $ git checkout python3_support
 
 Installing QInfer
 =================
