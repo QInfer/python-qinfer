@@ -47,5 +47,10 @@ setup(
         'qinfer.ui',
         'qinfer.experimental',
         'qinfer.tomography'
+    ],
+    install_requires=[
+        'numpy',
+        'scipy',
+        'future>=0.15'
     ]
 )
