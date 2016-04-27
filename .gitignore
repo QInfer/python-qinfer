@@ -1,3 +1,5 @@
+src/qinfer/version.py
+
 ## Temporary files ##
 *~
 *.tmp
