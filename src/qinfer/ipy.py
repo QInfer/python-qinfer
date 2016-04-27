@@ -55,6 +55,8 @@ class IPythonProgressBar(object):
         classes.
     """
     def __init__(self):
+        if ipw is None:
+            raise ImportError("IPython support requires the ipywidgets package.")
         self.widget = ipw.FloatProgress(
             value=0.0, min=0.0, max=100.0, step=0.5,
             description=""
