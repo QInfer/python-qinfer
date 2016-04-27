@@ -16,15 +16,15 @@ Welcome to QInfer
    :alt: Code Climate
 
 **QInfer** is a library using Bayesian sequential Monte Carlo for quantum
-parameter estimation. Works with Python 2.7, 3.3 and 3.4.
+parameter estimation. Works with Python 2.7, 3.3, 3.4 and 3.5.
 
 Installing QInfer
 =================
 
 We recommend using **QInfer** with the
 `Anaconda distribution`_. Download and install
-Anaconda for your platform, either Python 2 or 3. We
-suggest using Python 3, but **QInfer**
+Anaconda for your platform, either Python 2.7 or 3.5. We
+suggest using Python 3.5, but **QInfer**
 works with either. Once Anaconda is installed, simply run ``pip`` to install **QInfer**::
 
     $ pip install git+https://github.com/QInfer/python-qinfer.git
