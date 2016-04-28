@@ -127,13 +127,13 @@ def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=2000, return_a
     )
     updater.batch_update(outcomes, expparams, resample_interval=1)
 
-    mean = updater.est_mean()
-    cov = updater.est_covariance_mtx()
+    mean = updater.est_mean()[0]
+    var = updater.est_covariance_mtx()[0, 0]
 
     if not return_all:
-        return mean, cov
+        return mean, var
     else:
-        return mean, cov, {
+        return mean, var, {
             'updater': updater
         }
 
