@@ -162,7 +162,7 @@ class SMCUpdater(Distribution):
         self._zero_weight_thresh = (
             zero_weight_thresh
             if zero_weight_thresh is not None else
-            10*np.spacing(0)
+            10 * np.spacing(1)
         )
         
         ## PARTICLE INITIALIZATION ##
@@ -360,7 +360,7 @@ class SMCUpdater(Distribution):
         # We don't actually want to propagate this out to the caller, however,
         # and so we save the "fixed" norm_scale to a new array.
         fixed_norm_scale = norm_scale.copy()
-        fixed_norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
+        fixed_norm_scale[np.abs(norm_scale) < np.spacing(1)] = 1
         
         # normalize
         norm_weights = hyp_weights / fixed_norm_scale
@@ -1237,7 +1237,7 @@ class MixedApproximateSMCUpdater(SMCUpdater):
         # We don't actually want to propagate this out to the caller, however,
         # and so we save the "fixed" norm_scale to a new array.
         fixed_norm_scale = norm_scale.copy()
-        fixed_norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
+        fixed_norm_scale[np.abs(norm_scale) < np.spacing(1)] = 1
         
         # normalize
         norm_weights = hyp_weights / fixed_norm_scale

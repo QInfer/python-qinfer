@@ -93,6 +93,10 @@ class DerivedModel(Model):
     @property
     def modelparam_names(self):
         return self.underlying_model.modelparam_names
+
+    @property
+    def Q(self):
+        return self.underlying_model.Q
     
     def clear_cache(self):
         self.underlying_model.clear_cache()
@@ -261,10 +265,12 @@ class BinomialModel(DerivedModel):
             expparams['x'] if self._expparams_scalar else expparams)
         
         # Now we concatenate over outcomes.
-        return np.concatenate([
+        L = np.concatenate([
             binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr1)
             for idx in range(outcomes.shape[0])
             ]) 
+        assert not np.any(np.isnan(L))
+        return L
             
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         # FIXME: uncommenting causes a slowdown, but we need to call
