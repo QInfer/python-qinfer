@@ -466,6 +466,9 @@ class SMCUpdater(Distribution):
         if expparams.shape[0] != n_exps:
             raise ValueError("The number of outcomes and experiments must match.")
 
+        if len(expparams.shape) == 1:
+            expparams = expparams[:, None]
+
         # Loop over experiments and update one at a time.
         for idx_exp, (outcome, experiment) in enumerate(zip(iter(outcomes), iter(expparams))):
             self.update(outcome, experiment, check_for_resample=False)

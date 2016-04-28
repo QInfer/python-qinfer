@@ -45,6 +45,7 @@ from qinfer.smc import SMCUpdater
 from qinfer.test_models import SimplePrecessionModel
 from qinfer.derived_models import BinomialModel
 from qinfer.distributions import UniformDistribution
+from qinfer.resamplers import LiuWestResampler
 
 ## FUNCTIONS #################################################################
 
@@ -61,14 +62,14 @@ def data_to_params(data, expparams_dtype, col_idx_outcomes, col_map_expparams=No
 
     is_scalar_dtype = np.issctype(expparams_dtype)
 
-    outcomes = data[col_idx_outcomes].astype(int)
+    outcomes = data[..., col_idx_outcomes].astype(int)
     expparams = np.empty(outcomes.shape, dtype=expparams_dtype)
 
     if is_scalar_dtype:
-        expparams[:] = data[col_idx_expparams]
+        expparams[:] = data[..., col_idx_expparams]
     else:
-        for col_idx, expparams_key in col_map_expparams.items():
-            expparams[expparams_key] = data[col_idx]
+        for expparams_key, col_idx in col_map_expparams.items():
+            expparams[expparams_key] = data[..., col_idx]
 
     return outcomes, expparams
 
@@ -85,6 +86,8 @@ def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=2000, return_a
     """
     Estimates a simple precession (cos²) from experimental data.
     The columns of the data are assumed to be [counts, t, n_shots].
+    Note that this model is mainly for testing purposes, as it does not
+    consider the phase or amplitude of precession, leaving only the frequency.
 
     :param data:
     :type data: file, `str` or array
@@ -98,7 +101,7 @@ def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=2000, return_a
         ('n_shots', 'uint')
     ])
 
-    if np.issctype(data):
+    if np.issctype(data.dtype):
         # Loaded as a two-axis array.
         outcomes, expparams = data_to_params(data,
             model.expparams_dtype,
@@ -119,13 +122,15 @@ def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=2000, return_a
             }
         )
 
-    updater = SMCUpdater(model, n_particles, prior)
+    updater = SMCUpdater(model, n_particles, prior,
+        # resampler=LiuWestResampler(a=0.9)
+    )
     updater.batch_update(outcomes, expparams, resample_interval=1)
 
     mean = updater.est_mean()
     cov = updater.est_covariance_mtx()
 
-    if return_all:
+    if not return_all:
         return mean, cov
     else:
         return mean, cov, {
