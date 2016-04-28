@@ -25,7 +25,9 @@ We recommend using **QInfer** with the
 `Anaconda distribution`_. Download and install
 Anaconda for your platform, either Python 2.7 or 3.5. We
 suggest using Python 3.5, but **QInfer**
-works with either. Once Anaconda is installed, simply run ``pip`` to install **QInfer**::
+works with either. Next, ensure that you have Git installed. On Windows,
+we suggest the `official Git downloads <https://git-scm.com/downloads>`_.
+Once Anaconda and Git are installed, simply run ``pip`` to install **QInfer**::
 
     $ pip install git+https://github.com/QInfer/python-qinfer.git
 
