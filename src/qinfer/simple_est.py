@@ -49,7 +49,18 @@ from qinfer.resamplers import LiuWestResampler
 
 ## FUNCTIONS #################################################################
 
-def data_to_params(data, expparams_dtype, col_idx_outcomes, col_map_expparams=None, col_idx_expparams=None):
+class named(object):
+    def __init__(self, name):
+        self.name = name
+    def __call__(self, fn):
+        fn.__name__ = name
+        return fn
+
+def data_to_params(data,
+        expparams_dtype,
+        col_outcomes=(0, 'counts'),
+        cols_expparams=None
+    ):
     """
     Given data as a NumPy array, separates out each column either as
     the outcomes, or as a field of an expparams array. Columns may be specified
@@ -59,17 +70,20 @@ def data_to_params(data, expparams_dtype, col_idx_outcomes, col_map_expparams=No
     Since scalar arrays are homogenous in type, this may result in loss of precision
     due to casting between data types.
     """
+    BY_IDX, BY_NAME = range(2)
 
-    is_scalar_dtype = np.issctype(expparams_dtype)
+    is_exp_scalar = np.issctype(expparams_dtype)
+    is_data_scalar = np.issctype(data.dtype)
 
-    outcomes = data[..., col_idx_outcomes].astype(int)
+    idx_outcomes = col_outcomes[BY_IDX if is_data_scalar else BY_NAME]
+    outcomes = data[..., idx_outcomes].astype(int)
+
     expparams = np.empty(outcomes.shape, dtype=expparams_dtype)
-
-    if is_scalar_dtype:
-        expparams[:] = data[..., col_idx_expparams]
+    if is_exp_scalar:
+        expparams[:] = data[..., cols_expparams[BY_IDX if is_data_scalar else BY_NAME]]
     else:
-        for expparams_key, col_idx in col_map_expparams.items():
-            expparams[expparams_key] = data[..., col_idx]
+        for expparams_key, column in cols_expparams.items():
+            expparams[expparams_key] = data[..., column[BY_IDX if is_data_scalar else BY_NAME]]
 
     return outcomes, expparams
 
@@ -81,6 +95,27 @@ def load_data_or_txt(data, dtype):
         return data
     else:
         raise TypeError("Expected a filename, an array or a file-like object.")
+
+
+def do_update(model, n_particles, prior, outcomes, expparams, return_all):
+    updater = SMCUpdater(model, n_particles, prior,
+        # resampler=LiuWestResampler(a=0.9)
+    )
+    updater.batch_update(outcomes, expparams, resample_interval=1)
+
+    mean = updater.est_mean()
+    cov = updater.est_covariance_mtx()
+
+    if model.n_modelparams == 1:
+        mean = mean[0]
+        cov = cov[0, 0]
+
+    if not return_all:
+        return mean, cov
+    else:
+        return mean, cov, {
+            'updater': updater
+        }
 
 def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=2000, return_all=False):
     """
@@ -101,39 +136,15 @@ def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=2000, return_a
         ('n_shots', 'uint')
     ])
 
-    if np.issctype(data.dtype):
-        # Loaded as a two-axis array.
-        outcomes, expparams = data_to_params(data,
-            model.expparams_dtype,
-            col_idx_outcomes=0,
-            col_map_expparams={
-                'x': 1,
-                'n_meas': 2
-            }
-        )
-    else:
-        # Loaded using column names.
-        outcomes, expparams = data_to_params(data,
-            model.expparams_dtype,
-            col_idx_outcomes=0,
-            col_map_expparams={
-                'x': 't',
-                'n_meas': 'n_shots'
-            }
-        )
-
-    updater = SMCUpdater(model, n_particles, prior,
-        # resampler=LiuWestResampler(a=0.9)
-    )
-    updater.batch_update(outcomes, expparams, resample_interval=1)
-
-    mean = updater.est_mean()[0]
-    var = updater.est_covariance_mtx()[0, 0]
-
-    if not return_all:
-        return mean, var
-    else:
-        return mean, var, {
-            'updater': updater
+    outcomes, expparams = data_to_params(data,
+        model.expparams_dtype,
+        cols_expparams={
+            'x': (1, 't'),
+            'n_meas': (2, 'n_shots')
         }
+    )
 
+    return do_update(
+        model, n_particles, prior, outcomes, expparams,
+        return_all
+    )
