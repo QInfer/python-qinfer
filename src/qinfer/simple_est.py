@@ -101,7 +101,7 @@ def load_data_or_txt(data, dtype):
         return data.to_records(index=False)
 
     elif hasattr(data, 'read') or isinstance(data, 'str'):
-        data = np.loadtxt(data, dtype=dtype)
+        data = np.loadtxt(data, dtype=dtype, delimiter=',')
         return data
     else:
         raise TypeError("Expected a filename, an array or a file-like object.")
