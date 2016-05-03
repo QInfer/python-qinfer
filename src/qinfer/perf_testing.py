@@ -48,6 +48,7 @@ import numpy as np
 import numpy.ma as ma
 
 from qinfer.smc import SMCUpdater
+from qinfer.utils import pretty_time
 
 ## CLASSES ###################################################################
 
@@ -65,6 +66,16 @@ class Timer(object):
 
     def stop(self):
         self._toc = time.time()
+
+    def __repr__(self):
+        return "<qinfer.Timer at 0x{0:x}, {1} elapsed>".format(
+            id(self), pretty_time(self.delta_t)
+        )
+
+    def __str__(self):
+        return "{0} elapsed".format(
+            pretty_time(self.delta_t)
+        )
 
     @property
     def delta_t(self):
