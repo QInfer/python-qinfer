@@ -47,14 +47,14 @@ from qinfer.derived_models import BinomialModel
 from qinfer.distributions import UniformDistribution
 from qinfer.resamplers import LiuWestResampler
 
-## FUNCTIONS #################################################################
+# We want to be able to support Pandas without requiring it, so a conditional
+# import is required.
+try:
+    import pandas as pd
+except:
+    pd = None
 
-class named(object):
-    def __init__(self, name):
-        self.name = name
-    def __call__(self, fn):
-        fn.__name__ = name
-        return fn
+## FUNCTIONS #################################################################
 
 def data_to_params(data,
         expparams_dtype,
@@ -73,23 +73,33 @@ def data_to_params(data,
     BY_IDX, BY_NAME = range(2)
 
     is_exp_scalar = np.issctype(expparams_dtype)
-    is_data_scalar = np.issctype(data.dtype)
+    is_data_scalar = np.issctype(data.dtype) and not data.dtype.fields
 
-    idx_outcomes = col_outcomes[BY_IDX if is_data_scalar else BY_NAME]
-    outcomes = data[..., idx_outcomes].astype(int)
+    s_ = (
+        (lambda idx: np.s_[..., idx[BY_IDX]])
+        if is_data_scalar else
+        (lambda idx: np.s_[idx[BY_NAME]])
+    )
+
+    outcomes = data[s_(col_outcomes)].astype(int)
+
+    # mk new slicer t
 
     expparams = np.empty(outcomes.shape, dtype=expparams_dtype)
     if is_exp_scalar:
-        expparams[:] = data[..., cols_expparams[BY_IDX if is_data_scalar else BY_NAME]]
+        expparams[:] = data[s_(cols_expparams)]
     else:
         for expparams_key, column in cols_expparams.items():
-            expparams[expparams_key] = data[..., column[BY_IDX if is_data_scalar else BY_NAME]]
+            expparams[expparams_key] = data[s_(column)]
 
     return outcomes, expparams
 
 def load_data_or_txt(data, dtype):
     if isinstance(data, np.ndarray):
         return data
+    elif pd is not None and isinstance(data, pd.DataFrame):
+        return data.to_records(index=False)
+
     elif hasattr(data, 'read') or isinstance(data, 'str'):
         data = np.loadtxt(data, dtype=dtype)
         return data
