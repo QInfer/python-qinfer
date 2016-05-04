@@ -162,7 +162,7 @@ class SMCUpdater(Distribution):
         self._zero_weight_thresh = (
             zero_weight_thresh
             if zero_weight_thresh is not None else
-            10*np.spacing(0)
+            10 * np.spacing(1)
         )
         
         ## PARTICLE INITIALIZATION ##
@@ -360,7 +360,7 @@ class SMCUpdater(Distribution):
         # We don't actually want to propagate this out to the caller, however,
         # and so we save the "fixed" norm_scale to a new array.
         fixed_norm_scale = norm_scale.copy()
-        fixed_norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
+        fixed_norm_scale[np.abs(norm_scale) < np.spacing(1)] = 1
         
         # normalize
         norm_weights = hyp_weights / fixed_norm_scale
@@ -465,6 +465,9 @@ class SMCUpdater(Distribution):
         n_exps = outcomes.shape[0]
         if expparams.shape[0] != n_exps:
             raise ValueError("The number of outcomes and experiments must match.")
+
+        if len(expparams.shape) == 1:
+            expparams = expparams[:, None]
 
         # Loop over experiments and update one at a time.
         for idx_exp, (outcome, experiment) in enumerate(zip(iter(outcomes), iter(expparams))):
@@ -1234,7 +1237,7 @@ class MixedApproximateSMCUpdater(SMCUpdater):
         # We don't actually want to propagate this out to the caller, however,
         # and so we save the "fixed" norm_scale to a new array.
         fixed_norm_scale = norm_scale.copy()
-        fixed_norm_scale[np.abs(norm_scale) < np.spacing(0)] = 1
+        fixed_norm_scale[np.abs(norm_scale) < np.spacing(1)] = 1
         
         # normalize
         norm_weights = hyp_weights / fixed_norm_scale
