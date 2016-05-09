@@ -23,12 +23,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-## VERSION METADATA ###########################################################
-# In keeping with PEP-396, we define a version number of the form
-# {major}.{minor}[.{postrelease}]{prerelease-tag}
-
 from __future__ import absolute_import
-__version__ = '1.0b3'
+from qinfer.version import version as __version__
 
 ## IMPORTS ####################################################################
 # These imports control what is made available by importing qinfer itself.
