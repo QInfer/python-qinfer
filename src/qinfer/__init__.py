@@ -43,6 +43,7 @@ from qinfer.rb import *
 from qinfer.unstructured_models import *
 from qinfer.derived_models import *
 from qinfer.ipy import *
+from qinfer.simple_est import *
 
 import qinfer.tomography
 
