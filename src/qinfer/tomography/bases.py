@@ -105,7 +105,7 @@ def gell_mann_basis(dim):
             basis[idx_basis, [idx_i, idx_j], [idx_j, idx_i]] = 1 / np.sqrt(2)
             basis[idx_basis + y_offset, [idx_i, idx_j], [idx_j, idx_i]] = [1j / np.sqrt(2), -1j / np.sqrt(2)]
 
-    return TomographyBasis(basis, [dim], r'\gamma')
+    return TomographyBasis(basis, [dim], r'\gamma', name='gell_mann_basis')
 
 def tensor_product_basis(*bases):
     """
@@ -139,13 +139,16 @@ def pauli_basis(nq=1):
     :param int nq: Number of qubits on which the returned
         basis is defined.
     """
-    return tensor_product_basis(*[
+    basis = tensor_product_basis(*[
         TomographyBasis(
             gell_mann_basis(2).data[[0, 2, 3, 1]],
             [2],
             [u'𝟙', r'\sigma_x', r'\sigma_y', r'\sigma_z']
         )
     ] * nq)
+
+    basis._name = 'pauli_basis'
+    return basis
 
 def _format_float_as_latex(c, tol=1e-10):
     if abs(c - int(c)) <= tol:
@@ -208,12 +211,14 @@ class TomographyBasis(object):
     #: Labels for each basis element.
     labels = None
 
-    def __init__(self, data, dims, labels=None, superrep=None):
+    def __init__(self, data, dims, labels=None, superrep=None, name=None):
         self.data = data
         self.dims = dims
         self.superrep = superrep
 
         dim = self.dim
+
+        self._name = name if name is not None else "(unnamed)"
 
         if isinstance(labels, str):
             self.labels = list(map("{}_{{}}".format(labels).format, range(dim**2)))
@@ -223,7 +228,9 @@ class TomographyBasis(object):
         self._flat = self.data.reshape((self.data.shape[0], -1))
 
     def __repr__(self):
-        return "<TomographyBasis dims={} at {}>".format(self.dims, id(self))
+        return "<TomographyBasis {} dims={} at 0x{:0x}>".format(
+            self._name, self.dims, id(self)
+        )
 
     def _repr_html_(self):
 
@@ -285,6 +292,10 @@ class TomographyBasis(object):
     def dim(self):
         # TODO
         return np.prod(self.dims)
+
+    @property
+    def name(self):
+        return self._name
 
     def flat(self):
         """
