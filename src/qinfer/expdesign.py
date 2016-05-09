@@ -139,7 +139,7 @@ class ExpSparseHeuristic(Heuristic):
             return np.array([t], dtype=dtype)
         else:
             eps = np.empty((1,), dtype=dtype)
-            for field, value in self._other_fields.iteritems():
+            for field, value in self._other_fields.items():
                 eps[field] = value
             eps[self._t_field] = t
             return eps
@@ -212,7 +212,7 @@ class PGH(Heuristic):
         eps[self._x_] = self._inv_func(x)
         eps[self._t]  = self._t_func(1 / self._updater.model.distance(x, xp))
         
-        for field, value in self._other_fields.iteritems():
+        for field, value in self._other_fields.items():
             eps[field] = value
         
         return eps

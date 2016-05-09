@@ -87,7 +87,7 @@ represent the choices we get to make in performing measurements.
 Model parameters are represented by NumPy arrays of `dtype`_ `float` and that
 have two indices, one representing which model is being considered and one
 representing which parameter. That is, model parameters are defined by matrices
-such that the element :math:`X_ij` is the :math:`j^{\text{th}}` parameter of
+such that the element :math:`X_{ij}` is the :math:`j^{\text{th}}` parameter of
 the model parameter vector :math:`\vec{x}_i`.
 
 By contrast, since not all experiment parameters are best represented by
