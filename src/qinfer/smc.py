@@ -34,7 +34,6 @@ from __future__ import division, unicode_literals
 __all__ = [
     'SMCUpdater',
     'SMCUpdaterBCRB',
-    'SMCUpdaterABC',
     'MixedApproximateSMCUpdater'
 ]
 
