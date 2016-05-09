@@ -1,0 +1,30 @@
+---
+engines:
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - python
+  fixme:
+    enabled: true
+  radon:
+    enabled: true
+  pep8:
+    enabled: true
+    checks:
+      # We disable E266 (too many leading #s for block comment)
+      # as this flags on every use of ## for a section header.
+      E266:
+        enabled: false
+  duplication:
+    enabled: true
+    config:
+      languages:
+        - python
+ratings:
+  paths:
+  - "**.py"
+exclude_paths:
+# There's no point in scanning external libraries for code style,
+# as we can't do much with them anyway.
+- "src/qinfer/_lib/*"

@@ -25,9 +25,13 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## IMPORTS ####################################################################
+
+from builtins import range
 
 import warnings
 
@@ -233,7 +237,7 @@ if __name__ == "__main__":
     
     # compute mvee
     A, centroid = mvee(points)
-    print A
+    print(A)
     
     # point it and some other stuff
     U, D, V = la.svd(A)    
@@ -245,8 +249,8 @@ if __name__ == "__main__":
     y=ry*np.sin(u)*np.cos(v)
     z=rz*np.sin(v)
             
-    for idx in xrange(x.shape[0]):
-        for idy in xrange(y.shape[1]):
+    for idx in range(x.shape[0]):
+        for idy in range(y.shape[1]):
             x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.transpose(V),np.array([x[idx,idy],y[idx,idy],z[idx,idy]])) + centroid
             
     

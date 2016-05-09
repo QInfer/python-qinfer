@@ -25,6 +25,7 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## ALL ########################################################################
@@ -40,7 +41,7 @@ import numpy as np
 import scipy.linalg as la
 import warnings
 
-from utils import outer_product, particle_meanfn, particle_covariance_mtx
+from .utils import outer_product, particle_meanfn, particle_covariance_mtx
 
 import qinfer.clustering
 from qinfer._exceptions import ResamplerWarning, ResamplerError
@@ -224,7 +225,7 @@ class LiuWestResampler(object):
             raise ResamplerError(
                 "Infinite error in computing the square root of the "
                 "covariance matrix. Check that n_ess is not too small.")
-    	S = np.real(h * S)
+        S = np.real(h * S)
         n_ms, n_mp = l.shape
         
         new_locs = np.empty(l.shape)        

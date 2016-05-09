@@ -25,6 +25,8 @@
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## EXPORTS ###################################################################
@@ -34,6 +36,8 @@ __all__ = [
 ]
 
 ## IMPORTS ###################################################################
+
+from builtins import range
 
 from contextlib import contextmanager
 from functools import partial
@@ -202,7 +206,7 @@ def perf_test(
 
     performance['true'] = true_mps
 
-    for idx_exp in xrange(n_exp):
+    for idx_exp in range(n_exp):
         expparams = heuristic()
         datum = true_model.simulate_experiment(true_mps, expparams)
 
@@ -271,10 +275,15 @@ def perf_test_multiple(
     task = None
     thread = None
     wake_event = None
+    prog = None
+
+    try:
+        name = getattr(type(model), '__name__', 'unknown model')
+    except:
+        name = 'unknown model'
 
     if tskmon_client is not None:
         try:
-            name = getattr(type(model), '__name__', 'unknown model')
             task = tskmon_client.new_task(
                 description="QInfer Performance Testing",
                 status="Testing {}...".format(name),
@@ -288,26 +297,36 @@ def perf_test_multiple(
             thread.start()
 
         except Exception as ex:
-            print "Failed to start tskmon task: ", ex
+            print("Failed to start tskmon task: ", ex)
 
     try:
         if progressbar is not None:
             prog = progressbar()
             prog.start(n_trials)
+            if hasattr(prog, 'description'):
+                prog.description = 'Performance testing {} (0 / {})...'.format(
+                    name, n_trials
+                )
 
         # Make sure that everything we do catches NaNs as exceptions,
         # such that we can correctly record them as failures.
         with numpy_err_policy(divide='raise'):
             # Loop through once to dispatch tasks.
             # We'll loop through again to collect results.
-            results = [apply(trial_fn) for idx in xrange(n_trials)]
+            results = [apply(trial_fn) for idx in range(n_trials)]
 
             for idx, result in enumerate(results):
                 # FIXME: This is bad practice, but I don't feel like rewriting to
                 #        avoid right now.
                 try:
                     performance[idx, :] = result.get()
-                    prog.update(idx)
+                    if prog is not None:
+                        prog.update(idx)
+                        if hasattr(prog, 'description'):
+                            prog.description = 'Performance testing {} ({} / {})...'.format(
+                                name, idx, n_trials
+                            )
+
                 except:
                     if allow_failures:
                         performance.mask[idx, :] = True
@@ -330,10 +349,11 @@ def perf_test_multiple(
                 # raise and move on.
                 thread.join(1)
                 if thread.is_alive():
-                    print "Thread didn't die. This is a bug."
+                    print("Thread didn't die. This is a bug.")
             except Exception as ex:
-                print "Exception cleaning up tskmon task.", ex
+                print("Exception cleaning up tskmon task.", ex)
 
-        prog.finished()
+        if prog is not None:
+            prog.finished()
 
     return performance

@@ -25,6 +25,7 @@
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
 from __future__ import division # Ensures that a/b is always a float.
 
 ## EXPORTS ###################################################################
@@ -67,24 +68,32 @@ class DirectViewParallelizedModel(DerivedModel):
     r"""
     Given an instance of a `Model`, parallelizes execution of that model's
     likelihood by breaking the ``modelparams`` array into segments and
-    executing a segment on each member of a :ref:`~IPython.parallel.DirectView`.
+    executing a segment on each member of a :class:`~ipyparallel.DirectView`.
     
     This :ref:`Model` assumes that it has ownership over the DirectView, such
     that no other processes will send tasks during the lifetime of the Model.
     
-    TODO: describe parameters.
-
+    :param qinfer.Model serial_model: Model to be parallelized. This
+        model will be distributed to the engines in the direct view, such that
+        the model must support pickling.
+    :param ipyparallel.DirectView direct_view: Direct view onto the engines
+        that will be used to parallelize evaluation of the model's likelihood
+        function.
     :param bool purge_client: If ``True``, then this model will purge results
         and metadata from the IPython client whenever the model cache is cleared.
         This is useful for solving memory leaks caused by very large numbers of
         calls to ``likelihood``. By default, this is disabled, since enabling
         this option can cause data loss if the client is being sent other tasks
         during the operation of this model.
+    :param int serial_threshold: Sets the number of model vectors below which
+        the serial model is to be preferred. By default, this is set to ``10 *
+        n_engines``, where ``n_engines`` is the number of engines exposed by
+        ``direct_view``.
     """
     
     ## INITIALIZER ##
     
-    def __init__(self, serial_model, direct_view, purge_client=False):
+    def __init__(self, serial_model, direct_view, purge_client=False, serial_theshold=None):
         if ipp is None:
             raise RuntimeError(
                 "This model requires IPython parallelization support, "
@@ -93,6 +102,10 @@ class DirectViewParallelizedModel(DerivedModel):
 
         self._dv = direct_view
         self._purge_client = purge_client
+        self._serial_threshold = (
+            10 * self.n_engines
+            if serial_theshold is None else int(serial_theshold)
+        )
         
         super(DirectViewParallelizedModel, self).__init__(serial_model)
     
@@ -105,7 +118,8 @@ class DirectViewParallelizedModel(DerivedModel):
             '_underlying_model': self._underlying_model,
             '_dv': None,
             '_call_count': self._call_count,
-            '_sim_count': self._sim_count
+            '_sim_count': self._sim_count,
+            '_serial_threshold': self._serial_threshold
         }
     
     ## PROPERTIES ##
@@ -127,11 +141,21 @@ class DirectViewParallelizedModel(DerivedModel):
 
     @property
     def n_engines(self):
+        """
+        The number of engines seen by the direct view owned by this parallelized
+        model.
+
+        :rtype int:
+        """
         return len(self._dv) if self._dv is not None else 0
             
     ## METHODS ##
     
     def clear_cache(self):
+        """
+        Clears any cache associated with the serial model and the engines
+        seen by the direct view.
+        """
         self.underlying_model.clear_cache()
         try:
             logger.info('DirectView results has {} items. Clearing.'.format(
@@ -146,7 +170,15 @@ class DirectViewParallelizedModel(DerivedModel):
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
-        super(DirectViewParallelizedModel, self).likelihood(outcomes, modelparams, expparams) 
+        """
+        Returns the likelihood for the underlying (serial) model, distributing
+        the model parameter array across the engines controlled by this
+        parallelized model.
+        """
+        super(DirectViewParallelizedModel, self).likelihood(outcomes, modelparams, expparams)
+
+        if modelparams.shape[1] <= self._serial_threshold:
+            return self._serial_model.likelihood(outcomes, modelparams, expparams)
         
         if self._dv is None:
             raise RuntimeError(
@@ -154,6 +186,9 @@ class DirectViewParallelizedModel(DerivedModel):
                 "loaded from a pickle or NumPy saved array without providing a "
                 "new direct view."
             )
+
+        # If there's less models than some threshold, just use the serial model.
+        # By default, we'll set that threshold to be the number of engines * 10.
 
         # Need to decorate with interactive to overcome namespace issues with
         # remote engines.

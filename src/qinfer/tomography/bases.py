@@ -29,9 +29,14 @@
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 
 ## IMPORTS ###################################################################
+
+from builtins import range, map, str
+from functools import reduce
 
 import itertools as it
 
@@ -83,7 +88,7 @@ def gell_mann_basis(dim):
 
     # The next dim basis elements should be diagonal,
     # with all by one element nonnegative.
-    for idx_basis in xrange(1, dim):
+    for idx_basis in range(1, dim):
         basis[idx_basis, :, :] = np.diag(np.concatenate([
             np.ones((idx_basis, )),
             [-idx_basis],
@@ -94,8 +99,8 @@ def gell_mann_basis(dim):
     # These rely on some index gymnastics I don't yet fully
     # understand.
     y_offset = dim * (dim - 1) // 2
-    for idx_i in xrange(1, dim):
-        for idx_j in xrange(idx_i):
+    for idx_i in range(1, dim):
+        for idx_j in range(idx_i):
             idx_basis = (idx_i - 1) * (idx_i) // 2 + idx_j + dim
             basis[idx_basis, [idx_i, idx_j], [idx_j, idx_i]] = 1 / np.sqrt(2)
             basis[idx_basis + y_offset, [idx_i, idx_j], [idx_j, idx_i]] = [1j / np.sqrt(2), -1j / np.sqrt(2)]
@@ -119,12 +124,12 @@ def tensor_product_basis(*bases):
         sum((
             factor.dims for factor in bases
         ), []),
-        map(
+        list(map(
         r"\otimes".join,
         it.product(*[
             basis.labels for basis in bases
         ])
-    ))
+    )))
 
 def pauli_basis(nq=1):
     """
@@ -147,11 +152,11 @@ def pauli_basis(nq=1):
 
 def _format_float_as_latex(c, tol=1e-10):
     if abs(c - int(c)) <= tol:
-        return unicode(int(c))
+        return str(int(c))
     elif 1e-3 <= abs(c) <= 1e3:
         return u"{:0.3f}".format(c)
     else:
-        return (u"{:0.3e}".format(c)).replace("e", ur"\times10^{") + "}"
+        return (u"{:0.3e}".format(c)).replace("e", r"\times10^{") + "}"
 
 
 def _format_complex_as_latex(c, tol=1e-10):
@@ -159,9 +164,9 @@ def _format_complex_as_latex(c, tol=1e-10):
         # Purely real.
         return _format_float_as_latex(c.real, tol=tol)
     elif abs(c.real) <= tol:
-        return _format_float_as_latex(c.imag, tol=tol) + ur"\mathrm{i}"
+        return _format_float_as_latex(c.imag, tol=tol) + r"\mathrm{i}"
     else:
-        return ur"{} + {}\mathrm{{i}}".format(
+        return u"{} + {}\mathrm{{i}}".format(
             _format_float_as_latex(c.real, tol=tol),
             _format_float_as_latex(c.imag, tol=tol)
         )
@@ -216,9 +221,9 @@ class TomographyBasis(object):
         self._name = name if name is not None else "(unnamed)"
 
         if isinstance(labels, str):
-            self.labels = map("{}_{{}}".format(labels).format, xrange(dim**2))
+            self.labels = list(map("{}_{{}}".format(labels).format, range(dim**2)))
         else:
-            self.labels = map(r'B_{}'.format, xrange(dim**2)) if labels is None else labels
+            self.labels = list(map(r'B_{}'.format, range(dim**2))) if labels is None else labels
 
         self._flat = self.data.reshape((self.data.shape[0], -1))
 
@@ -230,7 +235,7 @@ class TomographyBasis(object):
     def _repr_html_(self):
 
         if self.dim <= 10:
-            element_strings = [ur"""
+            element_strings = [r"""
                 {label} =                   
                 \left(\begin{{matrix}}
                     {rows}
@@ -245,7 +250,7 @@ class TomographyBasis(object):
                 for element, label in zip(self.data, self.labels)
             ]
 
-            return ur"""
+            return r"""
             <strong>TomographyBasis:</strong>
                 dims=${dims}$
             <p>
@@ -254,17 +259,17 @@ class TomographyBasis(object):
                 \end{{equation}}
             </p>
             """.format(
-                dims=ur"\times".join(map(str, self.dims)),
+                dims=r"\times".join(map(str, self.dims)),
                 labels=u",".join(self.labels),
                 elements=u",".join(element_strings)
             )
         else:
-            return ur"""
+            return r"""
             <strong>TomographyBasis:</strong>
                 dims=${dims}$,
                 labels=$\\{{{labels}\\}}$
             """.format(
-                dims=ur"\times".join(map(str, self.dims)),
+                dims=r"\times".join(map(str, self.dims)),
                 labels=u",".join(self.labels)
             )
 
@@ -277,7 +282,7 @@ class TomographyBasis(object):
             raise TypeError("Expected int or list index, not {}.".format(type(idx)))
 
     def __iter__(self):
-        for idx in xrange(len(self)):
+        for idx in range(len(self)):
             yield self[idx]
 
     def __len__(self):
@@ -318,7 +323,7 @@ class TomographyBasis(object):
                 qobj.superrep = self.superrep
             return qobj
         else:
-            return map(self.modelparams_to_state, modelparams)
+            return list(map(self.modelparams_to_state, modelparams))
 
     def covariance_mtx_to_superop(self, mtx):
         """

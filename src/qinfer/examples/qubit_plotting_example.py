@@ -53,9 +53,13 @@ Usage: qubit_tomography_example.py [options]
 
 ## FEATURES ####################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## IMPORTS #####################################################################
+
+from builtins import range
 
 import numpy as np
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -114,7 +118,7 @@ if __name__ == "__main__":
             weighted=False, quiet=not verbose, **dbscan_args
         )
     elif resamp_algo == 'WDBSCAN-LW':
-        print "[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly."
+        print("[WARN] The WDBSCAN-LW resampling algorithm is currently experimental, and may not work properly.")
         resampler = ClusteringResampler(
             secondary_resampler=LiuWestResampler(**lw_args),
             weighted=True, quiet=not verbose, **dbscan_args
@@ -151,7 +155,7 @@ if __name__ == "__main__":
     tic = time.time()
     
     # Get all Bayesian up in here.
-    for idx_exp in xrange(n_exp):
+    for idx_exp in range(n_exp):
         # Randomly choose one of the three experiments from expparams and make
         # an array containing just that experiment.
         thisexp = expparams[np.newaxis, np.random.randint(0, 3)]
@@ -192,13 +196,13 @@ if __name__ == "__main__":
     toc = time.time() - tic
             
     # Print out summary statistics.    
-    print "True param: {}".format(truemp)    
-    print "Est. mean: {}".format(updater.est_mean())
-    print "Est. cov: {}".format(updater.est_covariance_mtx())
-    print "Error: {}".format(np.sum(np.abs(truemp[0]-updater.est_mean())**2))
-    print "Trace Cov: {}".format(np.trace(updater.est_covariance_mtx()))
-    print "Resample count: {}".format(updater.resample_count)
-    print "Elapsed time: {}".format(toc)
+    print("True param: {}".format(truemp))    
+    print("Est. mean: {}".format(updater.est_mean()))
+    print("Est. cov: {}".format(updater.est_covariance_mtx()))
+    print("Error: {}".format(np.sum(np.abs(truemp[0]-updater.est_mean())**2)))
+    print("Trace Cov: {}".format(np.trace(updater.est_covariance_mtx())))
+    print("Resample count: {}".format(updater.resample_count))
+    print("Elapsed time: {}".format(toc))
     
 
     est_mean = updater.est_mean()
@@ -282,8 +286,8 @@ if __name__ == "__main__":
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
             
-        for idx in xrange(x.shape[0]):
-            for idy in xrange(y.shape[1]):
+        for idx in range(x.shape[0]):
+            for idy in range(y.shape[1]):
                 x[idx, idy], y[idx, idy], z[idx, idy] = \
                     np.dot(
                         np.transpose(V),
@@ -322,8 +326,8 @@ if __name__ == "__main__":
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
             
-        for idx in xrange(x.shape[0]):
-            for idy in xrange(y.shape[1]):
+        for idx in range(x.shape[0]):
+            for idy in range(y.shape[1]):
                 x[idx, idy], y[idx, idy], z[idx, idy] = \
                     np.dot(
                         np.transpose(V),
@@ -350,8 +354,8 @@ if __name__ == "__main__":
         y = ry * np.sin(u) * np.cos(v)
         z = rz * np.sin(v)
             
-        for idx in xrange(x.shape[0]):
-            for idy in xrange(y.shape[1]):
+        for idx in range(x.shape[0]):
+            for idy in range(y.shape[1]):
                 x[idx, idy], y[idx, idy], z[idx, idy] = \
                     np.dot(
                         np.transpose(V),

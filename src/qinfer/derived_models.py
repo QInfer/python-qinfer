@@ -25,6 +25,8 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division # Ensures that a/b is always a float.
 
 ## ALL ########################################################################
@@ -39,6 +41,9 @@ __all__ = [
 ]
 
 ## IMPORTS ####################################################################
+
+from builtins import range
+from functools import reduce
 
 import numpy as np
 from scipy.stats import binom
@@ -258,7 +263,7 @@ class BinomialModel(DerivedModel):
         # Now we concatenate over outcomes.
         return np.concatenate([
             binomial_pdf(expparams['n_meas'][np.newaxis, :], outcomes[idx], pr1)
-            for idx in xrange(outcomes.shape[0])
+            for idx in range(outcomes.shape[0])
             ]) 
             
     def simulate_experiment(self, modelparams, expparams, repeat=1):
@@ -283,7 +288,7 @@ class BinomialModel(DerivedModel):
         )
         os = np.concatenate([
             sample()
-            for idx in xrange(repeat)
+            for idx in range(repeat)
         ], axis=0)
         return os[0,0,0] if os.size == 1 else os
         
@@ -380,7 +385,7 @@ class RandomWalkModel(DerivedModel):
 if __name__ == "__main__":
     
     import operator as op
-    from test_models import SimplePrecessionModel
+    from .test_models import SimplePrecessionModel
     
     m = BinomialModel(SimplePrecessionModel())
     
@@ -391,7 +396,7 @@ if __name__ == "__main__":
     L = m.likelihood(
         os, mps, eps
     )
-    print L
+    print(L)
     
     assert m.call_count == reduce(op.mul, [os.shape[0], mps.shape[0], eps.shape[0]]), "Call count inaccurate."
     assert L.shape == (os.shape[0], mps.shape[0], eps.shape[0]), "Shape mismatch."

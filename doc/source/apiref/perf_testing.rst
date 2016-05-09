@@ -37,6 +37,8 @@ Function Reference
 
 .. autofunction:: perf_test
 
+.. autofunction:: perf_test_multiple
+
 .. _perf_testing_struct:
 
 Performance Results Structure

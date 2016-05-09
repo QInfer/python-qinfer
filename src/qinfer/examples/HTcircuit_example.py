@@ -44,9 +44,13 @@ Options:
 
 ## FEATURES ####################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 
 ## IMPORTS #####################################################################
+
+from builtins import range
 
 import numpy as np
 import time
@@ -61,7 +65,7 @@ from .._lib import docopt
 try:
     from .. import dialogs
 except ImportError:
-    print "[WARN] Could not import dialogs."
+    print("[WARN] Could not import dialogs.")
     dialogs = None
 
 ## SCRIPT ######################################################################
@@ -148,7 +152,7 @@ if __name__ == "__main__":
         progress = None
      
     # Now we run the Monte Carlo simulations.
-    for idx_sim in xrange(n_sim):
+    for idx_sim in range(n_sim):
         
         # First, make new updaters using the constructors
         # defined above.
@@ -164,7 +168,7 @@ if __name__ == "__main__":
         # Now loop over experiments, updating each of the
         # updaters with the same data, so that we can compare
         # their estimation performance.
-        for idx_exp in xrange(n_exp):
+        for idx_exp in range(n_exp):
             
             # Make a short hand for indexing the current simulation
             # and experiment.
@@ -243,8 +247,8 @@ if __name__ == "__main__":
         for name, hist in performance_hist.iteritems()
     }
 
-    print "Average time per update for SMC: {}".format(avg_time['SMC'])
-    print "Average time per update for SMCALE: {}".format(avg_time['SMC_ALE'])
+    print("Average time per update for SMC: {}".format(avg_time['SMC']))
+    print("Average time per update for SMCALE: {}".format(avg_time['SMC_ALE']))
 
     
 

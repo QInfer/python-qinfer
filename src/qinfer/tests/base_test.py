@@ -25,6 +25,7 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division # Ensures that a/b is always a float.
 
 ## IMPORTS ####################################################################
