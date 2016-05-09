@@ -25,6 +25,7 @@
 
 ## FEATURES ##################################################################
 
+from __future__ import absolute_import
 from __future__ import division # Ensures that a/b is always a float.
 
 ## EXPORTS ###################################################################
@@ -38,11 +39,13 @@ __all__ = [
 
 ## IMPORTS ###################################################################
 
+from builtins import range
+
 import numpy as np
 
-from utils import binomial_pdf
+from .utils import binomial_pdf
 
-from abstract_model import Model, DifferentiableModel
+from .abstract_model import Model, DifferentiableModel
     
 ## CLASSES ###################################################################
 
@@ -257,9 +260,9 @@ class NDieModel(Model):
     
     ## METHODS ##
     def __init__(self, n = 6):
-	    self.n = n
-	    Model.__init__(self)
-	
+        self.n = n
+        Model.__init__(self)
+
     @staticmethod
     def are_models_valid(modelparams):
         return np.logical_and(modelparams >= 0, modelparams <= 1).all(axis=1)
@@ -279,5 +282,5 @@ class NDieModel(Model):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
         super(NDieModel, self).likelihood(outcomes, modelparams, expparams)
-        L = np.concatenate([np.array([modelparams[idx][outcomes]]) for idx in xrange(modelparams.shape[0])])
+        L = np.concatenate([np.array([modelparams[idx][outcomes]]) for idx in range(modelparams.shape[0])])
         return L[...,np.newaxis].transpose([1,0,2])

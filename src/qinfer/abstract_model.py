@@ -26,7 +26,8 @@
 
 ## FEATURES ##################################################################
 
-from __future__ import division
+from __future__ import absolute_import
+from __future__ import division, unicode_literals
 
 ## EXPORTS ###################################################################
 
@@ -38,14 +39,17 @@ __all__ = [
 
 ## IMPORTS ###################################################################
 
+from builtins import range, map
+from future.utils import with_metaclass
+
 import abc
     # Python standard library package for specifying abstract classes.
 import numpy as np
     
 ## CLASSES ###################################################################
 
-class Simulatable(object):
-    __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
+class Simulatable(with_metaclass(abc.ABCMeta, object)):
+
     # TODO: docstring!
     
     def __init__(self):
@@ -96,7 +100,7 @@ class Simulatable(object):
     def model_chain(self):
         """
         Returns a tuple of models upon which this model is based,
-        such that proeprties and methods of underlying models for
+        such that properties and methods of underlying models for
         models that decorate other models can be accessed. For a
         standalone model, this is always the empty tuple.
         """
@@ -147,7 +151,28 @@ class Simulatable(object):
         Returns the names of the various model parameters admitted by this
         model, formatted as LaTeX strings.
         """
-        return map("x_{{{}}}".format, xrange(self.n_modelparams))
+        return list(map("x_{{{}}}".format, range(self.n_modelparams)))
+
+    ## CONCRETE METHODS ##
+
+    def _repr_html_(self, suppress_base=False):
+        s = r"""
+            <strong>{type.__name__}</strong> at 0x{id:0x}: {n_mp} model parameter{plural}
+        """.format(
+            id=id(self), type=type(self),
+            n_mp=self.n_modelparams,
+            plural="" if self.n_modelparams == 1 else "s"
+        )
+        if not suppress_base and self.model_chain:
+            s += r"""<br>
+            <p>Model chain:</p>
+            <ul>{}
+            </ul>
+            """.format(r"\n".join(
+                u"<li>{}</li>".format(model._repr_html_(suppress_base=True))
+                for model in reversed(self.model_chain)
+            ))
+        return s
     
     ## ABSTRACT METHODS ##
     
@@ -364,11 +389,10 @@ class Model(Simulatable):
         
         return np.concatenate([
             pr0 if outcomes[idx] == 0 else pr1
-            for idx in xrange(outcomes.shape[0])
+            for idx in range(outcomes.shape[0])
             ]) 
         
-class DifferentiableModel(Model):
-    __metaclass__ = abc.ABCMeta # Needed in any class that has abstract methods.
+class DifferentiableModel(with_metaclass(abc.ABCMeta, Model)):
     
     @abc.abstractmethod
     def score(self, outcomes, modelparams, expparams, return_L=False):

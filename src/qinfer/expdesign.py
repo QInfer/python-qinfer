@@ -25,6 +25,7 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## ALL ########################################################################
@@ -33,12 +34,15 @@ from __future__ import division
 __all__ = [
     'ExperimentDesigner',
     'Heuristic',
+    'EnsembleHeuristic',
     'ExpSparseHeuristic',
     'PGH',
     'OptimizationAlgorithms'
 ]
 
 ## IMPORTS ####################################################################
+
+from future.utils import with_metaclass
 
 import numpy as np
 
@@ -51,11 +55,15 @@ import warnings
 
 from qinfer.finite_difference import *
 
+## FUNCTIONS ###################################################################
+
+def identity(arg): return arg
+
 ## CLASSES #####################################################################
 
 OptimizationAlgorithms = enum.enum("NULL", "CG", "NCG", "NELDER_MEAD")
 
-class Heuristic(object):
+class Heuristic(with_metaclass(ABCMeta, object)):
     r"""
     Defines a heuristic used for selecting new experiments without explicit
     optimization of the risk. As an example, the :math:`t_k = (9/8)^k`
@@ -67,14 +75,31 @@ class Heuristic(object):
     Note that the design of this abstract base class is still being decided,
     such that it is a placeholder for now.
     """
-    __metaclass__ = ABCMeta
-    
+
     def __init__(self, updater):
         self._updater = updater
     
     @abstractmethod
     def __call__(self, *args):
         raise NotImplementedError("Not yet implemented.")
+
+class EnsembleHeuristic(Heuristic):
+    r"""
+    Heuristic that randomly chooses one of several other
+    heuristics.
+
+    :param list ensemble: List of tuples ``(heuristic, pr)``
+        specifying the probability of choosing each member
+        heuristic.
+    """
+
+    def __init__(self, ensemble):
+        self._pr = np.array([pr for heuristic, pr in ensemble])
+        self._heuristics = ([heuristic for heuristic, pr in ensemble])
+
+    def __call__(self, *args):
+        idx_heuristic = np.random.choice(len(self._heuristics), p=self._pr)
+        return self._heuristics[idx_heuristic](*args)
         
 class ExpSparseHeuristic(Heuristic):
     r"""
@@ -135,6 +160,8 @@ class PGH(Heuristic):
         evolution time.
     :param callable inv_func: Function to be applied to modelparameter vectors
         to produce an inversion field ``x_``.
+    :param callable t_func: Function to be applied to the evolution time to produce a
+         time field ``t``.
     :param int maxiters: Number of times to try and choose distinct particles
         before giving up.
     :param dict other_fields: Values to set for fields not given by the PGH.
@@ -154,11 +181,17 @@ class PGH(Heuristic):
     attempts. If that limit is reached, a `RuntimeError` will be raised.
     """
     
-    def __init__(self, updater, inv_field='x_', t_field='t', inv_func=lambda x: x, maxiters=10, other_fields=None):
+    def __init__(self, updater, inv_field='x_', t_field='t',
+                 inv_func=identity,
+                 t_func=identity,
+                 maxiters=10,
+                 other_fields=None
+                 ):
         super(PGH, self).__init__(updater)
         self._x_ = inv_field
         self._t = t_field
         self._inv_func = inv_func
+        self._t_func = t_func
         self._maxiters = maxiters
         self._other_fields = other_fields if other_fields is not None else {}
         
@@ -177,7 +210,7 @@ class PGH(Heuristic):
             
         eps = np.empty((1,), dtype=self._updater.model.expparams_dtype)
         eps[self._x_] = self._inv_func(x)
-        eps[self._t]  = 1 / self._updater.model.distance(x, xp)
+        eps[self._t]  = self._t_func(1 / self._updater.model.distance(x, xp))
         
         for field, value in self._other_fields.iteritems():
             eps[field] = value

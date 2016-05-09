@@ -25,6 +25,7 @@
 
 ## FEATURES ###################################################################
 
+from __future__ import absolute_import
 from __future__ import division
 
 ## ALL ########################################################################
@@ -40,7 +41,7 @@ import numpy as np
 import scipy.linalg as la
 import warnings
 
-from utils import outer_product, particle_meanfn, particle_covariance_mtx
+from .utils import outer_product, particle_meanfn, particle_covariance_mtx
 
 import qinfer.clustering
 from qinfer._exceptions import ResamplerWarning, ResamplerError
@@ -145,6 +146,8 @@ class LiuWestResampler(object):
     :param float zero_cov_comp: Amount of covariance to be added to every
         parameter during resampling in the case that the estimated covariance
         has zero norm.
+    :param callable kernel: Callable function ``kernel(*shape)`` that returns samples
+        from a resampling distribution with mean 0 and variance 1.
         
     .. warning::
     
@@ -155,7 +158,8 @@ class LiuWestResampler(object):
     """
     def __init__(self,
             a=0.98, h=None, maxiter=1000, debug=False, postselect=True,
-            zero_cov_comp=1e-10
+            zero_cov_comp=1e-10,
+            kernel=np.random.randn
         ):
         self.a = a # Implicitly calls the property setter below to set _h.
         if h is not None:
@@ -165,6 +169,7 @@ class LiuWestResampler(object):
         self._debug = debug
         self._postselect = postselect
         self._zero_cov_comp = zero_cov_comp
+        self._kernel = kernel
 
     _override_h = False
 
@@ -220,7 +225,7 @@ class LiuWestResampler(object):
             raise ResamplerError(
                 "Infinite error in computing the square root of the "
                 "covariance matrix. Check that n_ess is not too small.")
-    	S = np.real(h * S)
+        S = np.real(h * S)
         n_ms, n_mp = l.shape
         
         new_locs = np.empty(l.shape)        
@@ -252,7 +257,7 @@ class LiuWestResampler(object):
             mus[...] = a * l[js,:] + (1 - a) * mean
             
             # Draw x_i from N(mu_i, S).
-            new_locs[idxs_to_resample, :] = mus + np.dot(S, np.random.randn(n_mp, mus.shape[0])).T
+            new_locs[idxs_to_resample, :] = mus + np.dot(S, self._kernel(n_mp, mus.shape[0])).T
             
             # Now we remove from the list any valid models.
             # We write it out in a longer form than is strictly necessary so
