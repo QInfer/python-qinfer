@@ -5,6 +5,10 @@ python:
   - "3.3"
   - "3.4"
 
+env:
+  global:
+    - secure: 
+
 notifications:
   email: false
 
@@ -26,3 +30,11 @@ script:
 
 after_success:
   - coveralls
+
+deploy:
+  provider: pypi
+  user: ${PYPI_USERNAME}
+  password: ${PYPI_PASSWORD}
+  distributions: "sdist bdist_wheel"
+  on:
+    tags: true
