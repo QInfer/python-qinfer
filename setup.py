@@ -75,7 +75,7 @@ setup(
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Scientific/Engineering :: Physics',
     ],
-    platforms=['any']
+    platforms=['any'],
     install_requires=[
         'numpy',
         'scipy',
