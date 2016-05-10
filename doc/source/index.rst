@@ -11,17 +11,12 @@
 QInfer - Library for Statistical Inference in Quantum Information
 =================================================================
 
-------------------------------------------
-Christopher Granade and Christopher Ferrie
-------------------------------------------
-
 .. module:: qinfer
 
 Contents:
 
 .. toctree::
     intro
-    examples/index
     guide/index
     apiref/index
     biblo

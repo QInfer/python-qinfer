@@ -6,7 +6,8 @@
     California, 94041, USA.
     
 .. _intro:
-    
+
+============    
 Introduction
 ============
 
@@ -27,11 +28,10 @@ We recommend using **QInfer** with the
 `Anaconda distribution`_. Download and install
 Anaconda for your platform, either Python 2.7 or 3.5. We
 suggest using Python 3.5, but **QInfer**
-works with either. Next, ensure that you have Git installed. On Windows,
-we suggest the `official Git downloads <https://git-scm.com/downloads>`_.
-Once Anaconda and Git are installed, simply run ``pip`` to install **QInfer**::
+works with either.
+Once Anaconda is installed, simply run ``pip`` to install **QInfer**::
 
-    $ pip install git+https://github.com/QInfer/python-qinfer.git
+    $ pip install qinfer
 
 Alternatively, **QInfer** can be installed manually by downloading from GitHub,
 then running the provided installer::
@@ -79,21 +79,17 @@ Getting Started
 
 To get started using **QInfer**, it may be helpful to give a look through the
 :ref:`guide`. Alternatively, you may want to dive right into looking at
-the `examples`_ using `IPython Notebook`_. To do so, from your system command
-line, navigate to where you downloaded **QInfer**, then run::
+some examples. We provide a number of `Jupyter Notebook`_-based examples
+in the `qinfer-examples`_ repository. These examples can be viewed online
+using `nbviewer`_, or can be run online using `binder`_ without installing any additional
+software.
 
-    cd python-qinfer/examples
-    ipython notebook
-
-Alternatively, IPython provides an online viewer for reading notebook files:
-
-- `Plotting Example <http://nbviewer.ipython.org/github/csferrie/python-qinfer/blob/master/examples/plot_example.ipynb>`_
-- `Noisy Coin Example <http://nbviewer.ipython.org/github/csferrie/python-qinfer/blob/master/examples/Noisy%20Coin%20Example.ipynb>`_
-
-More details can be found in the :ref:`examples` section.
+The examples can also be run locally, using the instructions available
+at `qinfer-examples`_.
 
 .. _Anaconda distribution: https://www.continuum.io/downloads
 .. _Sphinx: http://sphinx-doc.org/
-.. _IPython Notebook: http://ipython.org/ipython-doc/stable/interactive/notebook.html
-
-.. _examples: https://github.com/csferrie/python-qinfer/tree/master/examples
+.. _Jupyter Notebook: http://jupyter.org/
+.. _nbviewer: http://nbviewer.jupyter.org/github/qinfer/qinfer-examples/tree/master/
+.. _binder: http://mybinder.org/repo/qinfer/qinfer-examples
+.. _qinfer-examples: https://github.com/QInfer/qinfer-examples
