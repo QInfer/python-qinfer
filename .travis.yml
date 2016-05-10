@@ -33,6 +33,11 @@ script:
 after_success:
   - coveralls
 
+before_deploy:
+  # For why this is needed, see:
+  # http://stackoverflow.com/questions/36635650/travisci-deploy-cannot-find-setup-py
+  - cd ~/
+
 deploy:
   provider: pypi
   user: ${PYPI_USERNAME}
