@@ -45,6 +45,7 @@ from qinfer.unstructured_models import *
 from qinfer.derived_models import *
 from qinfer.ipy import *
 from qinfer.simple_est import *
+from qinfer.resamplers import *
 
 import qinfer.tomography
 
