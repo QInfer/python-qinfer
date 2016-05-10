@@ -13,8 +13,6 @@ QInfer - Library for Statistical Inference in Quantum Information
 
 .. module:: qinfer
 
-Contents:
-
 .. toctree::
     intro
     guide/index
@@ -24,10 +22,12 @@ Contents:
     :maxdepth: 2
 
 
-Indices and tables
-==================
+.. only:: not latex
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    Indices and tables
+    ==================
+
+    * :ref:`genindex`
+    * :ref:`modindex`
+    * :ref:`search`
 
