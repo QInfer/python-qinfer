@@ -395,6 +395,7 @@ extlinks = {
 intersphinx_mapping = {
     'http://docs.python.org/': None,
     'numpy': ('http://docs.scipy.org/doc/numpy',None),
+    'scipy': ('http://docs.scipy.org/doc/scipy/reference',None),
     'IPython': ('http://ipython.org/ipython-doc/stable/', None),
     'ipyparallel': ('http://ipyparallel.readthedocs.org/en/latest/', None)
 }

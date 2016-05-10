@@ -7,7 +7,7 @@
     
 .. _distributions_guide:
     
-.. currentmodule:: qinfer.distributions
+.. currentmodule:: qinfer
 
 Representing Probability Distributions
 ======================================
@@ -16,7 +16,7 @@ Introduction
 ------------
 
 Probability distributions such as prior distributions over model parameters
-are reprented in QInfer by objects of type :class:`~qinfer.Distribution` that are
+are reprented in QInfer by objects of type :class:`Distribution` that are
 responsible for producing samples according to those distributions. This is
 especially useful, for instance, when drawing initial particles for use with
 an :class:`~qinfer.smc.SMCUpdater`.
@@ -24,7 +24,7 @@ an :class:`~qinfer.smc.SMCUpdater`.
 The approach to representing distributions taken by QInfer is somewhat
 different to that taken by, for example, :mod:`scipy.stats`, in that
 a QInfer :class:`Distribution` is a class that produces samples according to
-that distribution. This means that QInfer ``Distribution`` objects provide much
+that distribution. This means that QInfer :class:`Distribution` objects provide much
 less information than do those represented by objects in :mod:`scipy.stats`,
 but that they are much easier to write and combine.
 

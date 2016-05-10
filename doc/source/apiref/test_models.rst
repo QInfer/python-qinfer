@@ -7,7 +7,7 @@
     
 .. _test_models:
     
-.. currentmodule:: qinfer.test_models
+.. currentmodule:: qinfer
 
 Testing Models
 ==============
