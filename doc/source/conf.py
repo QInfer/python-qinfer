@@ -384,7 +384,7 @@ epub_copyright = u'2012, Christopher Ferrie and Christopher Granade'
 
 extlinks = {
     'arxiv': ('http://arxiv.org/abs/%s', 'arXiv:'),
-    'doi': ('http://dx.doi.org/abs/%s', 'doi:'),
+    'doi': ('https://dx.doi.org/%s', 'doi:'),
 }
 
 ## OTHER CONFIGURATION PARAMETERS ##############################################
@@ -393,11 +393,11 @@ extlinks = {
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'http://docs.python.org/': None,
-    'numpy': ('http://docs.scipy.org/doc/numpy',None),
-    'scipy': ('http://docs.scipy.org/doc/scipy/reference',None),
-    'IPython': ('http://ipython.org/ipython-doc/stable/', None),
-    'ipyparallel': ('http://ipyparallel.readthedocs.org/en/latest/', None)
+    'https://docs.python.org/3/': None,
+    'numpy': ('https://docs.scipy.org/doc/numpy',None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference',None),
+    'IPython': ('https://ipython.org/ipython-doc/stable/', None),
+    'ipyparallel': ('https://ipyparallel.readthedocs.io/en/latest/', None)
 }
 
 autodoc_member_order = 'bysource'
