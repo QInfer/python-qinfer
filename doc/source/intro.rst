@@ -42,7 +42,7 @@ then running the provided installer::
     $ python setup.py install
 
 Citing QInfer
--------------
+=============
 
 If you use **QInfer** in your publication or presentation, we would appreciate it
 if you cited our work. We recommend citing **QInfer** by using the BibTeX
@@ -75,7 +75,7 @@ In this example, ``d04bc1d53933f13065917c15ccb0e2f127de3b8a`` should be replaced
 particular version being cited.
 
 Getting Started
----------------
+===============
 
 To get started using **QInfer**, it may be helpful to give a look through the
 :ref:`guide`. Alternatively, you may want to dive right into looking at
