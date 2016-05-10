@@ -7,7 +7,7 @@
     
 .. _robustness_guide:
     
-.. currentmodule:: qinfer.derived_models
+.. currentmodule:: qinfer
 
 Robustness Testing
 ==================
@@ -24,7 +24,7 @@ Modeling Statistical and Sampling Error
 ---------------------------------------
 
 A basic kind of robustness testing can be performed by using
-:class:`PoisonedModel`, which adds noise to a model's :meth:`~qinfer.abstract_model.Model.likelihood`
+:class:`PoisonedModel`, which adds noise to a model's :meth:`~Model.likelihood`
 method in such a way as to simulate sampling errors incurred in LFPE approaches
 [FG13]_. The noise that :class:`PoisonedModel` adds can be specified as the
 tolerance of an adaptive likelihood estimation (ALE) step [FG13]_, or as the number

@@ -7,7 +7,7 @@
     
 .. _smc_guide:
     
-.. currentmodule:: qinfer.smc
+.. currentmodule:: qinfer
 
 Sequential Monte Carlo
 ======================
@@ -34,7 +34,7 @@ Creating and Configuring Updaters
 
 The most straightfoward way of creating an :class:`SMCUpdater` instance is to
 provide a model, a number of SMC particles and a prior distribution to choose
-those particles from. Using the example of a :class:`~qinfer.test_models.SimplePrecessionModel`,
+those particles from. Using the example of a :class:`SimplePrecessionModel`,
 and a uniform prior :math:`\omega \sim \text{Uni}(0, 1)`:
 
 >>> from qinfer.smc import SMCUpdater
@@ -60,7 +60,7 @@ distribution to a posterior conditioned on experimental data. For example,
 Drawing Posterior Samples and Estimates
 """""""""""""""""""""""""""""""""""""""
 
-Since :class:`SMCUpdater` inherits from :class:`~qinfer.distributions.Distribution`,
+Since :class:`SMCUpdater` inherits from :class:`Distribution`,
 it can be sampled in the same way described in :ref:`distributions_guide`.
 
 >>> posterior_samples = updater.sample(n=100)
@@ -89,9 +89,8 @@ Custom Resamplers
 
 By default, :class:`SMCUpdater` uses the Liu and West resampling algorithm [LW01]_
 with :math:`a = 0.98`. The resampling behavior can be controlled, however, by
-passing different instances of :class:`~qinfer.resamplers.Resampler` to
-:class:`SMCUpdater`. For instance, if one wants to create an updater with
-:math:`a = 0.9` as was suggested by [WGFC13a]_:
+passing resampler objects to :class:`SMCUpdater`. For instance, if one wants to
+create an updater with :math:`a = 0.9` as was suggested by [WGFC13a]_:
 
 >>> from qinfer.resamplers import LiuWestResampler
 >>> updater = SMCUpdater(model, 1000, prior, resampler=LiuWestResampler(0.9))

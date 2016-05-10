@@ -7,7 +7,7 @@
     
 .. _parallel_guide:
     
-.. currentmodule:: qinfer.parallel
+.. currentmodule:: qinfer
 
 Parallel Execution of Models
 ============================
