@@ -52,7 +52,6 @@ setup(
     packages=[
         'qinfer',
         'qinfer._lib',
-        'qinfer.experimental',
         'qinfer.tomography'
     ],
     keywords=['quantum', 'Bayesian', 'estimation'],
