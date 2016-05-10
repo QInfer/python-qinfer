@@ -2,8 +2,8 @@
 Welcome to QInfer
 =================
 
-.. image:: https://zenodo.org/badge/19664/QInfer/python-qinfer.svg
-   :target: https://zenodo.org/badge/latestdoi/19664/QInfer/python-qinfer
+.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.51273.svg
+   :target: http://dx.doi.org/10.5281/zenodo.51273
 
 .. image:: https://img.shields.io/badge/launch-binder-E66581.svg
     :target: http://mybinder.org/repo/qinfer/qinfer-examples
