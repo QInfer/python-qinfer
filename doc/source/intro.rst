@@ -48,31 +48,47 @@ If you use **QInfer** in your publication or presentation, we would appreciate i
 if you cited our work. We recommend citing **QInfer** by using the BibTeX
 entry::
 
-    @Misc{,
-      author = {Christopher Granade and Christopher Ferrie and others},
-      title =  {{QInfer}: Library for Statistical Inference in Quantum Information},
-      year =   {2012--},
-      url =    "https://github.com/QInfer/python-qinfer"
+    @misc{qinfer-1_0b4,
+      author       = {Christopher Granade and
+                      Christopher Ferrie and
+                      Steven Casagrande and
+                      Ian Hincks and
+                      Michal Kononenko and
+                      Thomas Alexander and
+                      Yuval Sanders},
+      title        = {{QInfer}: Library for Statistical Inference in Quantum Information},
+      month        = may,
+      year         = 2016,
+      doi          = {10.5281/zenodo.51273},
+      url          = {http://dx.doi.org/10.5281/zenodo.51273}
     }
 
-To indicate which version of **QInfer** you used in your work, it may be helpful
+If you wish to cite **QInfer** functionality that has not yet appeared in a
+released version, it may be helpful
 to cite a given SHA hash as listed on
 `GitHub <https://github.com/QInfer/python-qinfer/commits/master>`_ (the
 hashes of each commit are listed on the right hand side of the page).
-A recommended BibTeX entry for citing a particular version is::
+A recommended BibTeX entry for citing a particular commit is::
 
-    @Misc{,
-      author = {Christopher Granade and Christopher Ferrie and others},
-      title =  {{QInfer}: Library for Statistical Inference in Quantum Information},
-      year =   {2012},
-      month =  {2},
-      day =    {18},
-      url =    "https://github.com/QInfer/python-qinfer/commit/d04bc1d53933f13065917c15ccb0e2f127de3b8a",
-      note =   {Version \texttt{d04bc1d53933f13065917c15ccb0e2f127de3b8a}.}
+    @misc{qinfer-1_0b4,
+      author       = {Christopher Granade and
+                      Christopher Ferrie and
+                      Steven Casagrande and
+                      Ian Hincks and
+                      Michal Kononenko and
+                      Thomas Alexander and
+                      Yuval Sanders},
+      title        = {{QInfer}: Library for Statistical Inference in Quantum Information},
+      month        = may,
+      year         = 2016,
+      url =    "https://github.com/QInfer/python-qinfer/commit/bc3736c",
+      note =   {Version \texttt{bc3736c}.}
     }
+
     
-In this example, ``d04bc1d53933f13065917c15ccb0e2f127de3b8a`` should be replaced by the
-particular version being cited.
+In this example, ``bc3736c`` should be replaced by the
+particular commit being cited, and the date should be replaced by the date
+of that commit.
 
 Getting Started
 ===============
