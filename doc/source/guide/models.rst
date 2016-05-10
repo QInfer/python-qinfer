@@ -87,7 +87,7 @@ represent the choices we get to make in performing measurements.
 Model parameters are represented by NumPy arrays of `dtype`_ `float` and that
 have two indices, one representing which model is being considered and one
 representing which parameter. That is, model parameters are defined by matrices
-such that the element :math:`X_ij` is the :math:`j^{\text{th}}` parameter of
+such that the element :math:`X_{ij}` is the :math:`j^{\text{th}}` parameter of
 the model parameter vector :math:`\vec{x}_i`.
 
 By contrast, since not all experiment parameters are best represented by
@@ -216,7 +216,7 @@ Suppose we wish to implement the likelihood function
 
     \Pr(0 | \omega_1, \omega_2; t_1, t_2) = \cos^2(\omega_1 t_1 / 2) \cos^2(\omega_2 t_2 / 2),
     
-as may arise in looking, for instance, at an experiment expired by 2D NMR.
+as may arise in looking, for instance, at an experiment inspired by 2D NMR.
 This model has two model parameters, :math:`\omega_1` and :math:`\omega_2`, and
 so we start by creating a new class and declaring the number of model
 parameters as a `property`:
