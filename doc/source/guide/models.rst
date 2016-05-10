@@ -222,7 +222,7 @@ so we start by creating a new class and declaring the number of model
 parameters as a `property`:
 
 .. literalinclude:: multicos.py
-    :lines: 4-8
+    :lines: 1-8
     
 Next, we proceed to add a property and method indicating that this model always
 admits two outcomes, irrespective of what measurement is performed.
