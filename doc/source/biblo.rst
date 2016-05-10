@@ -7,8 +7,10 @@
 
 .. _biblo:
     
-Biblography
-===========
+.. only:: not latex
+
+    Biblography
+    ===========
 
 .. [FB12]
     Ferrie C., Blume-Kohout R. Estimating the bias of a noisy coin.  AIP Conf. Proc. 1443, 14-21 (2012). :doi:`10.1063/1.3703615`. :arxiv:`arXiv:1201.1493`.
