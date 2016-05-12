@@ -251,7 +251,7 @@ Finally, we write the likelihood itself. Since this is a two-outcome model,
 we can calculate the rank-two tensor
 :math:`p_{jk} = \Pr(0 | \vec{x}_j; \vec{e}_k)` and let
 :meth:`~qinfer.abstract_model.Model.pr0_to_likelihood_array` add an index over
-outcomes for us.
+outcomes for us so :math:`L_{0jk}=p_{jk}` and :math:`L_{1jk}=1-p_{jk}`.
 To compute :math:`p_{jk}` efficiently, it is helpful to do a bit of index
 gymnastics  using NumPy's powerful `broadcasting rules`_. In this example, we
 set up the calculation to produce terms of the form
