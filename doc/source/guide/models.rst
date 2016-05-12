@@ -232,11 +232,13 @@ admits two outcomes, irrespective of what measurement is performed.
     :lines: 10-14
     
 We indicate the valid range for model parameters by returning an array of
-dtype `bool` for each of an input matrix of model parameters, specifying whether
-each model vector is valid or not. Typically, this will look like some typical
-bounds checking, combined using `~numpy.logical_and` and `~numpy.all`. Here,
-we follow that model by inisting that *all* elements of each model parameter
-vector must be at least 0, *and* must not exceed 1.
+dtype `bool` for each of an input matrix of model parameters, specifying
+whether each model vector is valid or not (this is important in resampling,
+for instance, to make sure particles don't move to bad locations). Typically,
+this will look like some typical bounds checking, combined using
+`~numpy.logical_and` and `~numpy.all`. Here, we follow that model by insisting
+that *all* elements of each model parameter vector must be at least 0, *and*
+must not exceed 1.
     
 .. literalinclude:: multicos.py
     :lines: 16-17
