@@ -272,8 +272,24 @@ as:
     :lines: 23-48
     :emphasize-lines: 35-43
     
-Our new custom model is now ready to use!
-    
+Our new custom model is now ready to use! To simulate data from this model, we
+set up ``modelparams`` and ``expparams`` as before, taking care to conform to
+the ``expparams_dtype`` of our model:
+
+>>> import numpy as np
+>>> mcm = MultiCosModel()
+>>> modelparams = np.dstack(np.mgrid[0:1:100j,0:1:100j]).reshape(-1, 2)
+>>> expparams = np.empty((81,), dtype=mcm.expparams_dtype)
+>>> expparams['ts'] = np.dstack(np.mgrid[1:10,1:10] * np.pi / 2).reshape(-1, 2)
+>>> D = mcm.simulate_experiment(modelparams, expparams, repeat=2)
+
+.. note::
+
+    Creating ``expparams`` as an empty array and filling it by field name is a
+    straightforward way to make sure it matches ``expparams_dtype``, but it
+    comes with the risk of forgetting to initialize a field, so take care when
+    using this method.
+
 .. _broadcasting rules: http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
 
 .. currentmodule:: qinfer.derived_models
