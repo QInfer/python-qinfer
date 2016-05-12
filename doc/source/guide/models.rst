@@ -46,8 +46,9 @@ function
     \end{cases},
 
 as can be derived from Born's Rule for a spin-½ particle prepared and measured
-in the :math:`\left|+\right\rangle` state, and evolved under
-:math:`H = \omega \sigma_z / 2` for some time :math:`t`.
+in the
+:math:`\left|+\right\rangle\propto\left|0\right\rangle+\left|1\right\rangle` state, and evolved under :math:`H = \omega \sigma_z / 2` for some time
+:math:`t`.
 
 In this way, we see that by defining the likelihood function in terms of the
 hypothetical outcome :math:`d`, the model parameter :math:`\omega`, and the experimental
