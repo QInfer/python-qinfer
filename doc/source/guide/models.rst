@@ -65,13 +65,13 @@ provided with QInfer, we can simply import it and make an instance.
 Once a model or simulator has been created, you can query how many model
 parameters it admits and how many outcomes a given experiment can have.
 
->>> print m.n_modelparams
+>>> print(m.n_modelparams)
 1
->>> print m.modelparam_names
+>>> print(m.modelparam_names)
 ['\\omega']
->>> print m.is_n_outcomes_constant
+>>> print(m.is_n_outcomes_constant)
 True
->>> print m.n_outcomes(expparams=0)
+>>> print(m.n_outcomes(expparams=0))
 2
 
 Model and Experiment Parameters
@@ -109,20 +109,20 @@ and ``int``, respectively. Such arrays are initialized by passing lists of
 ...     (12.3, 2),
 ...     (14.1, 1)
 ... ], dtype=[('t', 'float'), ('basis', 'int')])
->>> print eps
+>>> print(eps)
 [(12.3, 2) (14.1, 1)]
->>> print eps.shape
+>>> print(eps.shape)
 (2,)
 
 Once we have made a record array, we can then index by field names to get out
 each field as an array of that field's value in each record, or we can index
 by record to get all fields.
 
->>> print eps['t']
+>>> print(eps['t'])
 [ 12.3  14.1]
->>> print eps['basis']
+>>> print(eps['basis'])
 [2 1]
->>> print eps[0]
+>>> print(eps[0])
 (12.3, 2)
 
 Model classes specify the dtypes of their experimental parameters with the
@@ -134,7 +134,7 @@ specify that we can use its :attr:`~abstract_model.Simulatable.expparams_dtype`:
 
 >>> from qinfer.derived_models import BinomialModel
 >>> bm = BinomialModel(m)
->>> print bm.expparams_dtype
+>>> print(bm.expparams_dtype)
 [('x', 'float'), ('n_meas', 'uint')]
 >>> eps = np.array([
 ...     (11.0, 20)
@@ -158,15 +158,15 @@ and experiment parameters.
 >>> modelparams = np.linspace(0, 1, 100)
 >>> expparams = np.arange(1, 10) * np.pi / 2
 >>> D = m.simulate_experiment(modelparams, expparams, repeat=3)
->>> print type(D)
+>>> print(type(D))
 <type 'numpy.ndarray'>
->>> print D.shape
+>>> print(D.shape)
 (3, 100, 9)
 
 If exactly one datum is requested, :meth:`~abstract_model.Simulatable.simulate_experiment`
 will return a scalar:
 
->>> print m.simulate_experiment(np.array([0.5]), np.array([3.5 * np.pi]), repeat=1).shape
+>>> print(m.simulate_experiment(np.array([0.5]), np.array([3.5 * np.pi]), repeat=1).shape)
 ()
 
 Note that in NumPy, a shape tuple of length zero indicates a scalar value,
@@ -195,9 +195,9 @@ array of probabilities whose shape is given by the lengths of ``outcomes``,
 In particular, :meth:`~abstract_model.Model.likelihood` returns a rank-three
 tensor :math:`L_{ijk} := \Pr(d_i | \vec{x}_j; \vec{e}_k)`.
 
->>> print type(L)
+>>> print(type(L))
 <type 'numpy.ndarray'>
->>> print L.shape
+>>> print(L.shape)
 (1, 100, 9)
 
 Implementing Custom Simulators and Models
@@ -284,6 +284,10 @@ the ``expparams_dtype`` of our model:
 >>> expparams = np.empty((81,), dtype=mcm.expparams_dtype)
 >>> expparams['ts'] = np.dstack(np.mgrid[1:10,1:10] * np.pi / 2).reshape(-1, 2)
 >>> D = mcm.simulate_experiment(modelparams, expparams, repeat=2)
+>>> print(type(D))
+<class 'numpy.ndarray'>
+>>> print(D.shape)
+(2, 10000, 81)
 
 .. note::
 
@@ -320,7 +324,7 @@ scalar will be referred to by a field ``x``.
 
 >>> import numpy as np
 >>> eps = np.array([(12.1, 10)], dtype=bin_model.expparams_dtype)
->>> print eps['x'], eps['n_meas']
+>>> print(eps['x'], eps['n_meas'])
 [ 12.1] [10]
 
 Another model which *decorates* other models in this way is :class:`PoisonedModel`,
