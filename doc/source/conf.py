@@ -340,4 +340,8 @@ intersphinx_mapping = {
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['show-inheritance', 'undoc-members']
 pngmath_latex_preamble = preamble
+doctest_global_setup = '''
+from __future__ import division, print_function
+import numpy as np
+'''
 

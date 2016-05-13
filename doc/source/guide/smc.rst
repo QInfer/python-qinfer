@@ -50,7 +50,6 @@ Updating from Data
 Once an updater has been created, one can then use it to update the prior
 distribution to a posterior conditioned on experimental data. For example,
 
->>> import numpy as np
 >>> true_model = prior.sample()
 >>> experiment = np.array([12.1], dtype=model.expparams_dtype)
 >>> outcome = model.simulate_experiment(true_model, experiment)

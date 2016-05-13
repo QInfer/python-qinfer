@@ -73,7 +73,6 @@ the angle between :math:`x` and :math:`y` is drawn from
 
 .. code-block:: python
 
-    import numpy as np
     from qinfer.distributions import Distribution
     
     class RingDistribution(Distribution):

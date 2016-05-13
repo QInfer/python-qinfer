@@ -104,7 +104,6 @@ an array has two fields, named ``t`` and ``basis``, having dtypes of ``float``
 and ``int``, respectively. Such arrays are initialized by passing lists of
 *tuples*, one for each field:
 
->>> import numpy as np
 >>> eps = np.array([
 ...     (12.3, 2),
 ...     (14.1, 1)
@@ -154,7 +153,6 @@ parameter records or scalars (depending on the model or simulator),
 then returns an array of sample data, one sample for each combination of model
 and experiment parameters.
 
->>> import numpy as np
 >>> modelparams = np.linspace(0, 1, 100)
 >>> expparams = np.arange(1, 10) * np.pi / 2
 >>> D = m.simulate_experiment(modelparams, expparams, repeat=3)
@@ -183,7 +181,6 @@ The core functionality of :class:`~abstract_model.Model`, however, is the
 model parameters and experiment parameters, then returns for each combination
 of the three the corresponding probability :math:`\Pr(d | \vec{x}; \vec{e})`.
 
->>> import numpy as np
 >>> modelparams = np.linspace(0, 1, 100)
 >>> expparams = np.arange(1, 10) * np.pi / 2
 >>> outcomes = np.array([0], dtype=int)
@@ -278,7 +275,12 @@ Our new custom model is now ready to use! To simulate data from this model, we
 set up ``modelparams`` and ``expparams`` as before, taking care to conform to
 the ``expparams_dtype`` of our model:
 
->>> import numpy as np
+.. testsetup::
+
+    import os, sys
+    sys.path.insert(0, os.path.join(os.getcwd(), 'source', 'guide'))
+    from multicos import MultiCosModel
+
 >>> mcm = MultiCosModel()
 >>> modelparams = np.dstack(np.mgrid[0:1:100j,0:1:100j]).reshape(-1, 2)
 >>> expparams = np.empty((81,), dtype=mcm.expparams_dtype)
@@ -322,7 +324,6 @@ underlying models, called ``n_meas``. If the original model used scalar
 experiment parameters (e.g.: ``expparams_dtype`` is `float`), then the original
 scalar will be referred to by a field ``x``.
 
->>> import numpy as np
 >>> eps = np.array([(12.1, 10)], dtype=bin_model.expparams_dtype)
 >>> print(eps['x'], eps['n_meas'])
 [ 12.1] [10]
