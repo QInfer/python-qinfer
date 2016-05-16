@@ -1,4 +1,4 @@
-from qinfer.abstract_model import Model
+from qinfer import Model
 import numpy as np
 
 class MultiCosModel(Model):

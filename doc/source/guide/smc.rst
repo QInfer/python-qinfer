@@ -37,9 +37,7 @@ provide a model, a number of SMC particles and a prior distribution to choose
 those particles from. Using the example of a :class:`SimplePrecessionModel`,
 and a uniform prior :math:`\omega \sim \text{Uni}(0, 1)`:
 
->>> from qinfer.smc import SMCUpdater
->>> from qinfer.distributions import UniformDistribution
->>> from qinfer.test_models import SimplePrecessionModel
+>>> from qinfer import SMCUpdater, UniformDistribution, SimplePrecessionModel
 >>> model = SimplePrecessionModel()
 >>> prior = UniformDistribution([0, 1])
 >>> updater = SMCUpdater(model, 1000, prior)
@@ -91,7 +89,7 @@ with :math:`a = 0.98`. The resampling behavior can be controlled, however, by
 passing resampler objects to :class:`SMCUpdater`. For instance, if one wants to
 create an updater with :math:`a = 0.9` as was suggested by [WGFC13a]_:
 
->>> from qinfer.resamplers import LiuWestResampler
+>>> from qinfer import LiuWestResampler
 >>> updater = SMCUpdater(model, 1000, prior, resampler=LiuWestResampler(0.9))
 
 

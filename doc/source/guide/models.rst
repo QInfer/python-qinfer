@@ -59,7 +59,7 @@ In order to use this likelihood function, we must instantiate the model that
 implements the likelihood. Since :class:`SimplePrecessionModel` is
 provided with QInfer, we can simply import it and make an instance.
 
->>> from qinfer.test_models import SimplePrecessionModel
+>>> from qinfer import SimplePrecessionModel
 >>> m = SimplePrecessionModel()
 
 Once a model or simulator has been created, you can query how many model
@@ -131,7 +131,7 @@ example, the model class :class:`~BinomialModel` adds an `int`
 field specifying how many times a two-outcome measurement is repeated, so to
 specify that we can use its :attr:`~Simulatable.expparams_dtype`:
 
->>> from qinfer.derived_models import BinomialModel
+>>> from qinfer import BinomialModel
 >>> bm = BinomialModel(m)
 >>> print(bm.expparams_dtype)
 [('x', 'float'), ('n_meas', 'uint')]
@@ -287,7 +287,7 @@ the ``expparams_dtype`` of our model:
 >>> expparams['ts'] = np.dstack(np.mgrid[1:10,1:10] * np.pi / 2).reshape(-1, 2)
 >>> D = mcm.simulate_experiment(modelparams, expparams, repeat=2)
 >>> print(type(D))
-<class 'numpy.ndarray'>
+<type 'numpy.ndarray'>
 >>> print(D.shape)
 (2, 10000, 81)
 
@@ -313,8 +313,8 @@ measurements make sense.
 To use :class:`BinomialModel`, simply provide an instance of another model
 class:
 
->>> from qinfer.test_models import SimplePrecessionModel
->>> from qinfer.derived_models import BinomialModel
+>>> from qinfer import SimplePrecessionModel
+>>> from qinfer import BinomialModel
 >>> bin_model = BinomialModel(SimplePrecessionModel())
 
 Experiments for :class:`BinomialModel` have an additional field from the

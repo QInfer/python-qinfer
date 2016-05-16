@@ -60,8 +60,8 @@ An experiment parameter vector for this model is simply a specification of
 :class:`RandomizedBenchmarkingModel` represents 0/1 data, it is common to wrap
 this model in a :class:`BinomialModel`:
 
->>> from qinfer.derived_models import BinomialModel
->>> from qinfer.rb import RandomizedBenchmarkingModel
+>>> from qinfer import BinomialModel
+>>> from qinfer import RandomizedBenchmarkingModel
 >>> model = BinomialModel(RandomizedBenchmarkingModel(order=0, interleaved=False))
 >>> expparams = np.array([
 ...    (100, 1000) # 1000 shots of sequences with length 100.

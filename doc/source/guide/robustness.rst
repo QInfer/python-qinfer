@@ -41,8 +41,8 @@ where :math:`\widehat{\Pr}` is the reported estimate of the true likelihood.
 For example, to simulate using adaptive likelihood estimation to reach a
 threshold tolerance of 0.01:
 
->>> from qinfer.test_models import SimplePrecessionModel
->>> from qinfer.derived_models import PoisonedModel
+>>> from qinfer import SimplePrecessionModel
+>>> from qinfer import PoisonedModel
 >>> model = PoisonedModel(SimplePrecessionModel(), tol=0.01)
 
 
