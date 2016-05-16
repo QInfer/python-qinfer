@@ -156,8 +156,8 @@ and experiment parameters.
 >>> modelparams = np.linspace(0, 1, 100)
 >>> expparams = np.arange(1, 10) * np.pi / 2
 >>> D = m.simulate_experiment(modelparams, expparams, repeat=3)
->>> print(type(D))
-<type 'numpy.ndarray'>
+>>> print(isinstance(D, np.ndarray))
+True
 >>> print(D.shape)
 (3, 100, 9)
 
@@ -192,8 +192,8 @@ array of probabilities whose shape is given by the lengths of ``outcomes``,
 In particular, :meth:`~abstract_model.Model.likelihood` returns a rank-three
 tensor :math:`L_{ijk} := \Pr(d_i | \vec{x}_j; \vec{e}_k)`.
 
->>> print(type(L))
-<type 'numpy.ndarray'>
+>>> print(isinstance(L, np.ndarray))
+True
 >>> print(L.shape)
 (1, 100, 9)
 
@@ -286,8 +286,8 @@ the ``expparams_dtype`` of our model:
 >>> expparams = np.empty((81,), dtype=mcm.expparams_dtype)
 >>> expparams['ts'] = np.dstack(np.mgrid[1:10,1:10] * np.pi / 2).reshape(-1, 2)
 >>> D = mcm.simulate_experiment(modelparams, expparams, repeat=2)
->>> print(type(D))
-<type 'numpy.ndarray'>
+>>> print(isinstance(D, np.ndarray))
+True
 >>> print(D.shape)
 (2, 10000, 81)
 
