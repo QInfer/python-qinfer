@@ -215,6 +215,19 @@ def compactspace(scale, n):
     compact_xs = np.linspace(0, 1, n + 2)[1:-1]
     return logit(compact_xs)
            
+
+def pretty_time(secs, force_h=False, force_m=False):
+    if secs > 86400:
+        return "{d} days, ".format(d=int(secs//86400)) + pretty_time(secs % 86400, force_h=True)
+    elif force_h or secs > 3600:
+        return "{h}:".format(h=int(secs//3600)) + pretty_time(secs % 3600, force_m=True)
+    elif force_m or secs > 60:
+        return (
+            "{m:0>2}:{s:0>2}" if force_m else "{m}:{s:0>2}"
+        ).format(m=int(secs//60), s=int(secs%60))
+    else:
+        return "{0:0.2f} seconds".format(secs)
+
     
 #==============================================================================
 #Test Code
@@ -260,15 +273,3 @@ if __name__ == "__main__":
     ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
     plt.show()
  
-
-def pretty_time(secs, force_h=False, force_m=False):
-    if secs > 86400:
-        return "{d} days, ".format(d=int(secs//86400)) + pretty_time(secs % 86400, force_h=True)
-    elif force_h or secs > 3600:
-        return "{h}:".format(h=int(secs//3600)) + pretty_time(secs % 3600, force_m=True)
-    elif force_m or secs > 60:
-        return (
-            "{m:0>2}:{s:0>2}" if force_m else "{m}:{s:0>2}"
-        ).format(m=int(secs//60), s=int(secs%60))
-    else:
-        return "{0:0.2f} seconds".format(secs)

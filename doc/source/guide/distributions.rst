@@ -39,7 +39,7 @@ that produces an array of samples.
 >>> from qinfer.distributions import NormalDistribution
 >>> dist = NormalDistribution(0, 1)
 >>> samples = dist.sample(n=5)
->>> print samples.shape
+>>> print(samples.shape)
 (5, 1)
 
 Combining Distributions
@@ -55,7 +55,7 @@ then the product distribution on :math:`(a,b)` can be produced by using
 >>> b = UniformDistribution([0, 1])
 >>> ab = ProductDistribution(a, b)
 >>> samples = ab.sample(n=5)
->>> print samples.shape
+>>> print(samples.shape)
 (5, 2)
 
     
@@ -73,7 +73,6 @@ the angle between :math:`x` and :math:`y` is drawn from
 
 .. code-block:: python
 
-    import numpy as np
     from qinfer.distributions import Distribution
     
     class RingDistribution(Distribution):

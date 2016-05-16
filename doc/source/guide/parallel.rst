@@ -33,6 +33,14 @@ or more engines, typically obtained with an expression similar to
 ``client[:]``, and splits calls to :meth:`~qinfer.Model.likelihood`
 across the engines accessible from the :class:`~ipyparallel.DirectView`.
 
+.. note::
+
+    **QInfer** does not include `ipyparallel`_ in its installation, so you must
+    `install <https://ipyparallel.readthedocs.io/en/latest/#installing-ipython-parallel>`_
+    it separately. To run the example code also requires some initialization,
+    which is also described in the
+    `docs <https://ipyparallel.readthedocs.io/en/latest/intro.html#getting-started>`_.
+
 >>> from ipyparallel import Client # doctest: +SKIP
 >>> from qinfer import SimplePrecessionModel # doctest: +SKIP
 >>> from qinfer import DirectViewParallelizedModel # doctest: +SKIP
@@ -92,4 +100,3 @@ parallelization.
 
 .. _ipyparallel: https://ipyparallel.readthedocs.org/en/latest/
 .. _PyOpenCL: http://documen.tician.de/pyopencl/
-

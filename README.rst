@@ -5,6 +5,14 @@ Welcome to QInfer
 .. image:: https://zenodo.org/badge/19664/QInfer/python-qinfer.svg
    :target: https://zenodo.org/badge/latestdoi/19664/QInfer/python-qinfer
 
+.. image:: https://img.shields.io/badge/launch-binder-E66581.svg
+    :target: http://mybinder.org/repo/qinfer/qinfer-examples
+    :alt: Launch Binder
+    
+.. image:: https://img.shields.io/pypi/v/QInfer.svg?maxAge=2592000
+    :target: https://pypi.python.org/pypi/QInfer
+    
+
 .. image:: https://travis-ci.org/QInfer/python-qinfer.svg?branch=master
     :target: https://travis-ci.org/QInfer/python-qinfer
 

@@ -50,7 +50,6 @@ import warnings
 __all__ = [
     'Distribution',
     'SingleSampleMixin',
-    
     'ProductDistribution',
     'UniformDistribution',
     'ConstantDistribution',
@@ -209,51 +208,6 @@ class ConstantDistribution(Distribution):
         
     def sample(self, n=1):
         return np.repeat(self._values, n, axis=0)
-
-class UniformDistributionWith0(Distribution):
-    """
-    Uniform distribution on a given rectangular region with padded zeros.
-    
-    :param numpy.ndarray ranges: Array of shape ``(n_rvs, 2)``, where ``n_rvs``
-        is the number of random variables, specifying the upper and lower limits
-        for each variable.
-    """
-    
-    def __init__(self, ranges=_DEFAULT_RANGES, zeros = 0):
-        warnings.warn(
-            "This class has been superceded by ProductDistribution and ConstantDistribution.",
-            DeprecationWarning
-        )
-    
-        if not isinstance(ranges, np.ndarray):
-            ranges = np.array(ranges)
-            
-        if len(ranges.shape) == 1:
-            ranges = ranges[np.newaxis, ...]
-        
-        self._ranges = ranges
-        self._n_rvs = ranges.shape[0]
-        self._delta = ranges[:, 1] - ranges[:, 0]
-        
-        self.zeros = zeros
-        
-    @property
-    def n_rvs(self):
-        return self._n_rvs
-        
-    def sample(self, n=1):
-        shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
-        z = np.random.random(shape)
-        foo =  self._ranges[:, 0] + z * self._delta
-        return np.pad(foo,((0,0), (0, self.zeros)), mode = 'constant')
-        
-    def grad_log_pdf(self, var):
-        # THIS IS NOT TECHNICALLY LEGIT; BCRB doesn't technically work with a
-        # prior that doesn't go to 0 at its end points.  But we do it anyway.
-        if var.shape[0] == 1:
-            return 12/(self._delta)**2
-        else:
-            return np.zeros(var.shape)
 
 
 class NormalDistribution(Distribution):

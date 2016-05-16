@@ -32,8 +32,8 @@ from __future__ import division
 
 __all__ = [
     'simple_est_prec',
+    'simple_est_rb',
     # TODO:
-    # 'simple_est_rb',
     # 'simple_est_rabi'
 ]
 
@@ -43,8 +43,9 @@ import numpy as np
 
 from qinfer.smc import SMCUpdater
 from qinfer.test_models import SimplePrecessionModel
+from qinfer.rb import RandomizedBenchmarkingModel
 from qinfer.derived_models import BinomialModel
-from qinfer.distributions import UniformDistribution
+from qinfer.distributions import UniformDistribution, PostselectedDistribution
 from qinfer.resamplers import LiuWestResampler
 
 # We want to be able to support Pandas without requiring it, so a conditional
@@ -100,16 +101,16 @@ def load_data_or_txt(data, dtype):
     elif pd is not None and isinstance(data, pd.DataFrame):
         return data.to_records(index=False)
 
-    elif hasattr(data, 'read') or isinstance(data, 'str'):
+    elif hasattr(data, 'read') or isinstance(data, str):
         data = np.loadtxt(data, dtype=dtype, delimiter=',')
         return data
     else:
         raise TypeError("Expected a filename, an array or a file-like object.")
 
 
-def do_update(model, n_particles, prior, outcomes, expparams, return_all):
+def do_update(model, n_particles, prior, outcomes, expparams, return_all, resampler=None):
     updater = SMCUpdater(model, n_particles, prior,
-        # resampler=LiuWestResampler(a=0.9)
+        resampler=resampler
     )
     updater.batch_update(outcomes, expparams, resample_interval=1)
 
@@ -127,7 +128,7 @@ def do_update(model, n_particles, prior, outcomes, expparams, return_all):
             'updater': updater
         }
 
-def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=2000, return_all=False):
+def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=6000, return_all=False):
     """
     Estimates a simple precession (cos²) from experimental data.
     The columns of the data are assumed to be [counts, t, n_shots].
@@ -152,6 +153,55 @@ def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=2000, return_a
             'x': (1, 't'),
             'n_meas': (2, 'n_shots')
         }
+    )
+
+    return do_update(
+        model, n_particles, prior, outcomes, expparams,
+        return_all
+    )
+
+
+def simple_est_rb(data, interleaved=False, p_min=0.0, p_max=1.0, n_particles=8000, return_all=False):
+    """
+    Estimates the fidelity of a gateset from a standard or interleaved randomized benchmarking
+    experiment.
+    The columns of the data are assumed to be [counts, m, n_shots] for standard randomized
+    benchmarking, and [counts, m, n_shots, reference] for interleaved, where ``reference`` is a
+    Boolean variable indicating if that datum was collected for the reference or interleaved
+    curve.
+    """
+    model = BinomialModel(RandomizedBenchmarkingModel(interleaved=interleaved))
+    prior = PostselectedDistribution(UniformDistribution([
+            [p_min, p_max],
+            [0, 1],
+            [0, 1]
+        ] if not interleaved else [
+            [p_min, p_max],
+            [p_min, p_max],
+            [0, 1],
+            [0, 1]
+        ]),
+        model
+    )
+
+    data = load_data_or_txt(data, [
+        ('counts', 'uint'),
+        ('m', 'uint'),
+        ('n_shots', 'uint')
+    ] + [
+        ('reference', 'uint')
+    ] if interleaved else [])
+
+    cols_expparams = {
+        'm': (1, 'm'),
+        'n_meas': (2, 'n_shots')
+    }
+    if interleaved:
+        cols_expparams['reference'] = (3, 'reference')
+
+    outcomes, expparams = data_to_params(data,
+        model.expparams_dtype,
+        cols_expparams=cols_expparams
     )
 
     return do_update(
