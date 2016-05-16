@@ -31,7 +31,10 @@ if os.path.exists(VERSION_TARGET):
 
 write_version()
 
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 try:
     with open('README.rst', 'r') as readme:
