@@ -18,7 +18,7 @@ class MultiCosModel(Model):
     
     @property
     def expparams_dtype(self):
-        return [('ts', '2float')]
+        return [('ts', 'float', 2)]
        
     def likelihood(self, outcomes, modelparams, expparams):
         # We first call the superclass method, which basically

@@ -46,8 +46,9 @@ function
     \end{cases},
 
 as can be derived from Born's Rule for a spin-½ particle prepared and measured
-in the :math:`\left|+\right\rangle` state, and evolved under
-:math:`H = \omega \sigma_z / 2` for some time :math:`t`.
+in the
+:math:`\left|+\right\rangle\propto\left|0\right\rangle+\left|1\right\rangle` state, and evolved under :math:`H = \omega \sigma_z / 2` for some time
+:math:`t`.
 
 In this way, we see that by defining the likelihood function in terms of the
 hypothetical outcome :math:`d`, the model parameter :math:`\omega`, and the experimental
@@ -64,13 +65,13 @@ provided with QInfer, we can simply import it and make an instance.
 Once a model or simulator has been created, you can query how many model
 parameters it admits and how many outcomes a given experiment can have.
 
->>> print m.n_modelparams
+>>> print(m.n_modelparams)
 1
->>> print m.modelparam_names
+>>> print(m.modelparam_names)
 ['\\omega']
->>> print m.is_n_outcomes_constant
+>>> print(m.is_n_outcomes_constant)
 True
->>> print m.n_outcomes(expparams=0)
+>>> print(m.n_outcomes(expparams=0))
 2
 
 Model and Experiment Parameters
@@ -87,7 +88,7 @@ represent the choices we get to make in performing measurements.
 Model parameters are represented by NumPy arrays of `dtype`_ `float` and that
 have two indices, one representing which model is being considered and one
 representing which parameter. That is, model parameters are defined by matrices
-such that the element :math:`X_ij` is the :math:`j^{\text{th}}` parameter of
+such that the element :math:`X_{ij}` is the :math:`j^{\text{th}}` parameter of
 the model parameter vector :math:`\vec{x}_i`.
 
 By contrast, since not all experiment parameters are best represented by
@@ -103,25 +104,24 @@ an array has two fields, named ``t`` and ``basis``, having dtypes of ``float``
 and ``int``, respectively. Such arrays are initialized by passing lists of
 *tuples*, one for each field:
 
->>> import numpy as np
 >>> eps = np.array([
 ...     (12.3, 2),
 ...     (14.1, 1)
 ... ], dtype=[('t', 'float'), ('basis', 'int')])
->>> print eps
+>>> print(eps)
 [(12.3, 2) (14.1, 1)]
->>> print eps.shape
+>>> print(eps.shape)
 (2,)
 
 Once we have made a record array, we can then index by field names to get out
 each field as an array of that field's value in each record, or we can index
 by record to get all fields.
 
->>> print eps['t']
+>>> print(eps['t'])
 [ 12.3  14.1]
->>> print eps['basis']
+>>> print(eps['basis'])
 [2 1]
->>> print eps[0]
+>>> print(eps[0])
 (12.3, 2)
 
 Model classes specify the dtypes of their experimental parameters with the
@@ -133,7 +133,7 @@ specify that we can use its :attr:`~abstract_model.Simulatable.expparams_dtype`:
 
 >>> from qinfer.derived_models import BinomialModel
 >>> bm = BinomialModel(m)
->>> print bm.expparams_dtype
+>>> print(bm.expparams_dtype)
 [('x', 'float'), ('n_meas', 'uint')]
 >>> eps = np.array([
 ...     (11.0, 20)
@@ -153,19 +153,18 @@ parameter records or scalars (depending on the model or simulator),
 then returns an array of sample data, one sample for each combination of model
 and experiment parameters.
 
->>> import numpy as np
 >>> modelparams = np.linspace(0, 1, 100)
 >>> expparams = np.arange(1, 10) * np.pi / 2
 >>> D = m.simulate_experiment(modelparams, expparams, repeat=3)
->>> print type(D)
+>>> print(type(D))
 <type 'numpy.ndarray'>
->>> print D.shape
+>>> print(D.shape)
 (3, 100, 9)
 
 If exactly one datum is requested, :meth:`~abstract_model.Simulatable.simulate_experiment`
 will return a scalar:
 
->>> print m.simulate_experiment(np.array([0.5]), np.array([3.5 * np.pi]), repeat=1).shape
+>>> print(m.simulate_experiment(np.array([0.5]), np.array([3.5 * np.pi]), repeat=1).shape)
 ()
 
 Note that in NumPy, a shape tuple of length zero indicates a scalar value,
@@ -182,7 +181,6 @@ The core functionality of :class:`~abstract_model.Model`, however, is the
 model parameters and experiment parameters, then returns for each combination
 of the three the corresponding probability :math:`\Pr(d | \vec{x}; \vec{e})`.
 
->>> import numpy as np
 >>> modelparams = np.linspace(0, 1, 100)
 >>> expparams = np.arange(1, 10) * np.pi / 2
 >>> outcomes = np.array([0], dtype=int)
@@ -194,9 +192,9 @@ array of probabilities whose shape is given by the lengths of ``outcomes``,
 In particular, :meth:`~abstract_model.Model.likelihood` returns a rank-three
 tensor :math:`L_{ijk} := \Pr(d_i | \vec{x}_j; \vec{e}_k)`.
 
->>> print type(L)
+>>> print(type(L))
 <type 'numpy.ndarray'>
->>> print L.shape
+>>> print(L.shape)
 (1, 100, 9)
 
 Implementing Custom Simulators and Models
@@ -216,13 +214,13 @@ Suppose we wish to implement the likelihood function
 
     \Pr(0 | \omega_1, \omega_2; t_1, t_2) = \cos^2(\omega_1 t_1 / 2) \cos^2(\omega_2 t_2 / 2),
     
-as may arise in looking, for instance, at an experiment expired by 2D NMR.
+as may arise in looking, for instance, at an experiment inspired by 2D NMR.
 This model has two model parameters, :math:`\omega_1` and :math:`\omega_2`, and
 so we start by creating a new class and declaring the number of model
 parameters as a `property`:
 
 .. literalinclude:: multicos.py
-    :lines: 4-8
+    :lines: 1-8
     
 Next, we proceed to add a property and method indicating that this model always
 admits two outcomes, irrespective of what measurement is performed.
@@ -231,11 +229,13 @@ admits two outcomes, irrespective of what measurement is performed.
     :lines: 10-14
     
 We indicate the valid range for model parameters by returning an array of
-dtype `bool` for each of an input matrix of model parameters, specifying whether
-each model vector is valid or not. Typically, this will look like some typical
-bounds checking, combined using `~numpy.logical_and` and `~numpy.all`. Here,
-we follow that model by inisting that *all* elements of each model parameter
-vector must be at least 0, *and* must not exceed 1.
+dtype `bool` for each of an input matrix of model parameters, specifying
+whether each model vector is valid or not (this is important in resampling,
+for instance, to make sure particles don't move to bad locations). Typically,
+this will look like some typical bounds checking, combined using
+`~numpy.logical_and` and `~numpy.all`. Here, we follow that model by insisting
+that *all* elements of each model parameter vector must be at least 0, *and*
+must not exceed 1.
     
 .. literalinclude:: multicos.py
     :lines: 16-17
@@ -250,7 +250,7 @@ Finally, we write the likelihood itself. Since this is a two-outcome model,
 we can calculate the rank-two tensor
 :math:`p_{jk} = \Pr(0 | \vec{x}_j; \vec{e}_k)` and let
 :meth:`~qinfer.abstract_model.Model.pr0_to_likelihood_array` add an index over
-outcomes for us.
+outcomes for us so :math:`L_{0jk}=p_{jk}` and :math:`L_{1jk}=1-p_{jk}`.
 To compute :math:`p_{jk}` efficiently, it is helpful to do a bit of index
 gymnastics  using NumPy's powerful `broadcasting rules`_. In this example, we
 set up the calculation to produce terms of the form
@@ -271,8 +271,33 @@ as:
     :lines: 23-48
     :emphasize-lines: 35-43
     
-Our new custom model is now ready to use!
-    
+Our new custom model is now ready to use! To simulate data from this model, we
+set up ``modelparams`` and ``expparams`` as before, taking care to conform to
+the ``expparams_dtype`` of our model:
+
+.. testsetup::
+
+    import os, sys
+    sys.path.insert(0, os.path.join(os.getcwd(), 'source', 'guide'))
+    from multicos import MultiCosModel
+
+>>> mcm = MultiCosModel()
+>>> modelparams = np.dstack(np.mgrid[0:1:100j,0:1:100j]).reshape(-1, 2)
+>>> expparams = np.empty((81,), dtype=mcm.expparams_dtype)
+>>> expparams['ts'] = np.dstack(np.mgrid[1:10,1:10] * np.pi / 2).reshape(-1, 2)
+>>> D = mcm.simulate_experiment(modelparams, expparams, repeat=2)
+>>> print(type(D))
+<class 'numpy.ndarray'>
+>>> print(D.shape)
+(2, 10000, 81)
+
+.. note::
+
+    Creating ``expparams`` as an empty array and filling it by field name is a
+    straightforward way to make sure it matches ``expparams_dtype``, but it
+    comes with the risk of forgetting to initialize a field, so take care when
+    using this method.
+
 .. _broadcasting rules: http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
 
 .. currentmodule:: qinfer.derived_models
@@ -299,9 +324,8 @@ underlying models, called ``n_meas``. If the original model used scalar
 experiment parameters (e.g.: ``expparams_dtype`` is `float`), then the original
 scalar will be referred to by a field ``x``.
 
->>> import numpy as np
 >>> eps = np.array([(12.1, 10)], dtype=bin_model.expparams_dtype)
->>> print eps['x'], eps['n_meas']
+>>> print(eps['x'], eps['n_meas'])
 [ 12.1] [10]
 
 Another model which *decorates* other models in this way is :class:`PoisonedModel`,
