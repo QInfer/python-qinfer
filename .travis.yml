@@ -26,10 +26,11 @@ install:
   - pip install -r requirements.txt
   - python setup.py install
   - cd src/
+
 script:
   - py.test --cov-config .coveragerc --cov=qinfer
   - pylint --py3k qinfer/
-  - cd ~/doc
+  - cd $TRAVIS_BUILD_DIR/doc
   - make doctest
 
 after_success:
@@ -38,7 +39,7 @@ after_success:
 before_deploy:
   # For why this is needed, see:
   # http://stackoverflow.com/questions/36635650/travisci-deploy-cannot-find-setup-py
-  - cd ~/
+  - cd $TRAVIS_BUILD_DIR
 
 deploy:
   provider: pypi
