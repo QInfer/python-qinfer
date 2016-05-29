@@ -361,20 +361,21 @@ class RandomWalkModel(DerivedModel):
     def __init__(self, underlying_model, step_distribution):
         self._step_dist = step_distribution
         
-        if self._model.n_modelparams != self._step_dist.n_rvs:
+        super(RandomWalkModel, self).__init__(underlying_model)
+        
+        if self.underlying_model.n_modelparams != self._step_dist.n_rvs:
             raise TypeError("Step distribution does not match model dimension.")
         
-        super(RandomWalkModel, self).__init__(underlying_model)
             
     ## METHODS ##
     
     def likelihood(self, outcomes, modelparams, expparams):
         super(RandomWalkModel, self).likelihood(outcomes, modelparams, expparams)
-        return self._model.likelihood(outcomes, modelparams, expparams)
+        return self.underlying_model.likelihood(outcomes, modelparams, expparams)
         
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         super(RandomWalkModel, self).simulate_experiment(modelparams, expparams, repeat)
-        return self._model.simulate_experiment(modelparams, expparams, repeat)
+        return self.underlying_model.simulate_experiment(modelparams, expparams, repeat)
         
     def update_timestep(self, modelparams, expparams):
         # Note that the timestep update is presumed to be independent of the
