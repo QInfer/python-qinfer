@@ -7,7 +7,7 @@
     
 .. _rb_guide:
     
-.. currentmodule:: qinfer.rb
+.. currentmodule:: qinfer
 
 Accelerated Randomized Benchmarking
 ===================================
@@ -32,7 +32,7 @@ Regardless of the order or interleaving mode, each model instance for randomized
 benchmarking yields 0/1 data, with 1 indicating a survival (measuring the same
 state after applying a gate sequence as was initially prepared). To use these
 models with data batched over many sequences, model instances can be augmented
-by :class:`~qinfer.derived_models.BinomialModel`.
+by :class:`BinomialModel`.
 
 Zeroth-Order Model
 ------------------
@@ -58,10 +58,10 @@ parameters and fidelities.
 An experiment parameter vector for this model is simply a specification of
 :math:`m`, the length of the Clifford sequence used for that datum. Since
 :class:`RandomizedBenchmarkingModel` represents 0/1 data, it is common to wrap
-this model in a :class:`~qinfer.derived_models.BinomialModel`:
+this model in a :class:`BinomialModel`:
 
->>> from qinfer.derived_models import BinomialModel
->>> from qinfer.rb import RandomizedBenchmarkingModel
+>>> from qinfer import BinomialModel
+>>> from qinfer import RandomizedBenchmarkingModel
 >>> model = BinomialModel(RandomizedBenchmarkingModel(order=0, interleaved=False))
 >>> expparams = np.array([
 ...    (100, 1000) # 1000 shots of sequences with length 100.

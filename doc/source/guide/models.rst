@@ -22,8 +22,8 @@ distribution is called the *likelihood function*, and it encapsulates the
 definition of the model.
 
 In QInfer, likelihood functions are represented as classes inheriting from either
-:class:`~abstract_model.Model`, when the likelihood function can be numerically
-evaluated, or :class:`~abstract_model.Simulatable` when only samples from the
+:class:`Model`, when the likelihood function can be numerically
+evaluated, or :class:`Simulatable` when only samples from the
 function can be efficiently generated.
 
 Using Models and Simulations
@@ -32,10 +32,10 @@ Using Models and Simulations
 Basic Functionality
 ~~~~~~~~~~~~~~~~~~~
 
-Both :class:`~abstract_model.Model` and :class:`~abstract_model.Simulatable` offer
+Both :class:`Model` and :class:`Simulatable` offer
 basic functionality to describe how they are parameterized, what outcomes are
-possible, etc. For this example, we will use a premade model from :mod:`test_models`,
-:class:`~test_models.SimplePrecessionModel`. This model implements the likelihood
+possible, etc. For this example, we will use a premade model,
+:class:`~qinfer.SimplePrecessionModel`. This model implements the likelihood
 function
 
 .. math::
@@ -56,10 +56,10 @@ parameter :math:`t`, we can reason about the experimental data that we would ext
 from the system.
 
 In order to use this likelihood function, we must instantiate the model that
-implements the likelihood. Since :class:`~test_models.SimplePrecessionModel` is
+implements the likelihood. Since :class:`SimplePrecessionModel` is
 provided with QInfer, we can simply import it and make an instance.
 
->>> from qinfer.test_models import SimplePrecessionModel
+>>> from qinfer import SimplePrecessionModel
 >>> m = SimplePrecessionModel()
 
 Once a model or simulator has been created, you can query how many model
@@ -78,7 +78,7 @@ Model and Experiment Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The division between unknown parameters that we are trying to learn (:math:`\omega`
-in the ``SimplePrecessionModel`` example) and the controls that we can use to
+in the :class:`SimplePrecessionModel` example) and the controls that we can use to
 design measurements (:math:`t`) is generic, and is key to how QInfer handles
 the problem of parameter estimation.
 Roughly speaking, model parameters are real numbers that represent properties
@@ -125,13 +125,13 @@ by record to get all fields.
 (12.3, 2)
 
 Model classes specify the dtypes of their experimental parameters with the
-property :attr:`~abstract_model.Simulatable.expparams_dtype`. Thus, a common
+property :attr:`~Simulatable.expparams_dtype`. Thus, a common
 idiom is to pass this property to the dtype keyword of NumPy functions. For
-example, the model class :class:`~derived_models.BinomialModel` adds an `int`
+example, the model class :class:`~BinomialModel` adds an `int`
 field specifying how many times a two-outcome measurement is repeated, so to
-specify that we can use its :attr:`~abstract_model.Simulatable.expparams_dtype`:
+specify that we can use its :attr:`~Simulatable.expparams_dtype`:
 
->>> from qinfer.derived_models import BinomialModel
+>>> from qinfer import BinomialModel
 >>> bm = BinomialModel(m)
 >>> print(bm.expparams_dtype)
 [('x', 'float'), ('n_meas', 'uint')]
@@ -147,7 +147,7 @@ Simulation
 ~~~~~~~~~~
 
 Both models and simulators allow for simulated data to be drawn from the
-model distribution using the :meth:`~abstract_model.Simulatable.simulate_experiment`
+model distribution using the :meth:`~Simulatable.simulate_experiment`
 method. This method takes a matrix of model parameters and a vector of experiment
 parameter records or scalars (depending on the model or simulator),
 then returns an array of sample data, one sample for each combination of model
@@ -156,12 +156,12 @@ and experiment parameters.
 >>> modelparams = np.linspace(0, 1, 100)
 >>> expparams = np.arange(1, 10) * np.pi / 2
 >>> D = m.simulate_experiment(modelparams, expparams, repeat=3)
->>> print(type(D))
-<type 'numpy.ndarray'>
+>>> print(isinstance(D, np.ndarray))
+True
 >>> print(D.shape)
 (3, 100, 9)
 
-If exactly one datum is requested, :meth:`~abstract_model.Simulatable.simulate_experiment`
+If exactly one datum is requested, :meth:`~Simulatable.simulate_experiment`
 will return a scalar:
 
 >>> print(m.simulate_experiment(np.array([0.5]), np.array([3.5 * np.pi]), repeat=1).shape)
@@ -176,8 +176,8 @@ as such an array has no indices.
 Likelihooods
 ~~~~~~~~~~~~
 
-The core functionality of :class:`~abstract_model.Model`, however, is the
-:meth:`~abstract_model.Model.likelihood` method. This takes vectors of outcomes,
+The core functionality of :class:`~Model`, however, is the
+:meth:`~Model.likelihood` method. This takes vectors of outcomes,
 model parameters and experiment parameters, then returns for each combination
 of the three the corresponding probability :math:`\Pr(d | \vec{x}; \vec{e})`.
 
@@ -186,14 +186,14 @@ of the three the corresponding probability :math:`\Pr(d | \vec{x}; \vec{e})`.
 >>> outcomes = np.array([0], dtype=int)
 >>> L = m.likelihood(outcomes, modelparams, expparams)
 
-The return value of :meth:`~abstract_model.Model.likelihood` is a three-index
+The return value of :meth:`~Model.likelihood` is a three-index
 array of probabilities whose shape is given by the lengths of ``outcomes``,
 ``modelparams`` and ``expparams``.
 In particular, :meth:`~abstract_model.Model.likelihood` returns a rank-three
 tensor :math:`L_{ijk} := \Pr(d_i | \vec{x}_j; \vec{e}_k)`.
 
->>> print(type(L))
-<type 'numpy.ndarray'>
+>>> print(isinstance(L, np.ndarray))
+True
 >>> print(L.shape)
 (1, 100, 9)
 
@@ -249,7 +249,7 @@ In this case, we want one field that is an array of two `float` elements:
 Finally, we write the likelihood itself. Since this is a two-outcome model,
 we can calculate the rank-two tensor
 :math:`p_{jk} = \Pr(0 | \vec{x}_j; \vec{e}_k)` and let
-:meth:`~qinfer.abstract_model.Model.pr0_to_likelihood_array` add an index over
+:meth:`~qinfer.Model.pr0_to_likelihood_array` add an index over
 outcomes for us so :math:`L_{0jk}=p_{jk}` and :math:`L_{1jk}=1-p_{jk}`.
 To compute :math:`p_{jk}` efficiently, it is helpful to do a bit of index
 gymnastics  using NumPy's powerful `broadcasting rules`_. In this example, we
@@ -286,8 +286,8 @@ the ``expparams_dtype`` of our model:
 >>> expparams = np.empty((81,), dtype=mcm.expparams_dtype)
 >>> expparams['ts'] = np.dstack(np.mgrid[1:10,1:10] * np.pi / 2).reshape(-1, 2)
 >>> D = mcm.simulate_experiment(modelparams, expparams, repeat=2)
->>> print(type(D))
-<class 'numpy.ndarray'>
+>>> print(isinstance(D, np.ndarray))
+True
 >>> print(D.shape)
 (2, 10000, 81)
 
@@ -299,8 +299,6 @@ the ``expparams_dtype`` of our model:
     using this method.
 
 .. _broadcasting rules: http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
-
-.. currentmodule:: qinfer.derived_models
 
 Adding Functionality to Models with Other Models
 ------------------------------------------------
@@ -315,8 +313,8 @@ measurements make sense.
 To use :class:`BinomialModel`, simply provide an instance of another model
 class:
 
->>> from qinfer.test_models import SimplePrecessionModel
->>> from qinfer.derived_models import BinomialModel
+>>> from qinfer import SimplePrecessionModel
+>>> from qinfer import BinomialModel
 >>> bin_model = BinomialModel(SimplePrecessionModel())
 
 Experiments for :class:`BinomialModel` have an additional field from the

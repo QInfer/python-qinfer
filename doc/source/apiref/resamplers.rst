@@ -7,7 +7,7 @@
     
 .. _resamplers:
     
-.. currentmodule:: qinfer.resamplers
+.. currentmodule:: qinfer
 
 Resampling Algorithms
 =====================

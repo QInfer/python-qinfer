@@ -7,7 +7,7 @@
     
 .. _parallel:
     
-.. currentmodule:: qinfer.parallel
+.. currentmodule:: qinfer
 
 Parallelized Models
 ===================
