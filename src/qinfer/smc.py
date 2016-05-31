@@ -34,7 +34,6 @@ from __future__ import division, unicode_literals
 __all__ = [
     'SMCUpdater',
     'SMCUpdaterBCRB',
-    'SMCUpdaterABC',
     'MixedApproximateSMCUpdater'
 ]
 
@@ -75,7 +74,7 @@ try:
     import mpltools.special as mpls
 except:
     # Don't even warn in this case.
-    pass
+    mpls = None
 
 ## LOGGING ####################################################################
 
@@ -1451,47 +1450,3 @@ class SMCUpdaterBCRB(SMCUpdater):
         # We now can update as normal.
         SMCUpdater.update(self, outcome, expparams,check_for_resample=check_for_resample)
         
-
-class SMCUpdaterABC(SMCUpdater):
-    """
-
-    Subclass of :class:`SMCUpdater`, adding approximate Bayesian computation
-    functionality.
-    
-    """
-
-    def __init__(self, model, n_particles, prior,
-                 abc_tol=0.01, abc_sim=1e4, **kwargs):
-        self.abc_tol = abc_tol
-        self.abc_sim = abc_sim
-        
-        SMCUpdater.__init__(self, model, n_particles, prior, **kwargs)
-        
-    def hypothetical_update(self, outcomes, expparams):
-        weights = np.copy(self.particle_weights)
-
-        # Check if we have a single outcome or an array. If we only have one
-        # outcome, wrap it in a one-index array.
-        if not isinstance(outcomes, np.ndarray):
-            outcomes = np.array([outcomes])
-        
-        #TODO: lots of assumptions have been made to ensure the following works
-        # 1 - this may only work for binary outcomes
-        # 2 - in any case, it assumes the outcome of an experiment is a single number
-        
-        # first simulate abc_sim experiments
-        n = self.model.simulate_experiment(self.particle_locations, expparams, repeat=self.abc_sim)
-        # re-weight the particle by multiplying by number of simulated 
-        # that came within a tolerance of abc_tol of the actual outcome    
-        weights = weights * np.sum(np.abs(n-outcomes)/self.abc_sim <= self.abc_tol,1) 
-        
-        # normalize
-        return weights / np.sum(weights)
-        
-    def update(self, outcome, expparams, check_for_resample=True):
-        self.particle_weights = self.hypothetical_update(outcome, expparams)
-
-        if check_for_resample:
-            self._maybe_resample()
-
-    

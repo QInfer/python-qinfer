@@ -50,7 +50,6 @@ Updating from Data
 Once an updater has been created, one can then use it to update the prior
 distribution to a posterior conditioned on experimental data. For example,
 
->>> import numpy as np
 >>> true_model = prior.sample()
 >>> experiment = np.array([12.1], dtype=model.expparams_dtype)
 >>> outcome = model.simulate_experiment(true_model, experiment)
@@ -64,7 +63,7 @@ Since :class:`SMCUpdater` inherits from :class:`~qinfer.distributions.Distributi
 it can be sampled in the same way described in :ref:`distributions_guide`.
 
 >>> posterior_samples = updater.sample(n=100)
->>> print posterior_samples.shape
+>>> print(posterior_samples.shape)
 (100, 1)
 
 More commonly, however, one will want to calculate estimates such as
@@ -73,7 +72,7 @@ estimates are given methods such as :meth:`~SMCUpdater.est_mean` and
 :meth:`~SMCUpdater.est_covariance_mtx`.
 
 >>> est = updater.est_mean()
->>> print est # doctest: +SKIP
+>>> print(est)# doctest: +SKIP
 [ 0.53147953]
 
 Plotting Posterior Distributions
