@@ -347,7 +347,8 @@ epub_copyright = u'2012, Christopher Ferrie and Christopher Granade'
 extlinks = {
     'arxiv': ('http://arxiv.org/abs/%s', 'arXiv:'),
     'doi': ('https://dx.doi.org/%s', 'doi:'),
-    'example_nb': ('https://nbviewer.jupyter.org/github/qinfer/qinfer-examples/blob/master/%s.ipynb', '')
+    'example_nb': ('https://nbviewer.jupyter.org/github/qinfer/qinfer-examples/blob/master/%s.ipynb', ''),
+    'hdl': ('https://hdl.handle.net/%s', 'hdl:')
 }
 
 ## OTHER CONFIGURATION PARAMETERS ##############################################
