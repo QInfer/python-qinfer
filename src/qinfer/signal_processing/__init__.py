@@ -1,0 +1,1 @@
+from qinfer.signal_processing.permutations import *
