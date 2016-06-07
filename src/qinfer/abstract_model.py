@@ -390,11 +390,14 @@ class Model(Simulatable):
         """
         pr0 = pr0[np.newaxis, ...]
         pr1 = 1 - pr0
-        
+
+        if len(np.shape(outcomes)) == 0:
+            outcomes = np.array(outcomes)[None]
+                    
         return np.concatenate([
             pr0 if outcomes[idx] == 0 else pr1
-            for idx in range(outcomes.shape[0])
-            ]) 
+            for idx in range(safe_shape(outcomes))
+        ]) 
         
 class DifferentiableModel(with_metaclass(abc.ABCMeta, Model)):
     
