@@ -39,25 +39,25 @@ if not tags.has('nomock'):
                 return Mock()
 
     # TODO: replace with RTD build from requirements.txt!
-    MOCK_MODULES = [
-        'scipy',
-        'scipy.ndimage',
-        'scipy.ndimage.filters',
-        'scipy.linalg',
-        'scipy.optimize',
-        'scipy.spatial',
-        'scipy.special',
-        'scipy.stats',
-        'scipy.stats.distributions',
-        'scipy.interpolate',
-        'scipy.integrate',
-        'sklearn',
-        'sklearn.cluster',
-        'sklearn.metrics',
-        'sklearn.metrics.pairwise',
-    ]
-    for mod_name in MOCK_MODULES:
-        sys.modules[mod_name] = Mock() 
+    # MOCK_MODULES = [
+    #     'scipy',
+    #     'scipy.ndimage',
+    #     'scipy.ndimage.filters',
+    #     'scipy.linalg',
+    #     'scipy.optimize',
+    #     'scipy.spatial',
+    #     'scipy.special',
+    #     'scipy.stats',
+    #     'scipy.stats.distributions',
+    #     'scipy.interpolate',
+    #     'scipy.integrate',
+    #     'sklearn',
+    #     'sklearn.cluster',
+    #     'sklearn.metrics',
+    #     'sklearn.metrics.pairwise',
+    # ]
+    # for mod_name in MOCK_MODULES:
+    #     sys.modules[mod_name] = Mock() 
 
 ###############################################################################
 
@@ -139,7 +139,11 @@ preamble = r"""
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.mathjax', 'sphinx.ext.extlinks']
+extensions = [
+    'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.mathjax', 'sphinx.ext.extlinks',
+    'matplotlib.sphinxext.only_directives',
+    'matplotlib.sphinxext.plot_directive'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -389,7 +393,14 @@ extlinks = {
 
 ## OTHER CONFIGURATION PARAMETERS ##############################################
 
+plot_pre_code = """
+import numpy as np
+from qinfer import *
 
+import matplotlib.pyplot as plt
+try: plt.style.use('ggplot')
+except: pass
+"""
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
