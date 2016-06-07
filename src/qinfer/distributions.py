@@ -128,9 +128,9 @@ class ProductDistribution(Distribution):
     In other words, the returned distribution is
     :math:`\Pr(\prod_k D_k) = \prod_k \Pr(D_k)`.
     
-    :param *factors: Distribution objects representing :math:`D_k`.
-                     Alternatively, one iterable argument can be given,
-                     in which case the factors are the values drawn from that iterator.
+    :param factors: Distribution objects representing :math:`D_k`.
+                    Alternatively, one iterable argument can be given,
+                    in which case the factors are the values drawn from that iterator.
     """
     
     def __init__(self, *factors):
