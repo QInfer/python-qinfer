@@ -6,7 +6,7 @@
 ##
 # © 2012 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
-#     
+#
 # This file is a part of the Qinfer project.
 # Licensed under the AGPL version 3.
 ##
@@ -47,31 +47,36 @@ import abc
 import numpy as np
 
 from qinfer.utils import safe_shape
-    
+
 ## CLASSES ###################################################################
 
 class Simulatable(with_metaclass(abc.ABCMeta, object)):
+    """
+    Represents a system which can be simulated according to
+    various model parameters and experimental control parameters
+    in order to produce representative data.
 
-    # TODO: docstring!
-    
+    See :ref:`models_guide` for more details.
+    """
+
     def __init__(self):
         self._sim_count = 0
-        
+
         # Initialize a default scale matrix.
         self._Q = np.ones((self.n_modelparams,))
-        
+
     ## ABSTRACT PROPERTIES ##
-    
+
     @abc.abstractproperty
     def n_modelparams(self):
         """
         Returns the number of real model parameters admitted by this model.
-        
+
         This property is assumed by inference engines to be constant for
         the lifetime of a :class:`Simulatable` instance.
         """
         pass
-        
+
     @abc.abstractproperty
     def expparams_dtype(self):
         """
@@ -79,20 +84,20 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         model with single-parameter control, this will likely be a scalar dtype,
         such as ``"float64"``. More generally, this can be an example of a
         record type, such as ``[('time', 'float64'), ('axis', 'uint8')]``.
-        
+
         This property is assumed by inference engines to be constant for
         the lifetime of a Model instance.
         """
         pass
-        
+
     ## CONCRETE PROPERTIES ##
-    
+
     @property
     def is_n_outcomes_constant(self):
         """
         Returns ``True`` if and only if the number of outcomes for each
         experiment is independent of the experiment being performed.
-        
+
         This property is assumed by inference engines to be constant for
         the lifetime of a Simulatable instance.
         """
@@ -124,29 +129,36 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         independent.
         """
         return self.model_chain[-1] if self.model_chain else None
-    
+
     @property
     def sim_count(self):
+        """
+        Returns the number of data samples that have been produced by
+        this simulator.
+
+        :rtype: int
+        """
         return self._sim_count
-        
+
     @property
     def Q(self):
         r"""
         Returns the diagonal of the scale matrix :math:`\matr{Q}` that
         relates the scales of each of the model parameters. In particular,
         the quadratic loss for this Simulatable is defined as:
-        
+
         .. math::
-            L_{\matr{Q}}(\vec{x}, \hat{\vec{x}}) = (\vec{x} - \hat{\vec{x}})^\T \matr{Q} (\vec{x} - \hat{\vec{x}})
-            
+            L_{\matr{Q}}(\vec{x}, \hat{\vec{x}}) =
+            (\vec{x} - \hat{\vec{x}})^\T \matr{Q} (\vec{x} - \hat{\vec{x}})
+
         If a subclass does not explicitly define the scale matrix, it is taken
         to be the identity matrix of appropriate dimension.
-        
+
         :return: The diagonal elements of :math:`\matr{Q}`.
         :rtype: :class:`~numpy.ndarray` of shape ``(n_modelparams, )``.
         """
         return self._Q
-        
+
     @property
     def modelparam_names(self):
         """
@@ -175,21 +187,21 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
                 for model in reversed(self.model_chain)
             ))
         return s
-    
+
     ## ABSTRACT METHODS ##
-    
+
     @abc.abstractmethod
     def n_outcomes(self, expparams):
         """
         Returns an array of dtype ``uint`` describing the number of outcomes
         for each experiment specified by ``expparams``.
-        
+
         :param numpy.ndarray expparams: Array of experimental parameters. This
             array must be of dtype agreeing with the ``expparams_dtype``
             property.
         """
         pass
-    
+
     @abc.abstractmethod
     def are_models_valid(self, modelparams):
         """
@@ -198,14 +210,33 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         each set of model parameters represents is valid under this model.
         """
         pass
-        
+
     @abc.abstractmethod
     def simulate_experiment(self, modelparams, expparams, repeat=1):
-        # TODO: document
+        """
+        Produces data according to the given model parameters and experimental
+        parameters, structured as a NumPy array.
+
+        :param np.ndarray modelparams: A shape ``(n_models, n_modelparams)``
+            array of model parameter vectors describing the hypotheses under
+            which data should be simulated.
+        :param np.ndarray expparams: A shape ``(n_experiments, )`` array of
+            experimental control settings, with ``dtype`` given by 
+            :attr:`~qinfer.Simulatable.expparams_dtype`, describing the
+            experiments whose outcomes should be simulated.
+        :param int repeat: How many times the specified experiment should
+            be repeated.
+        :rtype: np.ndarray
+        :return: A three-index tensor ``data[i, j, k]``, where ``i`` is the repetition,
+            ``j`` indexes which vector of model parameters was used, and where
+            ``k`` indexes which experimental parameters where used. If ``repeat == 1``,
+            ``len(modelparams) == 1`` and ``len(expparams) == 1``, then a scalar
+            datum is returned instead.
+        """
         self._sim_count += modelparams.shape[0] * expparams.shape[0] * repeat
-        
+
     ## CONCRETE METHODS ##
-    
+
     def clear_cache(self):
         """
         Tells the model to clear any internal caches used in computing
@@ -214,13 +245,13 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         """
         # By default, no cache to clear.
         pass
-    
+
     def experiment_cost(self, expparams):
         """
         Given an array of experimental parameters, returns the cost associated
         with performing each experiment. By default, this cost is constant
         (one) for every experiment.
-        
+
         :param expparams: An array of experimental parameters for which the cost
             is to be evaluated.
         :type expparams: :class:`~numpy.ndarray` of ``dtype`` given by
@@ -230,14 +261,14 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
             same shape as ``expparams``.
         """
         return np.ones(expparams.shape)
-        
+
     def distance(self, a, b):
         r"""
         Gives the distance between two model parameter vectors :math:`\vec{a}` and
         :math:`\vec{b}`. By default, this is the vector 1-norm of the difference
         :math:`\mathbf{Q} (\vec{a} - \vec{b})` rescaled by
         :attr:`~Simulatable.Q`.
-        
+
         :param np.ndarray a: Array of model parameter vectors having shape
             ``(n_models, n_modelparams)``.
         :param np.ndarray b: Array of model parameters to compare to, having
@@ -245,13 +276,13 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         :return: An array ``d`` of distances ``d[i]`` between ``a[i, :]`` and
             ``b[i, :]``.
         """
-        
+
         return np.apply_along_axis(
             lambda vec: np.linalg.norm(vec, 1),
             1,
             self.Q * (a - b)
         )
-        
+
     def update_timestep(self, modelparams, expparams):
         r"""
         Returns a set of model parameter vectors that is the update of an
@@ -259,12 +290,12 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         conditioned on a particular experiment having been performed.
         By default, this is the trivial function
         :math:`\vec{x}(t_{k+1}) = \vec{x}(t_k)`.
-        
+
         :param np.ndarray modelparams: Set of model parameter vectors to be
             updated.
         :param np.ndarray expparams: An experiment parameter array describing
             the experiment that was just performed.
-        
+
         :return np.ndarray: Array of shape
             ``(n_models, n_modelparams, n_experiments)`` describing the update
             of each model according to each experiment.
@@ -291,8 +322,8 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         call this method.
         """
         return modelparams
-        
-        
+
+
 class LinearCostModelMixin(Simulatable):
     # FIXME: move this mixin to a new module.
     # TODO: test this mixin.
@@ -302,32 +333,65 @@ class LinearCostModelMixin(Simulatable):
     ``expparams`` element (by default, ``t``).
     """
     _field = "t"
-    
+
     def experiment_cost(self, expparams):
         return expparams[self._field]
 
 class Model(Simulatable):
-    # TODO: now that Model is a subclass of Simulatable, Model may no longer
-    #       be the best name. Maybe rename to SimulatableModel and
-    #       ExplicitModel?
-    
+    """
+    Represents a system which can be simulated according to
+    various model parameters and experimental control parameters
+    in order to produce the probability of a hypothetical data
+    record. As opposed to :class:`~qinfer.Simulatable`, instances
+    of :class:`~qinfer.Model` not only produce data consistent
+    with the description of a system, but also evaluate the probability
+    of that data arising from the system.
+
+    See :ref:`models_guide` for more details.
+    """
+
     ## INITIALIZERS ##
     def __init__(self):
         super(Model, self).__init__()
         self._call_count = 0
-    
+
     ## CONCRETE PROPERTIES ##
-    
+
     @property
     def call_count(self):
-        # TODO: document
+        """
+        Returns the number of points at which
+        the probability of this model has been evaluated,
+        where a point consists of a hypothesis about the model (a vector of
+        model parameters), an experimental control setting (expparams) and
+        a hypothetical or actual datum.
+
+        :rtype: int
+        """
         return self._call_count
-    
+
     ## ABSTRACT METHODS ##
-    
+
     @abc.abstractmethod
     def likelihood(self, outcomes, modelparams, expparams):
-        # TODO: document
+        r"""
+        Calculates the probability of each given outcome, conditioned on each
+        given model parameter vector and each given experimental control setting.
+
+        :param np.ndarray modelparams: A shape ``(n_models, n_modelparams)``
+            array of model parameter vectors describing the hypotheses for
+            which the likelihood function is to be calculated.
+        :param np.ndarray expparams: A shape ``(n_experiments, )`` array of
+            experimental control settings, with ``dtype`` given by 
+            :attr:`~qinfer.Simulatable.expparams_dtype`, describing the
+            experiments from which the given outcomes were drawn.
+        :rtype: np.ndarray
+        :return: A three-index tensor ``L[i, j, k]``, where ``i`` is the outcome
+            being considered, ``j`` indexes which vector of model parameters was used,
+            and where ``k`` indexes which experimental parameters where used.
+            Each element ``L[i, j, k]`` then corresponds to the likelihood
+            :math:`\Pr(d_i | \vec{x}_j; e_k)`.
+        """
         
         # Count the number of times the inner-most loop is called.
         self._call_count += (
