@@ -228,14 +228,21 @@ def perf_test(
     updater = SMCUpdater(model, n_particles, prior, **extra_updater_args)
     heuristic = heuristic_class(updater)
 
-    performance['true'] = true_mps
-
     for idx_exp in range(n_exp):
+        # Set inside the loop to handle the case where the
+        # true model is time-dependent as well as the estimation model.
+        performance[idx_exp]['true'] = true_mps
+
         expparams = heuristic()
         datum = true_model.simulate_experiment(true_mps, expparams)
 
         with timing() as t:
             updater.update(datum, expparams)
+
+        # Update the true model.
+        true_mps = true_model.update_timestep(
+            promote_dims_left(true_mps, 2), expparams
+        )[:, :, 0]
 
         est_mean = updater.est_mean()
         delta = np.subtract(*shorten_right(est_mean, true_mps))
