@@ -5,20 +5,11 @@
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
     
-.. _guide:
-
-User's Guide
-============
-
-.. toctree::
-    :maxdepth: 2
+.. _simple_est_guide:
     
-    simple_est
-    distributions
-    models
-    smc
-    expdesign
-    rb
-    parallel
-    robustness
-    
+.. currentmodule:: qinfer
+
+Simple Estimation Functions
+===========================
+
+TODO
