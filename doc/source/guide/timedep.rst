@@ -5,21 +5,11 @@
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
     
-.. _guide:
-
-User's Guide
-============
-
-.. toctree::
-    :maxdepth: 2
+.. _timedep_guide:
     
-    simple_est
-    distributions
-    models
-    smc
-    expdesign
-    rb
-    timedep
-    parallel
-    perf_testing
-    
+.. currentmodule:: qinfer
+
+Learning Time-Dependent Models
+==============================
+
+TODO

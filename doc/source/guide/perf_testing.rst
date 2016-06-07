@@ -17,8 +17,14 @@ Introduction
 
 In developing statistical inference applications, it is essential to test the
 robustness of one's software to errors and noise of various kinds. Thus,
-QInfer provides tools to do so by corrupting likelihood calculations in various
+QInfer provides tools to do so by repeatedly running estimation tasks
+to measure performance, and by corrupting likelihood calculations in various
 realistic ways.
+
+Testing Estimation Performance
+------------------------------
+
+TODO
 
 Modeling Statistical and Sampling Error
 ---------------------------------------
