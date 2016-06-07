@@ -45,6 +45,8 @@ from future.utils import with_metaclass
 import abc
     # Python standard library package for specifying abstract classes.
 import numpy as np
+
+from qinfer.utils import safe_shape
     
 ## CLASSES ###################################################################
 
@@ -328,7 +330,9 @@ class Model(Simulatable):
         # TODO: document
         
         # Count the number of times the inner-most loop is called.
-        self._call_count += outcomes.shape[0] * modelparams.shape[0] * expparams.shape[0]
+        self._call_count += (
+            safe_shape(outcomes) * safe_shape(modelparams) * safe_shape(expparams)
+        )
                 
     ## CONCRETE METHODS ##
     # These methods depend on the abstract methods, and thus their behaviors
