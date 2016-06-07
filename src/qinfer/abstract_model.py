@@ -45,6 +45,8 @@ from future.utils import with_metaclass
 import abc
     # Python standard library package for specifying abstract classes.
 import numpy as np
+
+from qinfer.utils import safe_shape
     
 ## CLASSES ###################################################################
 
@@ -328,7 +330,9 @@ class Model(Simulatable):
         # TODO: document
         
         # Count the number of times the inner-most loop is called.
-        self._call_count += outcomes.shape[0] * modelparams.shape[0] * expparams.shape[0]
+        self._call_count += (
+            safe_shape(outcomes) * safe_shape(modelparams) * safe_shape(expparams)
+        )
                 
     ## CONCRETE METHODS ##
     # These methods depend on the abstract methods, and thus their behaviors
@@ -386,11 +390,14 @@ class Model(Simulatable):
         """
         pr0 = pr0[np.newaxis, ...]
         pr1 = 1 - pr0
-        
+
+        if len(np.shape(outcomes)) == 0:
+            outcomes = np.array(outcomes)[None]
+                    
         return np.concatenate([
             pr0 if outcomes[idx] == 0 else pr1
-            for idx in range(outcomes.shape[0])
-            ]) 
+            for idx in range(safe_shape(outcomes))
+        ]) 
         
 class DifferentiableModel(with_metaclass(abc.ABCMeta, Model)):
     

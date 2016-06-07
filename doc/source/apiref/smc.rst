@@ -7,7 +7,7 @@
     
 .. _smc:
     
-.. currentmodule:: qinfer.smc
+.. currentmodule:: qinfer
 
 Sequential Monte Carlo
 ======================

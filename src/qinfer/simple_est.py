@@ -188,9 +188,9 @@ def simple_est_rb(data, interleaved=False, p_min=0.0, p_max=1.0, n_particles=800
         ('counts', 'uint'),
         ('m', 'uint'),
         ('n_shots', 'uint')
-    ] + [
+    ] + ([
         ('reference', 'uint')
-    ] if interleaved else [])
+    ] if interleaved else []))
 
     cols_expparams = {
         'm': (1, 'm'),

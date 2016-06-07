@@ -7,7 +7,7 @@
     
 .. _rb:
     
-.. currentmodule:: qinfer.rb
+.. currentmodule:: qinfer
 
 Accelerated Randomized Benchmarking
 ===================================
@@ -19,6 +19,8 @@ Class Reference
 ~~~~~~~~~~~~~~~
 .. autoclass:: RandomizedBenchmarkingModel
     :members:
+
+.. currentmodule:: qinfer.rb
     
 Function Reference
 ~~~~~~~~~~~~~~~~~~

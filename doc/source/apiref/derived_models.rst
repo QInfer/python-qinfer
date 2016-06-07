@@ -7,7 +7,7 @@
     
 .. _derived_models:
     
-.. currentmodule:: qinfer.derived_models
+.. currentmodule:: qinfer
 
 Derived Models
 ==============

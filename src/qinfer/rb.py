@@ -69,7 +69,7 @@ def F(p, d=2):
 
 class RandomizedBenchmarkingModel(DifferentiableModel):
     r"""
-    Implmenets the randomized benchmarking or interleaved randomized
+    Implements the randomized benchmarking or interleaved randomized
     benchmarking protocol, such that the depolarizing strength :math:`p`
     of the twirled channel is a parameter to be estimated, given a sequnce
     length :math:`m` as an experimental control. In addition, the zeroth-order

@@ -7,7 +7,7 @@
     
 .. _distributions_guide:
     
-.. currentmodule:: qinfer.distributions
+.. currentmodule:: qinfer
 
 Representing Probability Distributions
 ======================================
@@ -16,7 +16,7 @@ Introduction
 ------------
 
 Probability distributions such as prior distributions over model parameters
-are reprented in QInfer by objects of type :class:`~qinfer.Distribution` that are
+are reprented in QInfer by objects of type :class:`Distribution` that are
 responsible for producing samples according to those distributions. This is
 especially useful, for instance, when drawing initial particles for use with
 an :class:`~qinfer.smc.SMCUpdater`.
@@ -24,7 +24,7 @@ an :class:`~qinfer.smc.SMCUpdater`.
 The approach to representing distributions taken by QInfer is somewhat
 different to that taken by, for example, :mod:`scipy.stats`, in that
 a QInfer :class:`Distribution` is a class that produces samples according to
-that distribution. This means that QInfer ``Distribution`` objects provide much
+that distribution. This means that QInfer :class:`Distribution` objects provide much
 less information than do those represented by objects in :mod:`scipy.stats`,
 but that they are much easier to write and combine.
 
@@ -36,10 +36,10 @@ QInfer comes along with several distributions, listed in
 :class:`Distribution`, and hence has a method :meth:`~Distribution.sample`
 that produces an array of samples.
 
->>> from qinfer.distributions import NormalDistribution
+>>> from qinfer import NormalDistribution
 >>> dist = NormalDistribution(0, 1)
 >>> samples = dist.sample(n=5)
->>> print samples.shape
+>>> print(samples.shape)
 (5, 1)
 
 Combining Distributions
@@ -50,12 +50,12 @@ instance, if :math:`a \sim \mathcal{N}(0, 1)` and :math:`b \sim \text{Uni}(0, 1)
 then the product distribution on :math:`(a,b)` can be produced by using
 :class:`ProductDistribution`:
 
->>> from qinfer.distributions import UniformDistribution, ProductDistribution
+>>> from qinfer import UniformDistribution, ProductDistribution
 >>> a = NormalDistribution(0, 1)
 >>> b = UniformDistribution([0, 1])
 >>> ab = ProductDistribution(a, b)
 >>> samples = ab.sample(n=5)
->>> print samples.shape
+>>> print(samples.shape)
 (5, 2)
 
     
@@ -73,8 +73,7 @@ the angle between :math:`x` and :math:`y` is drawn from
 
 .. code-block:: python
 
-    import numpy as np
-    from qinfer.distributions import Distribution
+    from qinfer import Distribution
     
     class RingDistribution(Distribution):
         @property

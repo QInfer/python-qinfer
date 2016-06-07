@@ -2,8 +2,8 @@
 Welcome to QInfer
 =================
 
-.. image:: https://zenodo.org/badge/19664/QInfer/python-qinfer.svg
-   :target: https://zenodo.org/badge/latestdoi/19664/QInfer/python-qinfer
+.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.51273.svg
+   :target: http://dx.doi.org/10.5281/zenodo.51273
 
 .. image:: https://img.shields.io/badge/launch-binder-E66581.svg
     :target: http://mybinder.org/repo/qinfer/qinfer-examples
@@ -33,14 +33,47 @@ We recommend using **QInfer** with the
 `Anaconda distribution`_. Download and install
 Anaconda for your platform, either Python 2.7 or 3.5. We
 suggest using Python 3.5, but **QInfer**
-works with either. Next, ensure that you have Git installed. On Windows,
-we suggest the `official Git downloads <https://git-scm.com/downloads>`_.
-Once Anaconda and Git are installed, simply run ``pip`` to install **QInfer**::
+works with either.
+
+If using Anaconda, you should go ahead now and install from their repository
+all the dependencies that we can. If you are using "regular"-Python then you can
+ignore this step. Replace ``python=3.5`` with your version (typically
+either 2.7 or 3.5).
+
+.. code-block:: console
+
+    $ conda install python=3.5 numpy scipy matplotlib scikit-learn
+
+If you are **not** using Anaconda, but are instead using "regular"-Python,
+and you are on Linux, you will need the Python development package:
+
+.. code-block:: console
+
+    $ sudo apt-get install python-dev
+
+Where ``python-dev`` might be ``python3.5-dev`` depending on your package
+manager and which version of Python you are using.
+
+The latest release of **QInfer** can now be installed from
+``PyPI`` with ``pip``:
+
+.. code-block:: console
+
+    $ pip install qinfer
+
+Alternatively, **QInfer** can be installed using ``pip`` and Git. Ensure that
+you have Git installed. On Windows, we suggest the
+`official Git downloads <https://git-scm.com/downloads>`__.
+Once Anaconda and Git are installed, simply run ``pip`` to install **QInfer**:
+
+.. code-block:: console
 
     $ pip install git+https://github.com/QInfer/python-qinfer.git
 
-Alternatively, **QInfer** can be installed manually by downloading from GitHub,
-then running the provided installer::
+Lastely, **QInfer** can be installed manually by downloading from GitHub,
+then running the provided installer:
+
+.. code-block:: console
 
     $ git clone git@github.com:QInfer/python-qinfer.git
     $ cd python-qinfer

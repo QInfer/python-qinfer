@@ -7,7 +7,7 @@
     
 .. _expdesign_guide:
     
-.. currentmodule:: qinfer.expdesign
+.. currentmodule:: qinfer
 
 Online Experiment Design
 ========================
@@ -28,8 +28,8 @@ where :math:`r(\vec{e})` is the Bayes risk (see [GFWC12]_), :math:`C(\vec{e})`
 is a cost function describing the cost associated with each experiment and where
 :math:`k` is a parameter describing how much we are willing to pay for
 reductions in risk. In QInfer, the cost function is specified as the
-:meth:`~qinfer.abstract_model.Simulatable.experiment_cost` method of
-the :class:`~qinfer.abstract_model.Simulatable` class under study.
+:meth:`Simulatable.experiment_cost` method of
+the :class:`Simulatable` class under study.
 
 Heuristics
 ----------
@@ -42,5 +42,5 @@ learning experiments without incurring additional simulation costs.
 
 **QInfer** exposes these heuristics though subclasses of :class:`Heuristic`,
 such as :class:`PGH`, which create experiment parameter arrays given the
-prior information exposed by an :class:`~qinfer.smc.SMCUpdater` instance.
+prior information exposed by an :class:`SMCUpdater` instance.
 

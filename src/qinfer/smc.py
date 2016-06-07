@@ -74,7 +74,7 @@ try:
     import mpltools.special as mpls
 except:
     # Don't even warn in this case.
-    pass
+    mpls = None
 
 ## LOGGING ####################################################################
 
