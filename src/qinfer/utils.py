@@ -228,6 +228,10 @@ def pretty_time(secs, force_h=False, force_m=False):
     else:
         return "{0:0.2f} seconds".format(secs)
 
+def safe_shape(arr, idx=0, default=1):
+    shape = np.shape(arr)
+    return shape[idx] if idx < len(shape) else default
+
     
 #==============================================================================
 #Test Code
