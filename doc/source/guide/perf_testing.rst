@@ -5,12 +5,12 @@
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
     
-.. _robustness_guide:
+.. _perf_testing_guide:
     
 .. currentmodule:: qinfer
 
-Robustness Testing
-==================
+Performance and Robustness Testing
+==================================
 
 Introduction
 ------------
