@@ -28,10 +28,3 @@ Class Reference
 
 .. autoclass:: LiuWestResampler
     :members:
-
-:class:`ClusteringResampler` - Cluster-based recursive resampler
-----------------------------------------------------------------
-
-.. autoclass:: ClusteringResampler
-    :members:
-
