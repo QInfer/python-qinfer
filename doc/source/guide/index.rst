@@ -20,6 +20,6 @@ User's Guide
     expdesign
     rb
     timedep
-    parallel
     perf_testing
+    parallel
     
