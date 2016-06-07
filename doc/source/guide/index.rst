@@ -20,5 +20,5 @@ User's Guide
     expdesign
     rb
     parallel
-    robustness
+    perf_testing
     

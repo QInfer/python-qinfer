@@ -327,7 +327,7 @@ scalar will be referred to by a field ``x``.
 [ 12.1] [10]
 
 Another model which *decorates* other models in this way is :class:`PoisonedModel`,
-which is discussed in more detail in :ref:`robustness_guide`. Roughly,
+which is discussed in more detail in :ref:`perf_testing_guide`. Roughly,
 this model causes the likeihood functions calculated by its underlying model
 to be subject to random noise, so that the robustness of an inference algorithm
 against such noise can be tested.
