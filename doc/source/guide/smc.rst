@@ -153,6 +153,15 @@ create an updater with :math:`a = 0.9` as was suggested by [WGFC13a]_:
 >>> from qinfer import LiuWestResampler
 >>> updater = SMCUpdater(model, 1000, prior, resampler=LiuWestResampler(0.9))
 
+This causes the resampling procedure to more aggressively approximate
+the posterior as a Gaussian distribution, and can allow for a much smaller
+number of particles to be used when the Gaussian approximation is accurate.
+For multimodal problems, it can make sense to relax the requirement that
+the resampler preserve the mean and covariance, and to instead allow the
+resampler to increase the uncertianty. For instance, the modified Liu-West
+resampler :math:`a = 1` and :math:`h = 0.005` can accurately find exactly
+degenrate peaks in precession models [Gra15]_.
+
 
 Posterior Credible Regions
 """"""""""""""""""""""""""
@@ -197,7 +206,7 @@ the property :attr:`~SMCUpdater.log_total_likelihood` records the quantity
     \ell(D | M) = \sum_i \log \Pr(d_i | M)
     
 for :math:`M \in \{A, B\}`. This is related to the Bayes factor
-:math:`\text{f}` by
+:math:`f` by
 
 .. math::
 
