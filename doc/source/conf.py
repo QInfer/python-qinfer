@@ -402,6 +402,14 @@ try: plt.style.use('ggplot')
 except: pass
 """
 
+plot_include_source = True
+
+plot_formats = [
+    'svg', 'pdf',
+    ('hires.png', 250),
+    ('png', 125)
+]
+
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'https://docs.python.org/3/': None,
