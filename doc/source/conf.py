@@ -416,7 +416,10 @@ intersphinx_mapping = {
     'numpy': ('https://docs.scipy.org/doc/numpy',None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference',None),
     'IPython': ('https://ipython.org/ipython-doc/stable/', None),
-    'ipyparallel': ('https://ipyparallel.readthedocs.io/en/latest/', None)
+    'ipyparallel': ('https://ipyparallel.readthedocs.io/en/latest/', None),
+    # NB: change this to 3.2.0 when that is released, as we will need random object
+    # support from that version.
+    'qutip': ('http://qutip.org/docs/3.1.0/', None)
 }
 
 autodoc_member_order = 'bysource'
