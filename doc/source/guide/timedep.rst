@@ -12,4 +12,11 @@
 Learning Time-Dependent Models
 ==============================
 
-TODO
+State-Space Estimation
+----------------------
+
+Random Walk Models
+------------------
+
+Specifying Custom Time-Step Updates
+-----------------------------------

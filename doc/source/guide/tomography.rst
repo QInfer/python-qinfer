@@ -7,7 +7,7 @@
     
 .. _tomography_guide:
     
-.. currentmodule:: qinfer
+.. currentmodule:: qinfer.tomography
 
 Quantum Tomography
 ==================
@@ -16,7 +16,7 @@ Introduction
 ------------
 
 Tomography is the most common quantum statistical problem being the subject
-of both theoretical and practical studies. The :mod:`qinfer.tomograpy` module
+of both theoretical and practical studies. The :mod:`qinfer.tomography` module
 has rich support for many of the common models of tomography including
 standard distributions and heuristics, and also provides convenient plotting
 tools.
