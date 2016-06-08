@@ -65,7 +65,7 @@ Distributed Performance Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As an alternative to distributing a single likelihood call across multiple
-engines, **QInfer** also supports distributed performance testing. Under this
+engines, **QInfer** also supports distributed :ref:`perf_testing_guide`. Under this
 model, each engine performs an independent trial of an estimation procedure,
 which is then collected by the client process. Distributed performance testing
 is implemented using the :func:`~qinfer.perf_test_multiple` function, with the

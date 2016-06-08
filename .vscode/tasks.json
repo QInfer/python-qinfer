@@ -1,0 +1,17 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "0.1.0",
+    "options": {
+        "cwd": "${workspaceRoot}/doc"
+    },
+    "windows": {
+        "command": "make.bat"
+    },
+    "linux": {
+        "command": "make"
+    },
+    "isShellCommand": true,
+    "args": ["html"],
+    "showOutput": "always"
+}

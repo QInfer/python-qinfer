@@ -1,0 +1,19 @@
+numpy
+scipy
+scikit-learn
+ipython
+future>=0.15
+matplotlib
+# QuTiP's setup.py currently doesn't play well with
+# requirements.txt unless numpy is already installed.
+# See qutip/qutip#426.
+# To work around this, we temporarily use a modified
+# setup.py.
+-e git+https://github.com/cgranade/qutip.git@fix-setup-numpy#egg=QuTiP
+
+pytest
+pytest-cov
+pytest-xdist
+
+coveralls
+pylint

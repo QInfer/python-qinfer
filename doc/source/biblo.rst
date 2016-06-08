@@ -24,6 +24,8 @@
     Granade C. E., Ferrie C., Wiebe N. & Cory D. G.  Robust online Hamiltonian learning. New Journal of Physics **14** 103013 (2012). :doi:`10.1088/1367-2630/14/10/103013`. :arxiv:`1207.1655`.
 .. [GFC14]
     Granade C. E., Ferrie C. & Cory D. G. `Accelerated randomized benchmarking <http://www.cgranade.com/research/arb/>`_. :arxiv:`1404.5275`.
+.. [Gra15]
+    Granade C. E. Characterization, veriﬁcation and control for large quantum systems. PhD thesis. :hdl:`10012/9217`.
 .. [KL+08]
     Knill E., Leibfried D., Reichle R., Britton J., Blakestad R. B., Jost J. D., Langer C., Ozeri R., Seidelin S., and Wineland D. J. Randomized benchmarking of quantum gates. Physical Review A. **77** 1, 012307 (2008). :doi:`10.1103/PhysRevA.77.012307`.
 .. [LW01]

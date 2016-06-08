@@ -31,6 +31,8 @@ reductions in risk. In QInfer, the cost function is specified as the
 :meth:`Simulatable.experiment_cost` method of
 the :class:`Simulatable` class under study.
 
+.. _expdesign_guide_heur:
+
 Heuristics
 ----------
 
