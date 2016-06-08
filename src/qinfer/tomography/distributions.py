@@ -83,11 +83,11 @@ def rand_dm_ginibre_redit(N=2, rank=None, dims=None):
 ## CLASSES ###################################################################
 
 class DensityOperatorDistribution(SingleSampleMixin, Distribution):
-    def __init__(self, basis):
-        """
+    """
         basis : int or TomographyBasis
-            If int, assumes a default basis of that dimension.
-        """
+        If int, assumes a default basis of that dimension.
+    """
+    def __init__(self, basis):
         if isinstance(basis, int):
             basis = gell_mann_basis(basis)
 

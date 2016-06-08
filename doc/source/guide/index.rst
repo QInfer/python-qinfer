@@ -18,6 +18,7 @@ User's Guide
     smc
     expdesign
     rb
+    tomography
     parallel
     robustness
     

@@ -40,3 +40,6 @@
     Wiebe N., Granade C. E., Ferrie C. & Cory D. G. Hamiltonian Learning and Certification Using Quantum Resources. :arxiv:`1309.0876`
 .. [WGFC13b]
     Wiebe N., Granade C. E., Ferrie C. & Cory D. G. Quantum Hamiltonian Learning Using Imperfect Quantum Resources. :arxiv:`1311.5269`
+.. [GCC16]
+    Granade C. E., Combes J. & Cory D. G. Practical Bayesian Tomography. :doi:` 10.1088/1367-2630/18/3/033024`
+
