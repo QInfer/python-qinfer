@@ -152,7 +152,7 @@ Modeling Faulty or Noisy Simulators
 In addition, **QInfer** allows for testing robustness
 against errors in the model itself by using
 :class:`PoisonedModel`.
-This :ref:`derived model <model_guide_derived>`
+This :ref:`derived model <models_guide_derived>`
 adds noise to a model's :meth:`~Model.likelihood`
 method in such a way as to simulate sampling errors incurred in
 likelihood-hood free parameter estimation (LFPE) approaches

@@ -67,7 +67,7 @@ __all__ = [
 
 def gell_mann_basis(dim):
     """    
-    Returns a :ref:`~qinfer.tomography.TomographyBasis` on dim dimensions
+    Returns a :class:`~qinfer.tomography.TomographyBasis` on dim dimensions
     using the generalized Gell-Mann matrices.
 
     This implementation is based on a MATLAB-language implementation
@@ -183,7 +183,7 @@ class TomographyBasis(object):
     example, the Pauli matrices form a tomographic basis for qubits.
 
     Instances of TomographyBasis convert between representations of
-    tomographic objects as real vectors of model parameters and QuTiP ``Qobj``
+    tomographic objects as real vectors of model parameters and QuTiP :class:`~qutip.Qobj`
     instances. The latter is convienent for working with other libraries, and
     for reasoning about fidelities and other metrics, while model parameter
     representations are useful for defining prior distributions and
@@ -191,7 +191,7 @@ class TomographyBasis(object):
 
     :param np.ndarray data: Dense array of shape ``(dim ** 2, dim, dim)``
         containing all elements of the new tomographic basis. ``data[alpha, i, j]``
-        is the ``(i, j)``th element of the ``alpha``th matrix of the new basis.
+        is the ``(i, j)``-th element of the ``alpha``-th matrix of the new basis.
     :param list dims: Dimensions specification used in converting to QuTiP
         representations. The product of all elements of ``dims`` must equal
         the dimension of axes 1 and 2 of ``data``. For instance, ``[2, 3]``
@@ -298,10 +298,11 @@ class TomographyBasis(object):
         return self._name
 
     def flat(self):
-        """
+        r"""
         Returns a NumPy array that represents this operator basis
         in a flattened manner, such that ``basis.flat()[i, j]`` is
-        the ``j``th element of the flattened ``i``th basis operator.
+        the :math:`j\text{th}` element of the flattened
+        :math:`i\text{th}` basis operator.
         """
         return self._flat
     
