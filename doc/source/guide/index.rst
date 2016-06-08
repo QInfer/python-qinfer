@@ -19,11 +19,8 @@ User's Guide
     smc
     expdesign
     rb
-<<<<<<< HEAD
     tomography
-=======
     timedep
     perf_testing
->>>>>>> origin/feature-improved_docs
     parallel
     

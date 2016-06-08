@@ -102,6 +102,37 @@ values of ``n_particles``:
     plt.legend()
     plt.show()
 
+We can also pass fixed model parameter vectors to evaluate the
+risk (that is, not the Bayes risk) as a function of the true
+model:
+
+.. plot::
+
+    model = SimplePrecessionModel()
+    prior = UniformDistribution([0, 1])
+    heuristic_class = ExpSparseHeuristic
+
+    omegas = np.linspace(0, 1, 11)
+    risks = np.empty_like(omegas)
+
+    for idx_omega, omega in enumerate(omegas[:, np.newaxis]):
+        perf = perf_test_multiple(
+            n_trials=50,
+            model=model, n_particles=400, prior=prior,
+            n_exp=50, heuristic_class=heuristic_class,
+            true_mps=omega
+        )
+        risks[idx_omega] = perf['loss'].mean(axis=0)
+
+    plt.semilogy(omegas, risks)
+
+    plt.xlabel(r'$\omega')
+    plt.ylabel('Risk')
+    plt.show()
+
+
+
+
 Modeling Statistical and Sampling Error
 ---------------------------------------
 
