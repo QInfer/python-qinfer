@@ -32,8 +32,8 @@ function.
 
 As an example, let's consider an experiment for learning :math:`\omega`
 that consists of taking 40 measurements at each time
-:math:`t_k = k / (2 \omega_\max)`, where :math:`k = 0, \dots, N - 1`
-indexes each measurement, :math:`\omega_\max` is the maximum plausible
+:math:`t_k = k / (2 \omega_{\max})`, where :math:`k = 0, \dots, N - 1`
+indexes each measurement, :math:`\omega_{\max}` is the maximum plausible
 frequency to be estimated, and where :math:`N` is the number of
 distinct times measured. We can generate this data using
 :func:`~numpy.random.binomial`:
