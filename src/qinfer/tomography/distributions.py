@@ -65,6 +65,7 @@ __all__ = [
     'GinibreReditDistribution',
     'BCSZChoiDistribution',
     'GADFLIDistribution',
+    'TensorProductDistribution'
 ]
 
 ## FUNCTIONS #################################################################
