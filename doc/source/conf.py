@@ -34,6 +34,7 @@ preamble = r"""
 \newcommand{\ident}{\mathbbm{1}}
 \newcommand{\ave}{\mathrm{ave}}
 \newcommand{\ii}{\mathrm{i}}
+\newcommand{\expect}{\mathbb{E}}
 \usepackage{braket}
 
 \makeatletter
