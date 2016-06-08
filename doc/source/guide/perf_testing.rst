@@ -33,7 +33,7 @@ we adopt the quadratic loss :math:`L_Q` as a default, defined as
 
 .. math::
 
-    L_Q(\hat{\vec{x}}, \vec{x}) = \Tr((\hat{\vec{x}} - \vec{x})^\TT \matr{Q} (\hat{\vec{x}} - \vec{x})),
+    L_Q(\hat{\vec{x}}, \vec{x}) = \Tr((\hat{\vec{x}} - \vec{x})^\T \matr{Q} (\hat{\vec{x}} - \vec{x})),
 
 where :math:`\matr{Q}` is a positive-semidefinite matrix that establishes
 the relative scale of each model parameter.
@@ -133,15 +133,29 @@ model:
     plt.ylabel('Risk')
     plt.show()
 
+Robustness Testing
+------------------
 
+Incorrect Priors and Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The :func:`~qinfer.perf_test` and :func:`~qinfer.perf_test_multiple`
+functions also allow for testing the effect of "bad" prior
+assumptions, and of using the "wrong" model for estimation.
+In particular, the ``true_prior`` and ``true_model`` arguments
+allow for testing the effect of using a different prior or
+model for performing estimation than for simulating data. 
 
-Modeling Statistical and Sampling Error
----------------------------------------
+Modeling Faulty or Noisy Simulators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A basic kind of robustness testing can be performed by using
-:class:`PoisonedModel`, which adds noise to a model's :meth:`~Model.likelihood`
-method in such a way as to simulate sampling errors incurred in LFPE approaches
+In addition, **QInfer** allows for testing robustness
+against errors in the model itself by using
+:class:`PoisonedModel`.
+This :ref:`derived model <model_guide_derived>`
+adds noise to a model's :meth:`~Model.likelihood`
+method in such a way as to simulate sampling errors incurred in
+likelihood-hood free parameter estimation (LFPE) approaches
 [FG13]_. The noise that :class:`PoisonedModel` adds can be specified as the
 tolerance of an adaptive likelihood estimation (ALE) step [FG13]_, or as the number
 of samples and hedging used for a hedged maximum likelihood estimator of
@@ -157,14 +171,34 @@ where :math:`\widehat{\Pr}` is the reported estimate of the true likelihood.
 For example, to simulate using adaptive likelihood estimation to reach a
 threshold tolerance of 0.01:
 
->>> from qinfer import SimplePrecessionModel
->>> from qinfer import PoisonedModel
+>>> from qinfer import SimplePrecessionModel, PoisonedModel
 >>> model = PoisonedModel(SimplePrecessionModel(), tol=0.01)
 
+We can then use :func:`~qinfer.perf_test_multiple` as above to
+quickly test the effect of noise in the likelihood function on
+the Bayes risk.
 
+.. plot::
 
-Testing Faulty Simulators
--------------------------
+    models = [
+        SimplePrecessionModel(),
+        PoisonedModel(SimplePrecessionModel(), tol=0.25)
+    ]
+    prior = UniformDistribution([0, 1])
+    heuristic_class = ExpSparseHeuristic
 
-TODO
+    for model in models:
+        perf = perf_test_multiple(
+            n_trials=50,
+            model=model, n_particles=400, prior=prior,
+            true_model=models[0],
+            n_exp=50, heuristic_class=heuristic_class
+        )
+        bayes_risk = perf['loss'].mean(axis=0)
 
+        plt.semilogy(bayes_risk, label=type(model).__name__)
+    
+    plt.xlabel('# of Measurements')
+    plt.ylabel('Bayes Risk')
+    plt.legend()
+    plt.show()

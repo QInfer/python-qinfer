@@ -300,6 +300,8 @@ True
 
 .. _broadcasting rules: http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
 
+.. _models_guide_derived:
+
 Adding Functionality to Models with Other Models
 ------------------------------------------------
 
