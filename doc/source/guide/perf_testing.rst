@@ -59,7 +59,7 @@ by also taking the expectation over a prior distribution :math:`\pi`,
 The Bayes risk can thus be estimated by drawing a new set of true model
 parameters with each trial. 
 **QInfer** implements risk and Bayes risk estimation by providing
-a function :func:`~qinfer.perf_test`which simulates a single trial
+a function :func:`~qinfer.perf_test` which simulates a single trial
 with a given model, an
 :ref:`experiment design heuristic <expdesign_guide_heur>`, and either
 a true model parameter vector or a prior distribution. The
@@ -111,22 +111,25 @@ model:
     model = SimplePrecessionModel()
     prior = UniformDistribution([0, 1])
     heuristic_class = ExpSparseHeuristic
+    n_exp = 50
 
-    omegas = np.linspace(0, 1, 11)
+    omegas = np.linspace(0.1, 0.9, 6)
     risks = np.empty_like(omegas)
 
     for idx_omega, omega in enumerate(omegas[:, np.newaxis]):
         perf = perf_test_multiple(
-            n_trials=50,
+            n_trials=100,
             model=model, n_particles=400, prior=prior,
-            n_exp=50, heuristic_class=heuristic_class,
+            n_exp=n_exp, heuristic_class=heuristic_class,
             true_mps=omega
         )
-        risks[idx_omega] = perf['loss'].mean(axis=0)
+        # We now only take the loss after the last
+        # measurement (indexed by -1 along axis 1).
+        risks[idx_omega] = perf['loss'][:, -1].mean(axis=0)
 
     plt.semilogy(omegas, risks)
 
-    plt.xlabel(r'$\omega')
+    plt.xlabel(r'$\omega$')
     plt.ylabel('Risk')
     plt.show()
 
