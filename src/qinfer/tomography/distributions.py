@@ -117,7 +117,13 @@ class DensityOperatorDistribution(SingleSampleMixin, Distribution):
         return self.basis.state_to_modelparams(sample_dm)
 
 class TensorProductDistribution(DensityOperatorDistribution):
-    # TODO: add basis support!
+    """
+    This class is implemented using QuTiP (v3.1.0 or later), and thus will not
+    work unless QuTiP is installed.
+    
+        factors : list of TomographyBasis
+    """
+    
     def __init__(self, factors):
         super(TensorProductDistribution, self).__init__(
             basis=tensor_product_basis(
