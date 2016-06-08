@@ -127,9 +127,12 @@ PERFORMANCE_DTYPE = [
 
 ## FUNCTIONS #################################################################
 
-def actual_dtype(model):
+def actual_dtype(model, true_model=None):
+    if true_model is None:
+        true_model = model
+
     model_dtype = [
-        ('true', float, model.n_modelparams),
+        ('true', float, true_model.n_modelparams),
         ('est',  float, model.n_modelparams),
     ]
     if isinstance(model.expparams_dtype, str):
@@ -138,6 +141,32 @@ def actual_dtype(model):
     else:
         return PERFORMANCE_DTYPE + model_dtype + model.expparams_dtype, False
 
+def promote_dims_left(arr, ndim):
+    if np.ndim(arr) < ndim:
+        return arr[(None,) * (ndim - np.ndim(arr)) + (Ellipsis, )]
+    else:
+        return arr
+
+def shorten_right(*args):
+    # First, ensure that all args have the same number of
+    # dims.
+    max_dims = max(np.ndim(arg) for arg in args)
+    args = list(map(partial(promote_dims_left, ndim=max_dims), args))
+
+    # Next, for each axis, find the *shortest* along that axis.
+    min_shapes = [
+        min(np.shape(arg)[axis] for arg in args)
+        for axis in range(max_dims)
+    ]
+
+    # We then trim the elements that are longer than the minimum shape.
+    min_slice = np.s_[tuple([
+        np.s_[-min_shape:]
+        for min_shape in min_shapes
+    ])]
+    return tuple([
+        arg[min_slice] for arg in args
+    ])
 
 def perf_test(
         model, n_particles, prior, n_exp, heuristic_class,
@@ -160,6 +189,10 @@ def perf_test(
         for the experiment design heuristic to be used.
     :param qinfer.Model true_model: Model to be used in
         generating experimental data. If ``None``, assumed to be ``model``.
+        Note that if the true and estimation models have different numbers
+        of parameters, the loss will be calculated by aligning the
+        respective model vectors "at the right," analogously to the
+        convention used by NumPy broadcasting.
     :param qinfer.Distribution true_prior: Prior to be used in
         selecting the true model parameters. If ``None``, assumed to be
         ``prior``.
@@ -187,24 +220,33 @@ def perf_test(
     if extra_updater_args is None:
         extra_updater_args = {}
 
-    dtype, is_scalar_exp = actual_dtype(model)
+    n_min_modelparams = min(model.n_modelparams, true_model.n_modelparams)
+
+    dtype, is_scalar_exp = actual_dtype(model, true_model)
     performance = np.zeros((n_exp,), dtype=dtype)
 
     updater = SMCUpdater(model, n_particles, prior, **extra_updater_args)
     heuristic = heuristic_class(updater)
 
-    performance['true'] = true_mps
-
     for idx_exp in range(n_exp):
+        # Set inside the loop to handle the case where the
+        # true model is time-dependent as well as the estimation model.
+        performance[idx_exp]['true'] = true_mps
+
         expparams = heuristic()
         datum = true_model.simulate_experiment(true_mps, expparams)
 
         with timing() as t:
             updater.update(datum, expparams)
 
+        # Update the true model.
+        true_mps = true_model.update_timestep(
+            promote_dims_left(true_mps, 2), expparams
+        )[:, :, 0]
+
         est_mean = updater.est_mean()
-        delta = est_mean - true_mps
-        loss = np.dot(delta**2, model.Q)
+        delta = np.subtract(*shorten_right(est_mean, true_mps))
+        loss = np.dot(delta**2, model.Q[-n_min_modelparams:])
 
         performance[idx_exp]['elapsed_time'] = t.delta_t
         performance[idx_exp]['loss'] = loss
@@ -244,7 +286,7 @@ def perf_test_multiple(
         n_trials,
         model, n_particles, prior,
         n_exp, heuristic_class,
-        true_model=None, true_prior=None,
+        true_model=None, true_prior=None, true_mps=None,
         apply=apply_serial,
         allow_failures=False,
         extra_updater_args=None,
@@ -255,10 +297,11 @@ def perf_test_multiple(
     trial_fn = partial(perf_test,
         model, n_particles, prior,
         n_exp, heuristic_class, true_model, true_prior,
+        true_mps=true_mps,
         extra_updater_args=extra_updater_args
     )
 
-    dtype, is_scalar_exp = actual_dtype(model)
+    dtype, is_scalar_exp = actual_dtype(model, true_model)
     performance = (np.zeros if not allow_failures else ma.zeros)((n_trials, n_exp), dtype=dtype)
 
     prog = None
