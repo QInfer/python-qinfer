@@ -286,7 +286,7 @@ def perf_test_multiple(
         n_trials,
         model, n_particles, prior,
         n_exp, heuristic_class,
-        true_model=None, true_prior=None,
+        true_model=None, true_prior=None, true_mps=None,
         apply=apply_serial,
         allow_failures=False,
         extra_updater_args=None,
@@ -297,6 +297,7 @@ def perf_test_multiple(
     trial_fn = partial(perf_test,
         model, n_particles, prior,
         n_exp, heuristic_class, true_model, true_prior,
+        true_mps=true_mps,
         extra_updater_args=extra_updater_args
     )
 
