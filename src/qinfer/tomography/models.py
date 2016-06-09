@@ -144,7 +144,7 @@ class TomographyModel(Model):
     @property
     def expparams_dtype(self):
         return [
-            ('meas', float, self._dim ** 2)
+            (str('meas'), float, self._dim ** 2)
         ]
 
     def n_outcomes(self, expparams):
@@ -209,7 +209,7 @@ class DiffusiveTomographyModel(TomographyModel):
     @property
     def expparams_dtype(self):
         return super(DiffusiveTomographyModel, self).expparams_dtype + [
-            ('t', float)
+            (str('t'), float)
         ]
     
 
