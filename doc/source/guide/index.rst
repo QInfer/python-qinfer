@@ -17,7 +17,7 @@ User's Guide
     distributions
     models
     smc
-    expdesign
+    heuristics
     rb
     tomography
     timedep

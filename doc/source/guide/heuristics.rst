@@ -5,12 +5,12 @@
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
     
-.. _expdesign_guide:
+.. _heuristics_guide:
     
 .. currentmodule:: qinfer
 
-Online Experiment Design
-========================
+Experiment Design Heuristics
+============================
 
 Fully Adaptive Optimization
 ---------------------------
