@@ -93,3 +93,12 @@ Specific Heuristics
 
 .. autoclass:: ProductHeuristic
     :members:
+
+Plotting Functions
+------------------
+
+.. autofunction:: plot_cov_ellipse
+
+.. autofunction:: plot_rebit_prior
+
+.. autofunction:: plot_rebit_posterior
