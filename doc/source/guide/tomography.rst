@@ -40,7 +40,7 @@ Bases
 
 Bases define the map from abstract quantum theory to concrete representations. Once a basis is chosen, the tomography problem becomes a special case of a generic parameter estimation problem.
 
-The tomography module is used in the same way as other but requires the specification of a basis via the :class:`TomographyBasis` class. QInfer comes with the following :ref:`tomography_bases`: the `Gell-Mann basis <https://en.wikipedia.org/wiki/Gell-Mann_matrices>`_, the `Pauli basis <https://en.wikipedia.org/wiki/Pauli_matrices>`_ and function to combine bases with the tensor product. Thus, the first step in using the tomography module is to define a basis:
+The tomography module is used in the same way as other but requires the specification of a basis via the :class:`TomographyBasis` class. QInfer comes with the following :ref:`tomography_bases`: the `Gell-Mann basis <https://en.wikipedia.org/wiki/Gell-Mann_matrices>`_, the `Pauli basis <https://en.wikipedia.org/wiki/Pauli_matrices>`_ and function to combine bases with the tensor product. Thus, the first step in using the tomography module is to define a basis. For example, here we define the 1-qubit Pauli basis:
 
 >>> from qinfer.tomography import pauli_basis
 >>> basis = pauli_basis(1)
@@ -54,23 +54,37 @@ Built-in Distributions
 
 QInfer comes with several built-in distributions listed in :ref:`tomography_distributions`. Each of these is a subclass of :class:`DensityOperatorDistribution`. Distributions of quantum channels can also be subclassed as such with appeal to the Choi-Jamiolkowski isomorphism.
 
-For density matrices, the :class:`GinibreDistribution` defines a prior over mixed quantum which allows for support also for states of fixed rank [OSZ10]_.
+For density matrices, the :class:`GinibreDistribution` defines a prior over mixed quantum which allows for support also for states of fixed rank [OSZ10]_. For example, we can draw a sample from the this prior as follows:
 
->>> from qinfer.tomography import pauli_basis, GinibreDistribution
->>> basis = pauli_basis(1)
->>> prior = GinibretDistribution(basis)
+>>> from qinfer.tomography import GinibreDistribution
+>>> prior = GinibreDistribution(basis)
 >>> print(prior.sample()) #doctest: +SKIP
 [[ 0.70710678 -0.17816233  0.45195168 -0.08341437]]
 
+Recall this is this representation of of a qubit in the Pauli basis defined above.
+Quantum states are in general high dimensional objects which makes visualizing distributions of them challenging. The only 2-dimensional example is that of a rebit, which is usually defined as a qubit in the Pauli (or Bloch) representation with one of the Pauli expectations constrained to zero (usually :math:`\operatorname{Tr}(\rho \sigma_y)=0`). 
 
-Plotting tools
-~~~~~~~~~~~~~~
+Here we create a distribution of rebits accord to the Ginibre ensemble and use :func:`plot_rebit_prior` to depict this distribution through (by default) 2000 random samples. While discussing models below, we will see how to depict the particles of an :class:`SMCUpdater` directly.
 
+.. plot::
 
+	basis = tomography.bases.pauli_basis(1)
+	prior = tomography.distributions.GinibreDistribution(basis)
+	tomography.plot_rebit_prior(prior, rebit_axes=[1, 3])
+	plt.show()
 
 
 Using :class:`TomographyModel`
 ------------------------------
+
+The core of the tomography module is the :class:`TomographyModel`. The key assumption in the current version is that of two-outcome measurements. This has the convenience of allowing experiments to be specified by a single vectorized positive operator:
+
+>>> from qinfer.tomography import TomographyModel
+>>> model = TomographyModel(basis)
+>>> print(model.expparams_dtype)
+
+Suppose we measure :math:`\sigma_z` on a random state. The measurement effects are :math:`\frac12 (I\pm \sigma_z)`. Since they sum to identity, we need only specify one of them. We can use :class:`TomographyModel` to calculate the Born rule probability of obtaining one of these outcomes as follows:
+
 
 
 
