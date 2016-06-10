@@ -12,6 +12,8 @@
     Biblography
     ===========
 
+.. [BCSZ09]
+    Bruzda, W., Cappellini, V., Sommers, H-J. & Życzkowski, K. Random quantum operations. Physics Letters A. **373** 3 320–324 (2009). :doi:`10.1016/j.physleta.2008.11.043`.
 .. [FB12]
     Ferrie C., Blume-Kohout R. Estimating the bias of a noisy coin.  AIP Conf. Proc. 1443, 14-21 (2012). :doi:`10.1063/1.3703615`. :arxiv:`1201.1493`.
 .. [FGC12]

@@ -85,8 +85,13 @@ def rand_dm_ginibre_redit(N=2, rank=None, dims=None):
 
 class DensityOperatorDistribution(SingleSampleMixin, Distribution):
     """
-        basis : int or TomographyBasis
-        If int, assumes a default basis of that dimension.
+    Distribution over density operators parameterized in a given
+    basis.
+
+    :type basis: `int` or :class:`TomographyBasis`
+    :param basis: Basis to use in representing sampled
+        density operators. If an `int`, assumes a default
+        (Gell-Mann) basis of that dimension.
     """
     def __init__(self, basis):
         if isinstance(basis, int):
@@ -121,7 +126,10 @@ class TensorProductDistribution(DensityOperatorDistribution):
     This class is implemented using QuTiP (v3.1.0 or later), and thus will not
     work unless QuTiP is installed.
     
-        factors : list of TomographyBasis
+    :param factors: Distributions representing each factor of the tensor
+        product used to generate samples.
+    :type factors: `list` of :class:`DensityOperatorDistribution`
+        instances
     """
     
     def __init__(self, factors):
@@ -140,8 +148,14 @@ class TensorProductDistribution(DensityOperatorDistribution):
 
 class GinibreDistribution(DensityOperatorDistribution):
     """
-    This class is implemented using QuTiP (v3.1.0 or later), and thus will not
-    work unless QuTiP is installed.
+    Distribution over all trace-1 positive semidefinite operators
+    of a given rank. Generalizes the Hilbert-Schmidt
+    (full-rank) and Haar (rank-1) distributions.
+
+    :param TomographyBasis basis: Basis to use in generating
+        samples.
+    :param int rank: Rank of each sampled state. If `None`,
+        defaults to full-rank.
     """
     
     def __init__(self, basis, rank=None):
@@ -163,6 +177,17 @@ class GinibreDistribution(DensityOperatorDistribution):
         return qt.rand_dm_ginibre(self._dim, rank=self._rank)
 
 class GinibreReditDistribution(DensityOperatorDistribution):
+    """
+    Distribution over all real-valued trace-1 positive semidefinite
+    operators of a given rank. Generalizes the Hilbert-Schmidt
+    (full-rank) and Haar (rank-1) distributions. Useful for plotting.
+
+    :param TomographyBasis basis: Basis to use in generating
+        samples.
+    :param int rank: Rank of each sampled state. If `None`,
+        defaults to full-rank.
+    """
+
     def __init__(self, basis, rank=None):
         super(GinibreReditDistribution, self).__init__(basis)
         self._rank = rank
@@ -174,8 +199,9 @@ class GinibreReditDistribution(DensityOperatorDistribution):
 
 class BCSZChoiDistribution(DensityOperatorDistribution):
     """
-    Samples Choi states for CP or CPTP maps, as generated
-    by the BCSZ prior. The sampled states are normalized
+    Samples Choi states for completely-positive (CP) or CP and
+    trace-preserving (CPTP) maps, as generated
+    by the BCSZ prior [BCSZ09]_. The sampled states are normalized
     as states (trace 1).
     """
     def __init__(self, basis, rank=None, enforce_tp=True):
@@ -198,6 +224,17 @@ class BCSZChoiDistribution(DensityOperatorDistribution):
         ).unit()
 
 class GADFLIDistribution(DensityOperatorDistribution):
+    """
+    Samples operators from the generalized amplitude damping prior
+    for liklihood-based inference [GCC16]_, given a fiducial
+    distribution and the desired mean for the prior.
+
+    :param DensityOperatorDistribution fiducial_distribution:
+        Distribution from which samples are initially drawn
+        before transformation under generalized amplitude damping.
+    :param qutip.Qobj mean: State which will be the mean of the
+        GAD-transformed samples.
+    """
     def __init__(self, fiducial_distribution, mean):
         super(GADFLIDistribution, self).__init__(fiducial_distribution.basis)
         self._fid = fiducial_distribution
