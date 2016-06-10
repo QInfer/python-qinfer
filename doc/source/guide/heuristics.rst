@@ -12,6 +12,9 @@
 Experiment Design Heuristics
 ============================
 
+Using Heuristics in Updater Loops
+---------------------------------
+
 During an experiment, the current posterior distribution represented by
 an :class:`~qinfer.SMCUpdater` instance can be used to *adaptively*
 make decisions about which measurements should be performed. For example,
@@ -77,6 +80,55 @@ and can be used in an updater loop to adaptively select experiments.
 
     plt.show() 
 
-Similarly, the :class:`ExpSparseHeuristic` implements exponentially-sparse
-sampling for :class:`SimplePrecessionModel`. More generally, :class:`Heuristic`
-can be straightforwardly subclassed to define new custom heuristics.
+Changing Heuristic Parameters
+-----------------------------
+
+Essentially, heuristics in **QInfer** are functions that take :class:`SMCUpdater`
+instances and return functions that then yield experiments. This design allows
+for specializing heuristics by providing other arguments along with the
+updater. For instance, the :class:`ExpSparseHeuristic` class implements
+exponentially-sparse sampling :math:`t_k = ab^k` for :class:`SimplePrecessionModel`.
+Both :math:`a` and :math:`b` are parameters of the heuristic, named
+``scale`` and ``base``, respectively. Thus, it is easy to override the
+defaults to obtain different heuristics.
+
+.. plot::
+
+    model = SimplePrecessionModel()
+    prior = UniformDistribution([0, 1])
+    updater = SMCUpdater(model, 1000, prior)
+    heuristic = ExpSparseHeuristic(updater, scale=0.5)
+
+    true_omega = prior.sample()
+    est_omegas = []
+
+    for idx_exp in range(100):
+        experiment = heuristic()
+        datum = model.simulate_experiment(true_omega, experiment)
+        updater.update(datum, experiment)
+
+        est_omegas.append(updater.est_mean())
+
+    plt.semilogy((est_omegas - true_omega) ** 2)
+    plt.xlabel('# of Measurements')
+    plt.ylabel('Squared Error')
+
+    plt.show() 
+
+In overriding the default parameters of heuristics, the
+:func:`functools.partial` function provided with the Python
+standard library is especially useful, as it allows for easily
+making new heuristics with different default parameter values:
+
+>>> from qinfer import ExpSparseHeuristic
+>>> from functools import partial
+>>> rescaled_heuristic_class = partial(ExpSparseHeuristic, scale=0.01)
+
+Later, once we have an updater,
+we can then make new instances of our rescaled heuristic.
+
+>>> heuristic = rescaled_heuristic_class(updater) # doctest: +SKIP
+
+This technique is especially useful in :ref:`perf_testing`, as
+it makes it easy to modify existing heuristics by changing default
+parameters through partial application. 
