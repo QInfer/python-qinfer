@@ -36,7 +36,7 @@ and likelihood function
 
 .. math::
 
-    \Pr(1 | omega; \omega_-, t) = \sin^2([\omega - \omega_-] t / 2).
+    \Pr(1 | \omega; \omega_-, t) = \sin^2([\omega - \omega_-] t / 2).
 
 For a given posterior distribution,
 the *particle guess heuristic* (PGH) [WGFC13a]_ then chooses

@@ -6,6 +6,15 @@ python:
   - "3.4"
   - "3.5"
 
+# Explicitly add doctest support as separate parts of the build matrix,
+# since these tests require additional packages that should be optional.
+matrix:
+  include:
+    - python: "2.7"
+      env: DOCTEST=1
+    - python: "3.5"
+      env: DOCTEST=1 
+
 env:
   global:
     - secure: 
@@ -30,14 +39,21 @@ install:
   # without the use of the additional optional libraries listed
   # in rtd-requirements.txt, so we place this install command
   # after the primary installation above.
-  - pip install -r doc/rtd-requirements.txt
+  # Note that as a work around for qutip/qutip#426, we must install
+  # cython first.
+  - if [[ "${DOCTEST}" == "1" ]]; then
+      pip install cython;
+      pip install -r doc/rtd-requirements.txt;
+    fi
   - cd src/
 
 script:
   - py.test --cov-config .coveragerc --cov=qinfer
   - pylint --py3k qinfer/
-  - cd $TRAVIS_BUILD_DIR/doc
-  - make doctest
+  - if [[ "${DOCTEST}" == "1" ]]; then
+      cd $TRAVIS_BUILD_DIR/doc;
+      make doctest;
+    fi
 
 after_success:
   - coveralls
