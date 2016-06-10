@@ -11,6 +11,9 @@ matplotlib
 # setup.py.
 -e git+https://github.com/cgranade/qutip.git@fix-setup-numpy#egg=QuTiP
 
+# We also add additional tools for plotting.
+mpltools
+
 pytest
 pytest-cov
 pytest-xdist
