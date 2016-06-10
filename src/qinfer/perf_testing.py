@@ -292,7 +292,26 @@ def perf_test_multiple(
         extra_updater_args=None,
         progressbar=None
     ):
-    # TODO: write full docstring, but this repeats many times.
+    """
+    Runs many trials of using SMC to estimate the parameters of a model, given a
+    number of particles, a prior distribution and an experiment design
+    heuristic.
+
+    In addition to the parameters accepted by :func:`perf_test`,
+    this function takes the following arguments:
+
+    :param int n_trials: Number of different trials to run.
+    :param callable apply: Function to call to delegate each trial.
+        See, for example, :meth:`~ipyparallel.LoadBalancedView.apply`.
+    :param progressbar: QuTiP-style progress bar used to report
+        how many trials have successfully completed.
+    :param bool allow_failures: If `False`, an exception raised
+        in any trial will propagate out. Otherwise, failed
+        trials are masked out of the returned performance array
+        using NumPy masked arrays.
+    :return: A record array of performance metrics, indexed by
+        the trial and the number of experiments performed.
+    """
 
     trial_fn = partial(perf_test,
         model, n_particles, prior,

@@ -106,14 +106,29 @@ class DensityOperatorDistribution(SingleSampleMixin, Distribution):
 
     @property
     def n_rvs(self):
+        """
+        Number of random variables represented by this distribution.
+        
+        :type: `int`
+        """
         return self._dim **2    
 
     @property
     def dim(self):
+        """
+        Dimension of the Hilbert space on which sampled density operators
+        act.
+
+        :type: `int`
+        """
         return self._dim
 
     @property
     def basis(self):
+        """
+        Basis used to represent sampled density operators as model parameter
+        vectors.
+        """
         return self._basis
 
     def _sample(self):

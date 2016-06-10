@@ -32,6 +32,9 @@ Specific Distributions
 .. autoclass:: MultivariateNormalDistribution
     :members:
 
+.. autoclass:: LogNormalDistribution
+    :members:
+
 .. autoclass:: ConstantDistribution
     :members:
 

@@ -15,10 +15,6 @@ Performance Testing
 Introduction
 ------------
 
-.. todo::
-
-	Write guide on this.
-
 These functions provide performance testing support, allowing for the quick
 comparison of models, experiment design heuristics and quality parameters.
 QInfer's performance testing functionality can be quickly applied without
@@ -46,7 +42,7 @@ Performance Results Structure
 
 Perfromance results, as collected by :func:`perf_test`, are returned as
 a `record array`_ with several fields, each describing a different
-metric collected by QInfer about the performance. For a single performance
+metric collected by **QInfer** about the performance. For a single performance
 trial, the shape of this array is ``(n_exp, )``, such that ``perf[idx_exp]``
 returns metrics describing the performance immediately following collecting
 the datum ``idx_exp``.

@@ -14,3 +14,6 @@ Mixin Classes for Model Development
 
 :class:`~qinfer.ScoreMixin` - Numerical Differentiation for Fisher Scores
 -------------------------------------------------------------------------
+
+.. autoclass:: ScoreMixin
+    :members:

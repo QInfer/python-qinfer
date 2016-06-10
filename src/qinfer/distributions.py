@@ -126,7 +126,7 @@ class ProductDistribution(Distribution):
     and returns their Cartesian product.
     
     In other words, the returned distribution is
-    :math:`\Pr(\prod_k D_k) = \prod_k \Pr(D_k)`.
+    :math:`\Pr(D_1, \dots, D_N) = \prod_k \Pr(D_k)`.
     
     :param factors: Distribution objects representing :math:`D_k`.
                     Alternatively, one iterable argument can be given,
@@ -212,7 +212,11 @@ class ConstantDistribution(Distribution):
 
 class NormalDistribution(Distribution):
     """
+    Normal or truncated normal distribution over a single random
+    variable.
 
+    :param float mean: Mean of the represented random variable.
+    :param float var: Variance of the represented random variable. 
     :param tuple trunc: Limits at which the PDF of this
         distribution should be truncated, or ``None`` if
         the distribution is to have infinite support.
@@ -241,6 +245,15 @@ class NormalDistribution(Distribution):
         return -(x - self.mean) / self.var
         
 class MultivariateNormalDistribution(Distribution):
+    """
+    Multivariate (vector-valued) normal distribution.
+
+    :param np.ndarray mean: Array of shape ``(n_rvs, )``
+        representing the mean of the distribution.
+    :param np.ndarray cov: Array of shape ``(n_rvs, n_rvs)``
+        representing the covariance matrix of the distribution.
+    """
+
     def __init__(self, mean, cov):
         
         # Flatten the mean first, so we have a strong guarantee about its
@@ -254,13 +267,11 @@ class MultivariateNormalDistribution(Distribution):
     def n_rvs(self):
         return self.mean.shape[0]
         
-    def sample(self, n=1):
-        
+    def sample(self, n=1):        
         return np.einsum("ij,nj->ni", la.sqrtm(self.cov), np.random.randn(n, self.n_rvs)) + self.mean
 
-    def grad_log_pdf(self, x):
-        
-        return -np.dot(self.invcov,(x - self.mean).transpose()).transpose()
+    def grad_log_pdf(self, x):        
+        return -np.dot(self.invcov, (x - self.mean).transpose()).transpose()
         
         
 class SlantedNormalDistribution(Distribution):

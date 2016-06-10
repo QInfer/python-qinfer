@@ -160,7 +160,7 @@ def plot_rebit_prior(prior, rebit_axes=REBIT_AXES,
     """
     Plots rebit states drawn from a given prior.
 
-    :param qinfer.tomography.DensityOperatorDistribution: Distribution over
+    :param qinfer.tomography.DensityOperatorDistribution prior: Distribution over
         rebit states to plot.
     :param list rebit_axes: List containing indices for the :math:`x`
         and :math:`z` axes.
