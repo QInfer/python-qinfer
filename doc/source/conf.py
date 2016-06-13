@@ -11,6 +11,15 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+# Monkey patch in a field type for columns.
+
+from sphinx.util.docfields import Field, GroupedField, TypedField
+from sphinx.domains.python import PythonDomain, PyObject, l_
+
+PyObject.doc_field_types.append(
+    GroupedField('columns', label=l_('Columns'), names=('column', ), can_collapse=True)
+)
+
 ###############################################################################
 
 import sys, os
