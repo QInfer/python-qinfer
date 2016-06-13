@@ -64,7 +64,7 @@ For density matrices, the :class:`GinibreDistribution` defines a prior over mixe
 Recall this is this representation of of a qubit in the Pauli basis defined above.
 Quantum states are in general high dimensional objects which makes visualizing distributions of them challenging. The only 2-dimensional example is that of a rebit, which is usually defined as a qubit in the Pauli (or Bloch) representation with one of the Pauli expectations constrained to zero (usually :math:`\operatorname{Tr}(\rho \sigma_y)=0`). 
 
-Here we create a distribution of rebits accord to the Ginibre ensemble and use :func:`plot_rebit_prior` to depict this distribution through (by default) 2000 random samples. While discussing models below, we will see how to depict the particles of an :class:`SMCUpdater` directly.
+Here we create a distribution of rebits accord to the Ginibre ensemble and use :func:`plot_rebit_prior` to depict this distribution through (by default) 2000 random samples. While discussing models below, we will see how to depict the particles of an :class:`~qinfer.SMCUpdater` directly.
 
 .. plot::
 
@@ -82,11 +82,23 @@ The core of the tomography module is the :class:`TomographyModel`. The key assum
 >>> from qinfer.tomography import TomographyModel
 >>> model = TomographyModel(basis)
 >>> print(model.expparams_dtype)
+[('meas', <type 'float'>, 4)]
 
 Suppose we measure :math:`\sigma_z` on a random state. The measurement effects are :math:`\frac12 (I\pm \sigma_z)`. Since they sum to identity, we need only specify one of them. We can use :class:`TomographyModel` to calculate the Born rule probability of obtaining one of these outcomes as follows:
 
-
-
+>>> expparams = np.zeros((1,), dtype=model.expparams_dtype)
+>>> expparams['meas'][0, :] = basis.state_to_modelparams(np.sqrt(2)*(basis[0]+basis[1])/2)
+>>> print(model.likelihood(0,prior.sample(),expparams)) #doctest: +SKIP
+[[[ 0.62219803]]]
 
 Built-in Heuristics
 -------------------
+
+In addition to analyzing given data sets, the tomography module is well suited for testing measurement strategies against standard heuristics. These built-in heuristics are listed at :ref:`tomography_heuristics`. For qubits, the most commonly used heuristic is the random sampling of Pauli basis measurements, which is implemented by :class:`RandomPauliHeuristic`.
+
+>>> from qinfer.tomography.expdesign import RandomPauliHeuristic
+>>> from qinfer import SMCUpdater
+>>> updater = SMCUpdater(model,100,prior)
+>>> heuristic = RandomPauliHeuristic(updater)
+>>> print(model.simulate_experiment(prior.sample(),heuristic())) #doctest +SKIP
+0
