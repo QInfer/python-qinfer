@@ -13,12 +13,15 @@
 
 # Monkey patch in a field type for columns.
 
-from sphinx.util.docfields import Field, GroupedField, TypedField
-from sphinx.domains.python import PythonDomain, PyObject, l_
+try:
+  from sphinx.util.docfields import Field, GroupedField, TypedField
+  from sphinx.domains.python import PythonDomain, PyObject, l_
 
-PyObject.doc_field_types.append(
-    GroupedField('columns', label=l_('Columns'), names=('column', ), can_collapse=True)
-)
+  PyObject.doc_field_types.append(
+      GroupedField('columns', label=l_('Columns'), names=('column', ), can_collapse=True)
+  )
+except:
+  pass
 
 ###############################################################################
 
