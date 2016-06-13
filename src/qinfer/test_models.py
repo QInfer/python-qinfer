@@ -162,8 +162,11 @@ class SimplePrecessionModel(SimpleInversionModel):
 
     :param float min_freq: Minimum value for :math:`\omega` to accept as valid.
         This is used for testing techniques that mitigate the effects of
-        degenerate models; there is no "good" reason to ever set this other
-        than zero, other than to test with an explicitly broken model.
+        degenerate models; there is no "good" reason to ever set this to be
+        less than zero, other than to test with an explicitly broken model.
+
+    :modelparam omega: The precession frequency :math:`\omega`.
+    :scalar-expparam float: The evolution time :math:`t`.
     """
         
     @property
@@ -199,6 +202,10 @@ class NoisyCoinModel(Model):
     parameters not because we expect to design over those values, but because
     a specification of each is necessary to honestly describe an experiment
     that was performed.
+
+    :modelparam p: "Heads" probability :math:`p`.
+    :expparam float alpha: Visibility parameter :math:`\alpha`.
+    :expparam float beta: Visibility parameter :math:`\beta`.
     """
         
     ## PROPERTIES ##

@@ -80,6 +80,18 @@ class RandomizedBenchmarkingModel(DifferentiableModel):
         protocol, with :math:`\tilde{p}` being the depolarizing parameter for
         the interleaved gate and with :math:`p_{\text{ref}}` being the reference
         parameter.
+
+    :modelparam p: Fidelity of the twirled error channel :math:`\Lambda`, represented as
+        a decay rate :math:`p = (d F - 1) / (d - 1)`, where :math:`F`
+        is the fidelity and :math:`d` is the dimension of the Hilbert space.
+    :modelparam A: Scale of the randomized benchmarking decay, defined as
+        :math:`\Tr[Q \Lambda(\rho - \ident / d)]`, where :math:`Q` is the final
+        measurement, and where :math:`\ident` is the initial preparation.
+    :modelparam B: Offset of the randomized benchmarking decay, defined as
+        :math:`\Tr[Q \Lambda(\ident / d)]`.
+
+    :expparam int m: Length of the randomized benchmarking sequence
+        that was measured.
     """
     # TODO: add citations to the above docstring.
 
