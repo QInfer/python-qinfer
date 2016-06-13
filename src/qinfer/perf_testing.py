@@ -196,10 +196,10 @@ def perf_test(
     :param qinfer.Distribution true_prior: Prior to be used in
         selecting the true model parameters. If ``None``, assumed to be
         ``prior``.
-    :param np.ndarray true_mps: The true model parameters. If ``None``,
-        it will be sampled from ``true_prior``. Note that the performance
-        record can only handle one outcome and therefore ONLY ONE TRUE MODEL.
-        An error will occur if ``true_mps.shape[0] > 1`` returns ``True``.
+    :param numpy.ndarray true_mps: The true model parameters. If ``None``,
+        it will be sampled from ``true_prior``. Note that as this function
+        runs exactly one trial, only one model parameter vector may be passed.
+        In particular, this requires that ``len(true_mps.shape) == 1``. 
     :param dict extra_updater_args: Extra keyword arguments for the updater,
         such as resampling and zero-weight policies.
     :rtype np.ndarray: See :ref:`perf_testing_struct` for more details on 
@@ -303,12 +303,14 @@ def perf_test_multiple(
     :param int n_trials: Number of different trials to run.
     :param callable apply: Function to call to delegate each trial.
         See, for example, :meth:`~ipyparallel.LoadBalancedView.apply`.
-    :param progressbar: QuTiP-style progress bar used to report
-        how many trials have successfully completed.
+    :param qutip.ui.BaseProgressBar progressbar: QuTiP-style progress bar
+        class used to report how many trials have successfully completed.
     :param bool allow_failures: If `False`, an exception raised
         in any trial will propagate out. Otherwise, failed
         trials are masked out of the returned performance array
         using NumPy masked arrays.
+    :rtype np.ndarray: See :ref:`perf_testing_struct` for more details on 
+        the type returned by this function.
     :return: A record array of performance metrics, indexed by
         the trial and the number of experiments performed.
     """

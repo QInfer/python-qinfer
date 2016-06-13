@@ -68,7 +68,7 @@ class IPythonProgressBar(object):
         Text description for the progress bar widget,
         or ``None`` if the widget has been closed.
 
-        :rtype: `str`
+        :type: `str`
         """
         try:
             return self.widget.description
