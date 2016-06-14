@@ -57,7 +57,7 @@ def binomial_pdf(N,n,p):
 def outer_product(vec):
     r"""
     Returns the outer product of a vector :math:`v`
-    with itself, :math:`v v^\TT`.
+    with itself, :math:`v v^\T`.
     """        
     return (
         np.dot(vec[:, np.newaxis], vec[np.newaxis, :])
