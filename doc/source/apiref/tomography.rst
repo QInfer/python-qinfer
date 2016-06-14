@@ -69,6 +69,8 @@ Models
 Heuristics
 ----------
 
+.. _tomography_heuristics:
+
 Abstract Heuristics
 ~~~~~~~~~~~~~~~~~~~
 
@@ -80,7 +82,6 @@ Abstract Heuristics
 
 .. autoclass:: BestOfKMetaheuristic
     :members:
-
 
 Specific Heuristics
 ~~~~~~~~~~~~~~~~~~~
