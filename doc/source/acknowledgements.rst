@@ -19,13 +19,13 @@ by the following individuals:
 - `Ian Hincks`_
 - `Michal Kononenko <https://services.iqc.uwaterloo.ca/people/profile/mkononenko/>`_
 - `Yuval Sanders`_
-- `Nathan Wiebe`_
 
 Additionally, we thank those that have helped us to test **QInfer**, and that
 have made useful suggestions, pushing us forward.
 
 - `Joshua Combes <https://www.perimeterinstitute.ca/people/joshua-combes>`_
 - `Rahul Deshpande`_
+- `Nathan Wiebe`_
 
 .. _Rahul Deshpande: https://services.iqc.uwaterloo.ca/people/profile/rdeshpande/
 .. _Ian Hincks: https://github.com/ihincks
