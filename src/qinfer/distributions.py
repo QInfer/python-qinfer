@@ -88,7 +88,7 @@ class Distribution(with_metaclass(abc.ABCMeta, object)):
         """
         The number of random variables that this distribution is over.
 
-        :rtype: `int`
+        :type: `int`
         """
         pass
 
@@ -98,7 +98,8 @@ class Distribution(with_metaclass(abc.ABCMeta, object)):
         Returns one or more samples from this probability distribution.
 
         :param int n: Number of samples to return.
-        :return numpy.ndarray: An array containing samples from the
+        :rtype: numpy.ndarray
+        :return: An array containing samples from the
             distribution of shape ``(n, d)``, where ``d`` is the number of
             random variables.
         """
@@ -128,9 +129,10 @@ class ProductDistribution(Distribution):
     In other words, the returned distribution is
     :math:`\Pr(D_1, \dots, D_N) = \prod_k \Pr(D_k)`.
     
-    :param factors: Distribution objects representing :math:`D_k`.
-                    Alternatively, one iterable argument can be given,
-                    in which case the factors are the values drawn from that iterator.
+    :param Distribution factors:
+        Distribution objects representing :math:`D_k`.
+        Alternatively, one iterable argument can be given,
+        in which case the factors are the values drawn from that iterator.
     """
 
     def __init__(self, *factors):
@@ -299,8 +301,6 @@ class SlantedNormalDistribution(Distribution):
         #self._delta = ranges[:, 1] - ranges[:, 0]
         self._weight = weight
 
-
-
     @property
     def n_rvs(self):
         return self._n_rvs
@@ -333,10 +333,10 @@ class LogNormalDistribution(Distribution):
         return self.dist().rvs(size=n)[:, np.newaxis]
 
 class BetaDistribution(Distribution):
-    """
-    The beta distribution, whose pdf at $x$ is proportional to
-    $x^{\alpha-1}(1-x)^{\beta-1}$.
-    Note that either alpha and beta, or mean and var, must be
+    r"""
+    The beta distribution, whose pdf at :math:`x` is proportional to
+    :math:`x^{\alpha-1}(1-x)^{\beta-1}`.
+    Note that either ``alpha`` and ``beta``, or ``mean`` and ``var``, must be
     specified as inputs;
     either case uniquely determines the distribution.
 
@@ -357,7 +357,10 @@ class BetaDistribution(Distribution):
             self.alpha = mean ** 2 * (1 - mean) / var - mean
             self.beta = (1 - mean) ** 2 * mean / var - (1 - mean)
         else:
-            raise ValueError("BetaDistribution requires either (alpha and beta) or (mean and var).")
+            raise ValueError(
+                "BetaDistribution requires either (alpha and beta) " 
+                "or (mean and var)."
+            )
 
         self.dist = st.beta(a=self.alpha, b=self.beta)
 
@@ -369,18 +372,18 @@ class BetaDistribution(Distribution):
         return self.dist.rvs(size=n)[:, np.newaxis]
 
 class BetaBinomialDistribution(Distribution):
-    """
+    r"""
     The beta-binomial distribution, whose pmf at the non-negative
-    integer $k$ is equal to
-    $\binom{n}{k}\frac{B(k+\alpha,n-k+\beta)}{B(\alpha,\beta)}$
-    with $B(\cdot,\cdot)$ the beta function.
+    integer :math:`k` is equal to
+    :math:`\binom{n}{k}\frac{B(k+\alpha,n-k+\beta)}{B(\alpha,\beta)}`
+    with :math:`B(\cdot,\cdot)` the beta function.
     This is the compound distribution whose variates are binomial distributed
     with a bias chosen from a beta distribution.
-    Note that either alpha and beta, or mean and var, must be
+    Note that either ``alpha`` and ``beta``, or ``mean`` and ``var``, must be
     specified as inputs;
     either case uniquely determines the distribution.
 
-    :param int n: The $n$ parameter of the beta-binomial distribution.
+    :param int n: The :math:`n` parameter of the beta-binomial distribution.
     :param float alpha: The alpha shape parameter of the beta-binomial distribution.
     :param float beta: The beta shape parameter of the beta-binomial distribution.
     :param float mean: The desired mean value of the beta-binomial distribution.
@@ -418,8 +421,8 @@ class BetaBinomialDistribution(Distribution):
 
 class GammaDistribution(Distribution):
     """
-    The gamma distribution, whose pdf at $x$ is proportional to
-    $x^{-\alpha-1}e^{-x\beta}$.
+    The gamma distribution, whose pdf at :math:`x` is proportional to
+    :math:`x^{-\alpha-1}e^{-x\beta}`.
     Note that either alpha and beta, or mean and var, must be
     specified as inputs;
     either case uniquely determines the distribution.
