@@ -443,28 +443,6 @@ class GammaDistribution(Distribution):
     def sample(self, n=1):
         return self._dist.rvs(size=n)[:, np.newaxis] / self.beta
 
-class MultivariateNormalDistribution(Distribution):
-    def __init__(self, mean, cov):
-
-        # Flatten the mean first, so we have a strong guarantee about its
-        # shape.
-
-        self.mean = np.array(mean).flatten()
-        self.cov = cov
-        self.invcov = la.inv(cov)
-
-    @property
-    def n_rvs(self):
-        return self.mean.shape[0]
-
-    def sample(self, n=1):
-
-        return np.einsum("ij,nj->ni", la.sqrtm(self.cov), np.random.randn(n, self.n_rvs)) + self.mean
-
-    def grad_log_pdf(self, x):
-
-        return -np.dot(self.invcov,(x - self.mean).transpose()).transpose()
-
 class MVUniformDistribution(object):
 
     def __init__(self, dim = 6):
