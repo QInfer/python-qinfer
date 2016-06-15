@@ -15,5 +15,7 @@ Unit and Documentation Testing
 Unit Tests
 ----------
 
+.. _doctest_devguide:
+
 Documentation Tests
 -------------------
