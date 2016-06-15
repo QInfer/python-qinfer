@@ -420,7 +420,7 @@ class BetaBinomialDistribution(Distribution):
         return np.random.binomial(self.n, p_vals)
 
 class GammaDistribution(Distribution):
-    """
+    r"""
     The gamma distribution, whose pdf at :math:`x` is proportional to
     :math:`x^{-\alpha-1}e^{-x\beta}`.
     Note that either alpha and beta, or mean and var, must be

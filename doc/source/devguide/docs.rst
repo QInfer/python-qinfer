@@ -155,6 +155,21 @@ different forms:
 
 .. _primer: http://www.sphinx-doc.org/en/stable/rest.html
 
+Typesetting Math
+~~~~~~~~~~~~~~~~
+
+Math is formatted using the Sphinx markup ``:math:`...`` in place
+of ``$``, and using the ``.. math::`` directive in place of ``$$``.
+When building HTML- or PDF-formatted documentation, this is automatically
+converted to `MathJax`_- or LaTeX-formatted math. The **QInfer**
+documentation is configured with several macros available to each of
+MathJax and LaTeX, specified in ``doc/_templates/page.html``
+and ``doc/conf.py``, respectively. For example, ``:math:`\expect```
+is configured to produce the blackboard-bold expectation operator
+:math:`\expect`.
+
+.. _MathJax: https://www.mathjax.org/
+
 Docstrings and API References
 -----------------------------
 
@@ -193,6 +208,27 @@ adds the following fields:
   one experiment parameter of type ``scalar_type``.
 - ``:column dtype name:`` describes a column for data taken by
   :ref:`simple_est_guide` functions.
+
+Importantly, if math is included in a docstring, it is highly
+recommended to format the docstring as a *raw string*; that is,
+as a string starting with ``r'`` or ``r"`` for inline strings
+or ``r'''`` or ``r"""`` for multi-line strings. This avoids having
+to escape TeX markup that appears within a docstring. For instance,
+consider the following hypothetical function:
+
+.. code-block:: python
+
+    def state(theta, phi):
+        r"""
+        Returns an array representing :math:`\cos(\theta)\ket{0} +
+        \sin(\theta) e^{i \phi} \ket{1}`. 
+        """
+        ...
+
+If the docstring were instead declared using ``"""``, then
+``\t`` everywhere inside the docstring would be interpreted by
+Python as a tab character, and not as the start of a LaTeX command.  
+
 
 Showing Code Snippets
 ---------------------
