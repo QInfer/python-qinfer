@@ -289,3 +289,5 @@ provided by the ``qinfer.tomography`` module::
 
 Note the ``plt.show()`` call at the end; this is *required* to produce
 the final figure!
+
+.. matplotlib: http://matplotlib.org/
