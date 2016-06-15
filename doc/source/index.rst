@@ -17,6 +17,7 @@ QInfer - Library for Statistical Inference in Quantum Information
     intro
     guide/index
     apiref/index
+    devguide/index
     biblo
     acknowledgements
     :maxdepth: 2
