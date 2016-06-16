@@ -110,8 +110,8 @@ and ``int``, respectively. Such arrays are initialized by passing lists of
 ... ], dtype=[('t', 'float'), ('basis', 'int')])
 >>> print(eps)
 [(12.3, 2) (14.1, 1)]
->>> print(eps.shape)
-(2,)
+>>> eps.shape == (2,)
+True
 
 Once we have made a record array, we can then index by field names to get out
 each field as an array of that field's value in each record, or we can index
@@ -158,8 +158,8 @@ and experiment parameters.
 >>> D = m.simulate_experiment(modelparams, expparams, repeat=3)
 >>> print(isinstance(D, np.ndarray))
 True
->>> print(D.shape)
-(3, 100, 9)
+>>> D.shape == (3, 100, 9)
+True
 
 If exactly one datum is requested, :meth:`~Simulatable.simulate_experiment`
 will return a scalar:
@@ -194,8 +194,8 @@ tensor :math:`L_{ijk} := \Pr(d_i | \vec{x}_j; \vec{e}_k)`.
 
 >>> print(isinstance(L, np.ndarray))
 True
->>> print(L.shape)
-(1, 100, 9)
+>>> L.shape == (1, 100, 9)
+True
 
 Implementing Custom Simulators and Models
 -----------------------------------------
@@ -288,8 +288,8 @@ the ``expparams_dtype`` of our model:
 >>> D = mcm.simulate_experiment(modelparams, expparams, repeat=2)
 >>> print(isinstance(D, np.ndarray))
 True
->>> print(D.shape)
-(2, 10000, 81)
+>>> D.shape == (2, 10000, 81)
+True
 
 .. note::
 

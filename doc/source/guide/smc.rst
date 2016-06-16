@@ -61,8 +61,8 @@ Since :class:`SMCUpdater` inherits from :class:`Distribution`,
 it can be sampled in the same way described in :ref:`distributions_guide`.
 
 >>> posterior_samples = updater.sample(n=100)
->>> print(posterior_samples.shape)
-(100, 1)
+>>> posterior_samples.shape == (100, 1)
+True
 
 More commonly, however, one will want to calculate estimates such as
 :math:`\hat{\vec{x}} = \mathbb{E}_{\vec{x}|\text{data}}[\vec{x}]`. These
