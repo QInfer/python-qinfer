@@ -139,7 +139,7 @@ different forms:
 
 - Links to Python classes, modules and functions are formatted using
   ``:class:``, ``:mod:`` and ``:func:``, repsectively. For example,
-  ``:class:`qinfer.SMCUpdater:`` formats as :class:`qinfer.SMCUpdater:`.
+  ``:class:`qinfer.SMCUpdater`` formats as :class:`qinfer.SMCUpdater`.
   To suppress the path to a Python name, preface the name with a
   tilde (``~``), as in ``:class:`~qinfer.SMCUpdater:```. For a Python
   name to be a valid link target, it must be listed in the :ref:`apiref`
@@ -158,7 +158,7 @@ different forms:
 Typesetting Math
 ~~~~~~~~~~~~~~~~
 
-Math is formatted using the Sphinx markup ``:math:`...`` in place
+Math is formatted using the Sphinx markup ``:math:`...``` in place
 of ``$``, and using the ``.. math::`` directive in place of ``$$``.
 When building HTML- or PDF-formatted documentation, this is automatically
 converted to `MathJax`_- or LaTeX-formatted math. The **QInfer**
@@ -229,6 +229,7 @@ If the docstring were instead declared using ``"""``, then
 ``\t`` everywhere inside the docstring would be interpreted by
 Python as a tab character, and not as the start of a LaTeX command.  
 
+.. _docs_devguide_snippets:
 
 Showing Code Snippets
 ---------------------
