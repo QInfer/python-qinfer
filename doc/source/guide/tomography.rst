@@ -88,7 +88,7 @@ Suppose we measure :math:`\sigma_z` on a random state. The measurement effects a
 
 >>> expparams = np.zeros((1,), dtype=model.expparams_dtype)
 >>> expparams['meas'][0, :] = basis.state_to_modelparams(np.sqrt(2)*(basis[0]+basis[1])/2)
->>> print(model.likelihood(0,prior.sample(),expparams)) #doctest: +SKIP
+>>> print(model.likelihood(0, prior.sample(), expparams)) # doctest: +SKIP
 [[[ 0.62219803]]]
 
 Built-in Heuristics
@@ -96,9 +96,9 @@ Built-in Heuristics
 
 In addition to analyzing given data sets, the tomography module is well suited for testing measurement strategies against standard heuristics. These built-in heuristics are listed at :ref:`tomography_heuristics`. For qubits, the most commonly used heuristic is the random sampling of Pauli basis measurements, which is implemented by :class:`RandomPauliHeuristic`.
 
->>> from qinfer.tomography.expdesign import RandomPauliHeuristic
+>>> from qinfer.tomography import RandomPauliHeuristic
 >>> from qinfer import SMCUpdater
->>> updater = SMCUpdater(model,100,prior)
+>>> updater = SMCUpdater(model, 100, prior)
 >>> heuristic = RandomPauliHeuristic(updater)
->>> print(model.simulate_experiment(prior.sample(),heuristic())) #doctest +SKIP
+>>> print(model.simulate_experiment(prior.sample(), heuristic())) # doctest: +SKIP
 0
