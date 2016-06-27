@@ -57,35 +57,44 @@ On the other hand, when multiple trials are collected by ``perf_test_multiple``,
 returned as an array with the same fields, but with an additional index over trials,
 for a shape of ``(n_trials, n_exp)``.
 
-+--------------------+---------+----------------------------------+----------------------------------------------------+
-| Field              | Type    | Shape                            | Description                                        |
-+====================+=========+==================================+====================================================+
-| ``elapsed_time``   | `float` | scalar                           | Time (in seconds) elapsed during                   |
-|                    |         |                                  | the SMC update for this experiment.                |
-|                    |         |                                  | Includes resampling, but excludes experiment       |
-|                    |         |                                  | design, generation of "true" data and calculation  |
-|                    |         |                                  | of performance metrics.                            |
-+--------------------+---------+----------------------------------+----------------------------------------------------+
-| ``loss``           | `float` | scalar                           | Decision-theoretic loss incured by the estimate    |
-|                    |         |                                  | after updating with this experiment, given by the  |
-|                    |         |                                  | quadratic loss :math:`\Tr(Q (\hat{\vec{x}} -       |
-|                    |         |                                  | \vec{x}) (\hat{\vec{x}} - \vec{x})^{\mathrm{T}})`. |
-|                    |         |                                  | If the true and estimation models have different   |
-|                    |         |                                  | numbers of parameters, the loss will only be       |
-|                    |         |                                  | evaluated for those parameters that are in common  |
-|                    |         |                                  | (aligning the two vectors at the right).           |
-+--------------------+---------+----------------------------------+----------------------------------------------------+
-| ``resample_count`` | `int`   | scalar                           | Number of times that resampling was performed on   |
-|                    |         |                                  | the SMC updater.                                   |
-+--------------------+---------+----------------------------------+----------------------------------------------------+
-| ``outcome``        | `int`   | scalar                           | Outcome of the experiment that was performed.      |
-+--------------------+---------+----------------------------------+----------------------------------------------------+
-| ``true``           | `float` | ``(true_model.n_modelparams, )`` | Vector of model parameters used to simulate data.  |
-|                    |         |                                  | For time-dependent models, this changes with each  |
-|                    |         |                                  | experiment as per ``true_model.update_timestep``.  |
-+--------------------+---------+----------------------------------+----------------------------------------------------+
-| ``est``            | `float` | ``(model.n_modelparams, )``      | Mean vector of model parameters over the current   |
-|                    |         |                                  | posterior.                                         | 
-+--------------------+---------+----------------------------------+----------------------------------------------------+
++--------------------+---------+--------------------------------------------------+
+| Field              | Type    | Shape                                            |
++====================+=========+==================================================+
+| ``elapsed_time``   | `float` | scalar                                           |
++--------------------+---------+--------------------------------------------------+
+| Time (in seconds) elapsed during the SMC update for this                        |
+| experiment. Includes resampling, but excludes experiment                        |
+| design, generation of "true" data and calculation of                            |
+| performance metrics.                                                            |
++--------------------+---------+--------------------------------------------------+
+| ``loss``           | `float` | scalar                                           |
++--------------------+---------+--------------------------------------------------+
+| Decision-theoretic loss incured by the estimate after updating                  |
+| with this experiment, given by the quadratic loss                               |
+| :math:`\Tr(Q (\hat{\vec{x}} -\vec{x}) (\hat{\vec{x}} - \vec{x})^{\mathrm{T}})`. |
+| If the true and estimation models have                                          |
+| different numbers of parameters, the loss will only be                          |
+| evaluated for those parameters that are in common (aligning the                 |
+| two vectors at the right).                                                      |  
++--------------------+---------+--------------------------------------------------+
+| ``resample_count`` | `int`   | scalar                                           |
++--------------------+---------+--------------------------------------------------+
+| Number of times that resampling was performed on the SMC                        |
+| updater.                                                                        |
++--------------------+---------+--------------------------------------------------+
+| ``outcome``        | `int`   | scalar                                           |
++--------------------+---------+--------------------------------------------------+
+| Outcome of the experiment that was performed.                                   |
++--------------------+---------+--------------------------------------------------+
+| ``true``           | `float` | ``(true_model.n_modelparams, )``                 |
++--------------------+---------+--------------------------------------------------+
+| Vector of model parameters used to simulate data. For                           |
+| time-dependent models, this changes with each experiment as per                 |
+| ``true_model.update_timestep``.                                                 |
++--------------------+---------+--------------------------------------------------+
+| ``est``            | `float` | ``(model.n_modelparams, )``                      | 
++--------------------+---------+--------------------------------------------------+
+| Mean vector of model parameters over the current posterior.                     |
++--------------------+---------+--------------------------------------------------+
 
 .. _record array: http://docs.scipy.org/doc/numpy/user/basics.rec.html
