@@ -187,7 +187,10 @@ class LiuWestResampler(object):
 
     ## METHODS ##
     
-    def __call__(self, model, particle_weights, particle_locations, precomputed_mean=None, precomputed_cov=None):
+    def __call__(self, model, particle_weights, particle_locations,
+        n_particles=None,
+        precomputed_mean=None, precomputed_cov=None
+    ):
         """
         Resample the particles according to algorithm given in 
         [LW01]_.
@@ -205,6 +208,9 @@ class LiuWestResampler(object):
             cov = particle_covariance_mtx(w, l)
         else:
             cov = precomputed_cov
+        
+        if n_particles is None:
+            n_particles = l.shape[0]
         
         # parameters in the Liu and West algorithm            
         a, h = self._a, self._h
@@ -226,12 +232,12 @@ class LiuWestResampler(object):
                 "Infinite error in computing the square root of the "
                 "covariance matrix. Check that n_ess is not too small.")
         S = np.real(h * S)
-        n_ms, n_mp = l.shape
+        n_mp = l.shape[1]
         
-        new_locs = np.empty(l.shape)        
+        new_locs = np.empty((n_particles, n_mp))        
         cumsum_weights = np.cumsum(w)
         
-        idxs_to_resample = np.arange(n_ms)
+        idxs_to_resample = np.arange(n_particles)
         
         # Preallocate js and mus so that we don't have rapid allocation and
         # deallocation.
