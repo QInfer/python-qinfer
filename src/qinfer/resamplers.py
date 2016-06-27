@@ -237,12 +237,12 @@ class LiuWestResampler(object):
         new_locs = np.empty((n_particles, n_mp))        
         cumsum_weights = np.cumsum(w)
         
-        idxs_to_resample = np.arange(n_particles)
+        idxs_to_resample = np.arange(n_particles, dtype=int)
         
         # Preallocate js and mus so that we don't have rapid allocation and
         # deallocation.
         js = np.empty(idxs_to_resample.shape, dtype=int)
-        mus = np.empty(l.shape, dtype=l.dtype)
+        mus = np.empty(new_locs.shape, dtype=l.dtype)
         
         # Loop as long as there are any particles left to resample.
         n_iters = 0
