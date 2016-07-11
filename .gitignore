@@ -61,3 +61,6 @@ nosetests.xml
 
 #Mr Developer
 .mr.developer.cfg
+
+# Py test
+.cache
