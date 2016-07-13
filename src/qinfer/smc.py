@@ -656,8 +656,8 @@ class SMCUpdater(Distribution):
 
         rescale_var = np.sum(self.model.Q * var, axis=1)
         # Q has shape (n_mp,), therefore rescale_var has shape (n_outcomes,).
-        tot_like = np.sum(N, axis=1)
-        return np.dot(tot_like.T, rescale_var)
+        tot_norm = np.sum(N, axis=1)
+        return np.dot(tot_norm.T, rescale_var)
         
     def expected_information_gain(self, expparams):
         r"""
@@ -674,9 +674,9 @@ class SMCUpdater(Distribution):
         """
 
         nout = self.model.n_outcomes(expparams)
-        w, L = self.hypothetical_update(np.arange(nout), expparams, return_likelihood=True)
+        w, N = self.hypothetical_update(np.arange(nout), expparams, return_normalization=True)
         w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
-        L = L[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
+        N = N[:, :, 0] # Fix N.shape == (n_outcomes, n_particles).
         
         # This is a special case of the KL divergence estimator (see below),
         # in which the other distribution is guaranteed to share support.
@@ -685,12 +685,12 @@ class SMCUpdater(Distribution):
         # Est. KLD = E[KLD[idx_outcome] | outcomes].
         
         KLD = np.sum(
-            self.particle_weights * np.log(self.particle_weights / w),
+            w * np.log(self.particle_weights / w),
             axis=1 # Sum over particles.
         )
         
-        tot_like = np.sum(L, axis=1)
-        return np.dot(tot_like, KLD)
+        tot_norm = np.sum(N, axis=1)
+        return np.dot(tot_norm, KLD)
         
     def est_entropy(self):
         nz_weights = self.particle_weights[self.particle_weights > 0]
