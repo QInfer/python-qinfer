@@ -685,7 +685,7 @@ class SMCUpdater(Distribution):
         # Est. KLD = E[KLD[idx_outcome] | outcomes].
         
         KLD = np.sum(
-            w * np.log(self.particle_weights / w),
+            w * np.log(w / self.particle_weights ),
             axis=1 # Sum over particles.
         )
         
