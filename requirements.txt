@@ -1,4 +1,4 @@
-numpy
+numpy>=1.9.0
 scipy
 scikit-learn
 ipython
