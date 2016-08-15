@@ -52,6 +52,7 @@ from qinfer.utils import binomial_pdf
 from qinfer.abstract_model import Model, DifferentiableModel
 from qinfer._lib import enum # <- TODO: replace with flufl.enum!
 from qinfer.ale import binom_est_error
+from qinfer.domains import IntegerDomain
     
 ## CLASSES #####################################################################
 
@@ -106,6 +107,12 @@ class DerivedModel(Model):
     
     def are_models_valid(self, modelparams):
         return self.underlying_model.are_models_valid(modelparams)
+
+    def domain(self, expparams):
+        return self.underlying_model.domain(expparams)
+    
+    def are_expparam_dtypes_consistent(self, expparams):
+        return self.underlying_model.are_expparam_dtypes_consistent(expparams)
     
     def update_timestep(self, modelparams, expparams):
         return self.underlying_model.update_timestep(modelparams, expparams)
@@ -116,7 +123,6 @@ class DerivedModel(Model):
 PoisonModes = enum.enum("ALE", "MLE")
 
 class PoisonedModel(DerivedModel):
-    # TODO: refactor to use DerivedModel
     r"""
     Model that simulates sampling error incurred by the MLE or ALE methods of
     reconstructing likelihoods from sample data. The true likelihood given by an
@@ -153,7 +159,7 @@ class PoisonedModel(DerivedModel):
             self._hedge = hedge if hedge is not None else 0.0
             
     ## METHODS ##
-    
+
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
@@ -254,7 +260,31 @@ class BinomialModel(DerivedModel):
             property.
         """
         return expparams['n_meas'] + 1
+
+    def domain(self, expparams):
+        """
+        Returns a list of ``Domain``s, one for each input expparam.
+        :param numpy.ndarray expparams:  Array of experimental parameters. This
+            array must be of dtype agreeing with the ``expparams_dtype``
+            property.
+        :rtype: list of ``Domain``
+        """
+        return [IntegerDomain(min=0, max=ep['n_meas']) for ep in expparams] 
     
+    def are_expparam_dtypes_consistent(self, expparams):
+        """
+        Returns `True` iff all of the given expparams 
+        correspond to outcome domains with the same dtype.
+        For efficiency, concrete subclasses should override this method 
+        if the result is always `True`.
+
+        :param np.ndarray expparams: Array of expparamms 
+             of type `expparams_dtype`
+        :rtype: `bool`
+        """
+        # The output type is always the same, even though the domain is not.
+        return True
+
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
