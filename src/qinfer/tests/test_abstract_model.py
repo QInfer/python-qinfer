@@ -34,17 +34,20 @@ import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 
 from qinfer.tests.base_test import DerandomizedTestCase
-from qinfer.abstract_model import (
-    Model
-)
+from qinfer.abstract_model import Model, FiniteOutcomeModel
+from qinfer.domains import IntegerDomain
     
 ## CLASSES ####################################################################
 
-class MockModel(Model):
+class MockModel(FiniteOutcomeModel):
     """
     Two-outcome model whose likelihood is always 0.5, irrespective of
     model parameters, outcomes or experiment parameters.
     """
+
+    def __init__(self):
+        super(MockModel, self).__init__()
+        self._domain = IntegerDomain(min=0, max=1)
     
     @property
     def n_modelparams(self):
@@ -60,6 +63,10 @@ class MockModel(Model):
         
     def n_outcomes(self, expparams):
         return 2
+
+    def domain(self, expparams):
+        return self._domain if expparams is None else [self._domain for ep in expparams]
+
         
     @property
     def expparams_dtype(self):
@@ -69,13 +76,13 @@ class MockModel(Model):
     def likelihood(self, outcomes, modelparams, expparams):
         super(MockModel, self).likelihood(outcomes, modelparams, expparams)
         pr0 = np.ones((modelparams.shape[0], expparams.shape[0])) / 2
-        return Model.pr0_to_likelihood_array(outcomes, pr0)
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
     
 
 class TestAbstractModel(DerandomizedTestCase):
     
     def setUp(self):
-        super(TestModel, self).setUp()
+        super(TestAbstractModel, self).setUp()
         self.mock_model = MockModel()
 
     def test_pr0_shape(self):
