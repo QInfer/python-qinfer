@@ -56,6 +56,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+.cache
 nosetests.xml
 
 #Translations
@@ -64,5 +65,3 @@ nosetests.xml
 #Mr Developer
 .mr.developer.cfg
 
-# Py test
-.cache
