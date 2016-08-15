@@ -107,7 +107,7 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
     ## CONCRETE PROPERTIES ##
     
     @property
-    def is_outcomes_constant(self):
+    def is_n_outcomes_constant(self):
         """
         Returns ``True`` if and only if both the domain and ``n_outcomes``
         are independent of the expparam.
@@ -201,6 +201,29 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
                 for model in reversed(self.model_chain)
             ))
         return s
+
+    def are_expparam_dtypes_consistent(self, expparams):
+        """
+        Returns `True` iff all of the given expparams 
+        correspond to outcome domains with the same dtype.
+        For efficiency, concrete subclasses should override this method 
+        if the result is always `True`.
+
+        :param np.ndarray expparams: Array of expparamms 
+             of type `expparams_dtype`
+        :rtype: `bool`
+        """
+        if self.is_n_outcomes_constant:
+            # This implies that all domains are equal, so this must be true
+            return True
+
+        # otherwise we have to actually check all the dtypes
+        if expparams.size > 0:
+            domains = self.domain(expparams)
+            first_dtype = domains[0].dtype
+            return all(domain.dtype == first_dtype for domain in domains[1:])
+        else:
+            return True
     
     ## ABSTRACT METHODS ##
     
@@ -264,6 +287,7 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
             datum is returned instead.
         """
         self._sim_count += modelparams.shape[0] * expparams.shape[0] * repeat
+        assert(self.are_expparam_dtypes_consistent(expparams))
 
     ## CONCRETE METHODS ##
     
@@ -330,7 +354,7 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
             ``(n_models, n_modelparams, n_experiments)`` describing the update
             of each model according to each experiment.
         """
-        return modelparams[:, :, np.newaxis]
+        return np.tile(modelparams, (expparams.shape[0],1,1)).transpose((1,2,0))
 
     def canonicalize(self, modelparams):
         r"""
@@ -483,87 +507,6 @@ class Model(Simulatable):
         this model.
         """
         return self.are_models_valid(modelparams[np.newaxis, :])[0]
-
-    def representative_outcomes(self, weights, modelparams, expparams):
-        """
-        Given the distribution of model parameters specified by 
-        (``weights``, ``modelparams``), for each experimental parameter 
-        in ``expparams``, returns a subset of the relevant outcome 
-        domain where most of the weight lies. The notion of "most of" 
-        refers to the liklihood distribution conditioned on a specific
-        experimental parameter but marginalized over the given 
-        model parameter distribution and
-        is controlled by the class parameter ``n_outcomes`` and 
-        monitored by the threshold ``outcome_warning_threshhold``. 
-        Additionally, the likelihood of each of these outcomes is returned for 
-        each modelparam.
-
-        :param np.ndarray weights: Set of weights with a weight
-            corresponding to every modelparam. 
-        :param np.ndarray modelparams: Set of model parameters (particles).
-        :param np.ndarray expparams: Set of experimental parameters of 
-            type ``exparams_dtype``.
-
-        :return list: Returns a tuple ``(likelihoods, outcomes)``.
-            Here, ``outcomes`` is a list of length ``n_experiments`` 
-            with each member is an ``np.ndarray`` of shape ``(n_outcomes)`` 
-            with type ``model.domain(expparam).dtype``,
-            and ``likelihoods`` is a list of length ``n_experiments`` 
-            with each member is an ``np.ndarray`` of floats of shape 
-            ``(n_outcomes, modelparams)``
-
-
-        Note: The outcomes and outcome weights can be used to compute generic 
-        quantities which are averaged over data being marginalized over 
-        a distribution of model parameters. See ``~qinfer.SMCUpdater.bayes_risk()` 
-        as an example.
-        """
-
-        n_outcomes = self.n_outcomes(expparams)
-        n_expparams = expparams.shape[0]
-        n_modelparams = modelparams.shape[0]
-
-        outcomes = []
-        L = []
-        test_threshold = np.empty((n_expparams, ))
-
-        # We have to loop over expparams only because each one, unfortunately, might have 
-        # a different dtype and/or number of outcomes .
-        for idx_ep in range(n_expparams):
-            # So that expparam is a numpy array when extracted
-            expparam = expparams[idx_ep:idx_ep+1]
-            n_o = n_outcomes if np.isscalar(n_outcomes) else n_outcomes[idx_ep]
-            
-            sample_points = modelparams[np.random.choice(modelparams.shape[0], size=n_o, p=weights)]
-            os = self.simulate_experiment(sample_points, expparam, repeat=1)[0,:,0]
-            assert os.dtype == self.domain(expparam)[0].dtype
-
-            # The same outcome is likely to have resulted multiple times in the case that outcomes 
-            # are discrete values and the modelparam distribution is not too wide.
-            if not self.allow_identical_outcomes:
-                os = np.unique(os)
-
-            # Find the likelihood for each outcome given each modelparam (irrespective 
-            # of which modelparam the outcome resulted from)
-            L_ep = self.likelihood(os, modelparams, expparam)[:,:,0]
-
-            if self.domain(expparam)[0].is_discrete:
-                # If we sum L_ep over the weighted modelparams, we get the total probability 
-                # of the respective outcome. We want the total probability of 
-                # getting _any_ outcome to be near 1.
-                coverage = np.sum(np.tensordot(weights, L_ep, (0, 1)))
-                if coverage < self.outcome_warning_threshold:
-                    warnings.warn('The representative outcomes for experiment '
-                        '{} only cover {}% of their distribution. Consider increasing '
-                        'n_outcomes.'.format(expparam, coverage))
-            else:
-                # TODO: figure out a test in this case.
-                pass
-
-            outcomes.append(os)
-            L.append(L_ep)
-
-        return L, outcomes
     
             
 class LinearCostModelMixin(Model):
@@ -618,8 +561,8 @@ class FiniteOutcomeModel(Model):
     @property
     def n_outcomes_cutoff(self):
         """
-        If ``n_outcomes`` exceeds this value, 
-        ``representative_outcomes`` will use this 
+        If ``n_outcomes`` exceeds this value for 
+        some expparm, ``representative_outcomes`` will use this 
         value in its place. This is useful in the case
         of a finite yet untractible number of outcomes.
 
@@ -650,9 +593,9 @@ class FiniteOutcomeModel(Model):
         # This is used to count simulation calls.
         super(FiniteOutcomeModel, self).simulate_experiment(modelparams, expparams, repeat)
         
-        if self.is_outcomes_constant:
-            # In this case, all expparams have the same domain, so just look at the first one
-            all_outcomes = self.domain(expparams)[0].values
+        if self.is_n_outcomes_constant:
+            # In this case, all expparams have the same domain
+            all_outcomes = self.domain(None).values
             probabilities = self.likelihood(all_outcomes, modelparams, expparams)
             cdf = np.cumsum(probabilities, axis=0)
             randnum = np.random.random((repeat, 1, modelparams.shape[0], expparams.shape[0]))
@@ -661,6 +604,7 @@ class FiniteOutcomeModel(Model):
         else:
             # Loop over each experiment, sadly.
             # Assume all domains have the same dtype
+            assert(self.are_expparam_dtypes_consistent(expparams))
             dtype = self.domain(expparams[0, np.newaxis])[0].dtype
             outcomes = np.empty((repeat, modelparams.shape[0], expparams.shape[0]), dtype=dtype)
             for idx_experiment, single_expparams in enumerate(expparams[:, np.newaxis]):
@@ -672,68 +616,6 @@ class FiniteOutcomeModel(Model):
                 
         return outcomes[0, 0, 0] if repeat == 1 and expparams.shape[0] == 1 and modelparams.shape[0] == 1 else outcomes
 
-    def representative_outcomes(self, weights, modelparams, expparams):
-        """
-        Given the distribution of model parameters specified by 
-        (``weights``, ``modelparams``), for each experimental parameter 
-        in ``expparams``, returns a subset of the relevant outcome 
-        domain where most of the weight lies. The notion of "most of" 
-        refers to the liklihood distribution conditioned on a specific
-        experimental parameter but marginalized over the given 
-        model parameter distribution and
-        is controlled by the class parameter ``n_outcomes`` and 
-        monitored by the threshold ``outcome_warning_threshold``. 
-        Additionally, the likelihood of each of these outcomes is returned for 
-        each modelparam.
-
-        :param np.ndarray weights: Set of weights with a weight
-            corresponding to every modelparam. 
-        :param np.ndarray modelparams: Set of model parameters (particles).
-        :param np.ndarray expparams: Set of experimental parameters of 
-            type ``exparams_dtype``.
-
-        :return list: Returns a tuple ``(likelihoods, outcomes)``.
-            Here, ``outcomes`` is a list of length ``n_experiments`` 
-            with each member is an ``np.ndarray`` of shape ``(n_outcomes)`` 
-            with type ``model.domain(expparam).dtype``,
-            and ``likelihoods`` is a list of length ``n_experiments`` 
-            with each member is an ``np.ndarray`` of floats of shape 
-            ``(n_outcomes, modelparams)``
-
-
-        Note: The outcomes and outcome weights can be used to compute generic 
-        quantities which are averaged over data being marginalized over 
-        a distribution of model parameters. See ``~qinfer.SMCUpdater.bayes_risk()` 
-        as an example.
-        """
-
-        n_outcomes = self.n_outcomes(expparams)
-        n_expparams = expparams.shape[0]
-        n_modelparams = modelparams.shape[0]
-
-        outcomes = []
-        L = []
-        # We have to loop over expparams only because each one, unfortunately, might have 
-        # a different dtype and/or number of outcomes .
-        for idx_ep in range(expparams.shape[0]):
-            # So that expparam is a numpy array when extracted
-            expparam = expparams[idx_ep:idx_ep+1]
-
-            n_o = n_outcomes if np.isscalar(n_outcomes) else n_outcomes[idx_ep]
-            
-            if self.n_outcomes_cutoff is None or n_o <= self.n_outcomes_cutoff:
-                # If we don't have to many outcomes, just report them all.
-                os = self.domain(expparam)[0].values
-            else:
-                # Otherwise, use the generic method to pick some randomly.
-                os = super(FiniteOutcomeModel, self).representative_outcomes(
-                    weights, modelparams, expparam)[0]
-
-
-            outcomes.append(os)
-            L.append(self.likelihood(os, modelparams, expparam)[:,:,0])
-
-        return L, outcomes
 
     ## STATIC METHODS ##
     # These methods are provided as a convienence to make it easier to write
@@ -799,12 +681,7 @@ class DifferentiableModel(with_metaclass(abc.ABCMeta, Model)):
             give significant speed advantages.
         """
         
-        # TODO: break into two cases, one for constant outcomes, one for
-        #       variable. The latter will have to be a loop, which is much
-        #       slower.
-        #       Here, we sketch the first case.
-        # FIXME: completely untested!
-        if self.is_outcomes_constant:
+        if self.is_n_outcomes_constant:
             outcomes = np.arange(self.n_outcomes(expparams))
             scores, L = self.score(outcomes, modelparams, expparams, return_L=True)
             
