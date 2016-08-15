@@ -72,7 +72,7 @@ class MockModel(Model):
         return Model.pr0_to_likelihood_array(outcomes, pr0)
     
 
-class TestModel(DerandomizedTestCase):
+class TestAbstractModel(DerandomizedTestCase):
     
     def setUp(self):
         super(TestModel, self).setUp()

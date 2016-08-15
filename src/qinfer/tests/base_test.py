@@ -27,12 +27,51 @@
 
 from __future__ import absolute_import
 from __future__ import division # Ensures that a/b is always a float.
+from future.utils import with_metaclass
 
 ## IMPORTS ####################################################################
 
+import sys
+import abc
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 import unittest
+from qinfer import Domain
+
+## FUNCTIONS ##################################################################
+
+def test_model(model, prior, expparams, stream=sys.stderr):
+    """
+    Tests the given Simulatable instance for errors. Useful for debugging 
+    new or third party models.
+
+    :param model: Instance of Simulatable or a subclass thereof.
+    :param prior: Instance of Distribution, or any other class which 
+        implements a function `sample` that returns valid modelparams.
+    :param expparams: `np.ndarray` of experimental parameters to test with.
+    :param stream: Stream to dump the results into, default is stderr.
+    """
+
+    if isinstance(model, DifferentiableModel):
+        test_class = TestConcreteDifferentiableModel
+    elif isinstance(model, Model):
+        test_class = TestConcreteModel
+    elif isinstance(model, Simulatable):
+        test_class = TestConcreteSimulatable
+    else:
+        raise ValueError("Given model has unrecognized type.")
+
+    class TestGivenModel(test_class, DerandomizedTestCase):
+        def instantiate_model(self):
+            return model
+        def instantiate_prior(self):
+            return prior
+        def instantiate_expparams(self):
+            return expparams
+    
+    test = unittest.TestSuite((TestGivenModel, ))
+    runner = unittest.TextTestRunner(stream=stream)
+    runner.run(test)
 
 ## CLASSES ####################################################################
 
@@ -50,6 +89,267 @@ class DerandomizedTestCase(unittest.TestCase):
     # test method.
     
     def setUp(self):
-        # TODO: move this into a base class for deteministic unit tests!
         np.random.seed(0)
+
+class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
+    """
+    Mixin of generic tests which can be run to test basic properties 
+    of any subclass of Simulatable. 
+    """
+    
+    # FORCED PROPERTIES ##
+
+    # We use this abstract instantiate_* paradigm to ensure that the actual 
+    # property cannot change instances throughout the testing. Although 
+    # unlikely, this paranoid approach prevents subclasses from having 
+    # model return something different every time it is called!
+
+    @abc.abstractproperty
+    def instantiate_model(self):
+        """
+        Generates and returns an instance of the concrete Model class being tested.
+        """
+        pass
+    @property
+    def model(self):
+        """
+        Returns (a fixed) instance of the concrete Model class being tested.
+        """
+        try:
+            return self._model
+        except AttributeError:
+            self._model = self.instantiate_model()
+            return self._model
+
+    @abc.abstractproperty
+    def instantiate_prior(self):
+        """
+        Generates and returns a prior Distribution to be used with the model.
+        """
+        pass
+    @property
+    def prior(self):
+        """
+        Returns (a fixed) instance of the prior to be used while testing the model.
+        """
+        try:
+            return self._prior
+        except AttributeError:
+            self._prior = self.instantiate_prior()
+            return self._prior
+
+    @abc.abstractproperty
+    def instantiate_expparams(self):
+        """
+        Generates and returns a set of expparams to be used with the model.
+        """
+        pass
+    @property
+    def expparams(self):
+        """
+        Returns (a fixed) set of expparams to be used while testing the model.
+        """
+        try:
+            return self._expparams
+        except AttributeError:
+            self._expparams = self.instantiate_expparams()
+            return self._expparams
+
+    ## PROPERTIES ##
+
+    @property
+    def n_expparams(self):
+        """
+        Number of experimental parameters to do tests with.
+        """
+        return self.expparams.shape[0]
+
+    @property
+    def n_models(self):
+        """
+        Number of model parameters to do tests with.
+        """
+        # Ensure that n_models is not equal to n_expparams
+        return 21 if self.n_expparams == 20 else 20
+
+    @property
+    def n_outcomes(self):
+        """
+        Number of outcomes to do tests with.
+        """
+        # Ensure that this is not equal to n_models or n_expparams
+        return self.n_models + self.n_expparams
+
+    @property
+    def modelparams(self):
+        """
+        Fixed set of model parameter to do tests with.
+        """
+        try:
+            return self._modelparams
+        except AttributeError:
+            # get modelparams by sampling the prior
+            mps = self.prior.sample(n=self.n_models)
+            self._modelparams = mps
+            return self._modelparams
+
+    @property
+    def outcomes(self):
+        """
+        Fixed set of outcomes to do tests with. If you have 
+        a weird model with different outcome dtypes, you 
+        may want to set this property manually.
+        """
+        try:
+            return self._outcomes
+        except AttributeError:
+            # get some of our elements from the domain
+            os = self.model.domain(self.expparams)[0].values
+            while os.shape[0] < self.n_outcomes:
+                os = np.concatenate([os,os])
+            if os.shape[0] > self.n_outcomes:
+                os = os[:self.n_outcomes]
+            self._outcomes = os
+            
+            return self._outcomes
+
+
+    ## TESTS ##
+
+    def test_simulate_experiment(self):
+        """
+        Tests that simulate_experiment does not fail and has the right
+        output format.
+        """
+
+        # ensure that repeat is not equal to n_models or n_expparams
+        repeat = 2
+        while repeat == self.n_expparams or repeat == self.n_models:
+            repeat = repeat + 1
+
+        outcomes = self.model.simulate_experiment(self.modelparams, self.expparams, repeat=repeat)
+        
+        assert(outcomes.shape == (
+            repeat,
+            self.n_models, 
+            self.n_expparams)
+            )
+
+    
+    def test_update_timestep(self):
+        """
+        Tests that test_update_timstep does not fail and 
+        has the right output format.
+        """
+
+        mps = self.model.update_timestep(self.modelparams, self.expparams)
+
+        assert(mps.shape == (
+            self.n_models,
+            self.model.n_modelparams, 
+            self.n_expparams)
+            )
+
+    def test_domain_with_none(self):
+        """
+        Tests that the domain property of a Model works with the None input
+        whenever is_n_outcomes_constant is True.
+        """
+        if self.model.is_n_outcomes_constant:
+            domain = self.model.domain(None)
+            assert(isinstance(domain, Domain))
+
+
+    def test_domain(self):
+        """
+        Tests that the domain property returns a list of 
+        domains of the correct length
+        """
+        domains = self.model.domain(self.expparams)
+        assert(len(domains) == self.n_expparams)
+        for domain in domains:
+            assert(isinstance(domain, Domain))
+
+class ConcreteModelTest(ConcreteSimulatableTest):
+    """
+    Mixin of generic tests which can be run to test basic properties 
+    of any subclass of Model.
+    """
+
+    ## TESTS ##
+
+    def test_are_models_valid(self):
+        """
+        Tests that are_models_valid does not fail.
+        """
+        # we are more interested in whether this fails than if the models are valid
+        self.model.are_models_valid(self.modelparams)
+
+    def test_canonicalize(self):
+        """
+        Tests that canonicalize does not fail and that it 
+        returns valid models for the tester's specific modelparams.
+        """
+
+        new_mps = self.model.canonicalize(self.modelparams)
+        assert(np.all(self.model.are_models_valid(new_mps)))
+
+
+    def test_likelihood(self):
+        """
+        Tests that likelihood does not fail and has the right
+        output format.
+        """
+
+        L = self.model.likelihood(self.outcomes, self.modelparams, self.expparams)
+
+        assert(L.shape == (
+            self.n_outcomes,
+            self.n_models, 
+            self.n_expparams)
+            )
+
+class ConcreteDifferentiableModelTest(ConcreteModelTest):
+    """
+    Mixin of generic tests which can be run to test basic properties 
+    of any subclass of Model.
+    """
+
+    ## TESTS ##
+
+    def test_fisher_information(self):
+        """
+        Tests that fisher information does not fail and has the right
+        output format.
+        """
+
+        fisher = self.model.fisher_information(self.modelparams, self.expparams)
+        
+        assert(fisher.shape == (
+            self.model.n_modelparams,
+            self.model.n_modelparams, 
+            self.n_models, 
+            self.n_expparams))
+
+    def test_score(self):
+        """
+        Tests that score does not fail and has the right
+        output format.
+        """
+
+        score1 = self.model.score(self.outcomes, self.modelparams, self.expparams, return_L=False)
+        L1 = self.model.likelihood(self.outcomes, self.modelparams, self.expparams)
+        score, L = self.model.score(self.outcomes, self.modelparams, self.expparams, return_L=True)
+
+        # Ensure some consistency
+        assert_almost_equal(score1, score, 3)
+        assert_almost_equal(L1, L, 3)
+
+        # Dimensions must be correct
+        assert(score.shape == (
+            self.model.n_modelparams, 
+            self.n_outcomes, 
+            self.n_models, 
+            self.n_expparams)
+            )
         
