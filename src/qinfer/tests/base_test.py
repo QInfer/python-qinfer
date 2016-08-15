@@ -238,7 +238,7 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
     
     def test_update_timestep(self):
         """
-        Tests that test_update_timstep does not fail and 
+        Tests that update_timstep does not fail and 
         has the right output format.
         """
 

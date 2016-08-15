@@ -375,6 +375,10 @@ class MLEModel(DerivedModel):
         super(MLEModel, self).__init__(underlying_model)
         self._pow = likelihood_power
 
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        super(MLEModel, self).simulate_experiment(modelparams, expparams, repeat)
+        return self.underlying_model.simulate_experiment(modelparams, expparams, repeat)
+
     def likelihood(self, outcomes, modelparams, expparams):
         L = self.underlying_model.likelihood(outcomes, modelparams, expparams)
         return L**self._pow

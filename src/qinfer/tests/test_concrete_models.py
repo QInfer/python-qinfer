@@ -46,7 +46,7 @@ from qinfer import (
     SimplePrecessionModel, SimpleInversionModel,
     CoinModel, NoisyCoinModel, NDieModel,
     PoisonedModel, BinomialModel,
-    RandomWalkModel,
+    MLEModel, RandomWalkModel,
     NormalDistribution,
     BetaDistribution, UniformDistribution,
     ConstrainedSumDistribution
@@ -185,10 +185,7 @@ class TestPoisonedModelALE(ConcreteModelTest, DerandomizedTestCase):
     def instantiate_prior(self):
         return UniformDistribution(np.array([[5,8]]))
     def instantiate_expparams(self):
-        # the scalar expparam is given name 'x' by BinomialModel
-        ts = np.linspace(0,5,10, dtype=[('x','float')])
-        nmeas = np.arange(10,20).astype([('n_meas','int')])
-        return rfn.merge_arrays([ts,nmeas])
+        return np.arange(10,20).astype(self.model.expparams_dtype)
 
 class TestPoisonedModelMLE(ConcreteModelTest, DerandomizedTestCase):
     """
@@ -205,10 +202,23 @@ class TestPoisonedModelMLE(ConcreteModelTest, DerandomizedTestCase):
     def instantiate_prior(self):
         return UniformDistribution(np.array([[5,8]]))
     def instantiate_expparams(self):
-        # the scalar expparam is given name 'x' by BinomialModel
-        ts = np.linspace(0,5,10, dtype=[('x','float')])
-        nmeas = np.arange(10,20).astype([('n_meas','int')])
-        return rfn.merge_arrays([ts,nmeas])
+        return np.arange(10,20).astype(self.model.expparams_dtype)
+
+class TestMLEModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests MLEModel with SimplePrecessionModel and 
+    a normal distribution at each step.
+    """
+
+    def instantiate_model(self):
+        return MLEModel(
+                SimplePrecessionModel(),
+                likelihood_power = 2
+            )
+    def instantiate_prior(self):
+        return UniformDistribution(np.array([[5,8]]))
+    def instantiate_expparams(self):
+       return np.arange(10,20).astype(self.model.expparams_dtype)
 
 class TestRandomWalkModel(ConcreteModelTest, DerandomizedTestCase):
     """
@@ -224,7 +234,4 @@ class TestRandomWalkModel(ConcreteModelTest, DerandomizedTestCase):
     def instantiate_prior(self):
         return UniformDistribution(np.array([[5,8]]))
     def instantiate_expparams(self):
-        # the scalar expparam is given name 'x' by BinomialModel
-        ts = np.linspace(0,5,10, dtype=[('x','float')])
-        nmeas = np.arange(10,20).astype([('n_meas','int')])
-        return rfn.merge_arrays([ts,nmeas])
+        return np.arange(10,20).astype(self.model.expparams_dtype)
