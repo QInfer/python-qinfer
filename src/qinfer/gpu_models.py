@@ -58,7 +58,8 @@ import numpy as np
 import numpy.linalg as la
 import time
 
-from qinfer.abstract_model import Model
+from qinfer.abstract_model import Model, FiniteOutcomeModel
+from qinfer.domains import IntegerDomain
 from qinfer.test_models import SimplePrecessionModel
 from qinfer.smc import SMCUpdater
 from qinfer.distributions import UniformDistribution
@@ -83,7 +84,7 @@ __kernel void cos_model(
 
 ## CLASSES #####################################################################
 
-class AcceleratedPrecessionModel(Model):
+class AcceleratedPrecessionModel(FiniteOutcomeModel):
     r"""
     Reimplementation of `qinfer.test_models.SimplePrecessionModel`, using OpenCL
     to accelerate computation.
@@ -104,6 +105,8 @@ class AcceleratedPrecessionModel(Model):
 
         
         self._prg = cl.Program(self._ctx, COS_MODEL_KERNEL).build()
+
+        self._domain = IntegerDomain(min=0,max=1)
         
     
     ## PROPERTIES ##
@@ -146,6 +149,10 @@ class AcceleratedPrecessionModel(Model):
             property.
         """
         return 2
+
+    def domain(self, expparams):
+        return self._domain if expparams is None else [self._domain for ep in expparams]
+
     
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
@@ -180,7 +187,7 @@ class AcceleratedPrecessionModel(Model):
         dest_buf.release()
         
         # Now we concatenate over outcomes.
-        return Model.pr0_to_likelihood_array(outcomes, pr0)
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 
 ## SCRIPT ######################################################################
 
