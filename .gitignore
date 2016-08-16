@@ -10,6 +10,7 @@ src/qinfer/version.py
 # Migration #
 Backup/*
 UpgradeLog.htm
+.vscode
 
 ## Pycharm Stuff ##
 .idea
@@ -65,3 +66,5 @@ nosetests.xml
 #Mr Developer
 .mr.developer.cfg
 
+# cprofile profile file
+profile
