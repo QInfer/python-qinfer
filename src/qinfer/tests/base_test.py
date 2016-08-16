@@ -235,6 +235,11 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
             self.n_expparams)
             )
 
+        # check that outcomes are in the right domains
+        for idx_ep in range(self.n_expparams):
+            domain = self.model.domain(self.expparams[idx_ep:idx_ep+1])[0]
+            assert(domain.in_domain(outcomes[:,:,idx_ep].flatten()))
+
     
     def test_update_timestep(self):
         """
