@@ -45,7 +45,7 @@ import abc
 from qinfer import (
     SimplePrecessionModel, SimpleInversionModel,
     CoinModel, NoisyCoinModel, NDieModel,
-    PoisonedModel, BinomialModel,
+    PoisonedModel, BinomialModel, MultinomialModel,
     MLEModel, RandomWalkModel,
     NormalDistribution,
     BetaDistribution, UniformDistribution,
@@ -170,6 +170,20 @@ class TestBinomialModel2(ConcreteModelTest, DerandomizedTestCase):
         betas = np.linspace(0,0.5,10, dtype=[('beta','float')])
         nmeas = np.arange(10,20).astype([('n_meas','int')])
         return rfn.merge_arrays([alphas,betas,nmeas])
+
+class TestMultinomialModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests MultinomialModel with NDieModel as the underlying model
+    (underlying model has no expparams).
+    """
+
+    def instantiate_model(self):
+        return MultinomialModel(NDieModel(n=6))
+    def instantiate_prior(self):
+        unif = UniformDistribution(np.array([[0,1],[0,1],[0,1],[0,1],[0,1],[0,1]]))
+        return ConstrainedSumDistribution(unif, desired_total=1)
+    def instantiate_expparams(self):
+        return np.arange(10).astype(self.model.expparams_dtype)
 
 class TestPoisonedModelALE(ConcreteModelTest, DerandomizedTestCase):
     """

@@ -484,11 +484,11 @@ class MultinomialDomain(Domain):
             partition_array[i,:] = sum(c)
 
         # Convert to dtype before returning
-        return self._from_regular_array(partition_array)
+        return self.from_regular_array(partition_array)
         
     ## METHODS ##
 
-    def _to_regular_array(self, A):
+    def to_regular_array(self, A):
         """
         Converts from an array of type `self.dtype` to an array 
         of type `int` with an additional index labeling the 
@@ -498,9 +498,11 @@ class MultinomialDomain(Domain):
 
         :rtype: `np.ndarray`
         """
+        # this could be a static method, but we choose to be consistent with 
+        # from_regular_array
         return A.view((int, len(A.dtype.names))).reshape(A.shape + (-1,))
 
-    def _from_regular_array(self, A):
+    def from_regular_array(self, A):
         """
         Converts from an array of type `int` where the last index 
         is assumed to have length `self.n_elements` to an array 
@@ -510,7 +512,8 @@ class MultinomialDomain(Domain):
 
         :rtype: `np.ndarray`
         """
-        return A.view(dtype=self.dtype).squeeze(-1) 
+        dims = A.shape[:-1]
+        return A.reshape((np.prod(dims),-1)).view(dtype=self.dtype).squeeze(-1).reshape(dims)
 
     def in_domain(self, points):
         """
@@ -521,7 +524,8 @@ class MultinomialDomain(Domain):
 
         :rtype: `bool`
         """
-        array_view = self._to_regular_array(points)
+        array_view = self.to_regular_array(points)
+        print(np.all(array_view>=0))
         return np.all(array_view >= 0) and np.all(np.sum(array_view, axis=-1) == self.n_meas)
 
     
