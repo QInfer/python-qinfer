@@ -42,7 +42,7 @@ from __future__ import unicode_literals
 
 from builtins import range, map
 
-from qinfer import Model
+from qinfer import Model, IntegerDomain, FiniteOutcomeModel
 
 import numpy as np
 
@@ -70,7 +70,7 @@ def heisenberg_weyl_operators(d=2):
 
 ## CLASSES ###################################################################
 
-class TomographyModel(Model):
+class TomographyModel(FiniteOutcomeModel):
     r"""
     Model for tomographically learning a quantum state using
     two-outcome positive-operator valued measures (POVMs).
@@ -87,6 +87,9 @@ class TomographyModel(Model):
         self._basis = basis
         self._allow_subnormalied = allow_subnormalized
         super(TomographyModel, self).__init__()
+
+        # TODO: allow more outcomes
+        self._domain = IntegerDomain(min=0, max=0)
 
     @property
     def dim(self):
@@ -130,6 +133,10 @@ class TomographyModel(Model):
 
     def n_outcomes(self, expparams):
         return 2
+
+    def domain(self, expparams):
+        return self._domain if expparams is None else [self._domain for ep in expparams]
+
 
     def are_models_valid(self, modelparams):
         # This is wrong, but is wrong for the sake of speed.
@@ -214,7 +221,7 @@ class TomographyModel(Model):
         )
         np.clip(pr1, 0, 1, out=pr1)
 
-        return Model.pr0_to_likelihood_array(outcomes, 1 - pr1)
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, 1 - pr1)
 
 class DiffusiveTomographyModel(TomographyModel):
     @property

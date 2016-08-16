@@ -45,18 +45,21 @@ import abc
 from qinfer import (
     SimplePrecessionModel, SimpleInversionModel,
     CoinModel, NoisyCoinModel, NDieModel,
+    RandomizedBenchmarkingModel,
     PoisonedModel, BinomialModel, MultinomialModel,
     MLEModel, RandomWalkModel,
     NormalDistribution,
     BetaDistribution, UniformDistribution,
+    PostselectedDistribution,
     ConstrainedSumDistribution
 )
+from qinfer.tomography import TomographyModel, DiffusiveTomographyModel, pauli_basis, GinibreDistribution
 
 import unittest
 
 
 
-## TEST MODELS ################################################################
+## SIMPLE TEST MODELS #########################################################
 
 class TestSimplePrecessionModel(ConcreteDifferentiableModelTest, DerandomizedTestCase):
     """
@@ -123,6 +126,64 @@ class TestNDieModel(ConcreteModelTest, DerandomizedTestCase):
         return ConstrainedSumDistribution(unif, desired_total=1)
     def instantiate_expparams(self):
         return np.arange(10).astype(self.model.expparams_dtype)
+
+## TOMOGRAPHY MODELS ##########################################################
+
+class TestTomographyModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests TomographyModel.
+    """
+
+    def instantiate_model(self):
+        basis = pauli_basis(nq=2)
+        return TomographyModel(basis=basis)
+    def instantiate_prior(self):
+        basis = pauli_basis(nq=2)
+        return GinibreDistribution(basis)
+    def instantiate_expparams(self):
+        # 10 different random measurements, each measurement 
+        # is an operator expressed in the 2-qubit pauli basis.
+        eps = np.random.rand(10, 2 ** 4)
+        # now we need to convert to fancy data type by putting 
+        # the second index into the 'meas' structure
+        eps = eps.view(dtype=self.model.expparams_dtype).squeeze(-1)
+        return eps
+
+## RB MODELS ##################################################################
+
+class TestRBModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests RandomizedBenchmarkingModel without interleaving.
+    """
+
+    def instantiate_model(self):
+        return RandomizedBenchmarkingModel(interleaved=False)
+    def instantiate_prior(self):
+        return PostselectedDistribution(
+            UniformDistribution(np.array([[0,1],[0,1],[0,1]])),
+            self.model
+        )
+    def instantiate_expparams(self):
+        ms = np.arange(10).astype(self.model.expparams_dtype)
+        return ms
+
+class TestIRBModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests RandomizedBenchmarkingModel with interleaving.
+    """
+
+    def instantiate_model(self):
+        return RandomizedBenchmarkingModel(interleaved=True)
+    def instantiate_prior(self):
+        return PostselectedDistribution(
+            UniformDistribution(np.array([[0,1],[0,1],[0,1],[0,1]])),
+            self.model
+        )
+    def instantiate_expparams(self):
+        # sequential sequences
+        ms = np.arange(10).astype([('m','uint')])
+        isref = np.random.rand(10).round().astype([('reference',bool)])
+        return rfn.merge_arrays([ms, isref])
 
 ## DERIVED MODELS #############################################################
 
