@@ -530,7 +530,6 @@ class MultinomialModel(DerivedModel):
         ]).transpose((3,2,0,1))
 
         # convert to fancy data type
-        print(os.shape)
         os = self._example_domain.from_regular_array(os)
 
         return os[0,0,0] if os.size == 1 else os
