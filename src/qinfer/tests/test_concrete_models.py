@@ -151,7 +151,7 @@ class TestTomographyModel(ConcreteModelTest, DerandomizedTestCase):
 
 ## RB MODELS ##################################################################
 
-class TestRBModel(ConcreteModelTest, DerandomizedTestCase):
+class TestRBModel(ConcreteDifferentiableModelTest, DerandomizedTestCase):
     """
     Tests RandomizedBenchmarkingModel without interleaving.
     """
@@ -167,7 +167,7 @@ class TestRBModel(ConcreteModelTest, DerandomizedTestCase):
         ms = np.arange(10).astype(self.model.expparams_dtype)
         return ms
 
-class TestIRBModel(ConcreteModelTest, DerandomizedTestCase):
+class TestIRBModel(ConcreteDifferentiableModelTest, DerandomizedTestCase):
     """
     Tests RandomizedBenchmarkingModel with interleaving.
     """
