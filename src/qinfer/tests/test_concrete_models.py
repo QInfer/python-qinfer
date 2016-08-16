@@ -53,6 +53,7 @@ from qinfer import (
     PostselectedDistribution,
     ConstrainedSumDistribution
 )
+from qinfer.ale import ALEApproximateModel
 from qinfer.tomography import TomographyModel, DiffusiveTomographyModel, pauli_basis, GinibreDistribution
 
 import unittest
@@ -186,6 +187,21 @@ class TestIRBModel(ConcreteDifferentiableModelTest, DerandomizedTestCase):
         return rfn.merge_arrays([ms, isref])
 
 ## DERIVED MODELS #############################################################
+
+# not technically a derived model, but should be.
+class TestALEApproximateModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests ALEApproximateModel with SimplePrecessionModel as the underlying model
+    (underlying model has 1 scalar expparams).
+    """
+
+    def instantiate_model(self):
+        return ALEApproximateModel(SimplePrecessionModel())
+    def instantiate_prior(self):
+        return UniformDistribution(np.array([[5,8]]))
+    def instantiate_expparams(self):
+        ts = np.linspace(0,5,10, dtype=self.model.expparams_dtype)
+        return ts
 
 class TestBinomialModel(ConcreteModelTest, DerandomizedTestCase):
     """
