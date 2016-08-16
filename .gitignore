@@ -10,6 +10,7 @@ src/qinfer/version.py
 # Migration #
 Backup/*
 UpgradeLog.htm
+.vscode
 
 ## Pycharm Stuff ##
 .idea
