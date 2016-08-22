@@ -511,9 +511,6 @@ class SMCUpdater(Distribution):
         # Possibly canonicalize, if we've been asked to do so.
         if self._canonicalize:
             self.particle_locations[:, :] = self.model.canonicalize(self.particle_locations)
-
-        # Reset the weights to uniform.
-        self.particle_weights[:] = (1/self.n_particles)
         
         # Instruct the model to clear its cache, demoting any errors to
         # warnings.
