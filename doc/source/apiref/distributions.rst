@@ -32,7 +32,22 @@ Specific Distributions
 .. autoclass:: MultivariateNormalDistribution
     :members:
 
+.. autoclass:: SlantedNormalDistribution 
+    :members:
+
+.. autoclass:: LogNormalDistribution
+    :members:
+
 .. autoclass:: ConstantDistribution
+    :members:
+
+.. autoclass:: BetaDistribution 
+    :members:
+
+.. autoclass:: BetaBinomialDistribution 
+    :members:
+
+.. autoclass:: GammaDistribution 
     :members:
 
 .. autoclass:: HilbertSchmidtUniform
@@ -56,3 +71,8 @@ ones.
 .. autoclass:: PostselectedDistribution
     :members:
 
+Mixins for Distribution Development
+-----------------------------------
+
+.. autoclass:: SingleSampleMixin
+    :members:

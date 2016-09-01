@@ -47,9 +47,18 @@ from qinfer._exceptions import ApproximationWarning
 ## FUNCTIONS ##################################################################
 
 def binomial_pdf(N,n,p):
+    r"""
+    Returns the PDF of the binomial distribution
+    :math:`\operatorname{Bin}(N, p)` evaluated at :math:`n`.
+    """
     return binom(N, p).pmf(n)
 
-def outer_product(vec):        
+
+def outer_product(vec):
+    r"""
+    Returns the outer product of a vector :math:`v`
+    with itself, :math:`v v^\T`.
+    """        
     return (
         np.dot(vec[:, np.newaxis], vec[np.newaxis, :])
         if len(vec.shape) == 1 else
@@ -57,6 +66,17 @@ def outer_product(vec):
         )
         
 def particle_meanfn(weights, locations, fn=None):
+    r"""
+    Returns the mean of a function :math:`f` over model
+    parameters.
+
+    :param numpy.ndarray weights: Weights of each particle.
+    :param numpy.ndarray locations: Locations of each
+        particle.
+    :param callable fn: Function of model parameters to
+        take the mean of. If `None`, the identity function
+        is assumed.
+    """
     fn_vals = fn(locations) if fn is not None else locations
     return np.sum(weights * fn_vals.transpose([1, 0]),
         axis=1)
@@ -116,6 +136,10 @@ def particle_covariance_mtx(weights,locations):
 
 
 def ellipsoid_volume(A=None, invA=None):
+    """
+    Returns the volume of an ellipsoid given either its
+    matrix or the inverse of its matrix.
+    """
     
     if invA is None and A is None:
         raise ValueError("Must pass either inverse(A) or A.")
@@ -130,7 +154,11 @@ def ellipsoid_volume(A=None, invA=None):
     
     return Vn * la.det(sqrtm(invA))
 
-def mvee(points,tol=0.001):
+def mvee(points, tol=0.001):
+    """
+    Returns the minimum-volume enclosing ellipse (MVEE)
+    of a set of points, using the Khachiyan algorithm.
+    """
     N, d = points.shape
     
     Q = np.zeros([N,d+1])
@@ -162,12 +190,22 @@ def mvee(points,tol=0.001):
     return A, np.transpose(c)
 
 def uniquify(seq):
+    """
+    Returns the unique elements of a sequence ``seq``.
+    """
     #from http://stackoverflow.com/a/480227/1205799
     seen = set()
     seen_add = seen.add
     return [ x for x in seq if x not in seen and not seen_add(x)]
 
 def format_uncertainty(value, uncertianty, scinotn_break=4):
+    """
+    Given a value and its uncertianty, format as a LaTeX string
+    for pretty-printing.
+
+    :param int scinotn_break: How many decimal points to print
+        before breaking into scientific notation.
+    """
     if uncertianty == 0:
         # Return the exact number, without the ± annotation as a fixed point
         # number, since all digits matter.

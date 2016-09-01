@@ -11,53 +11,28 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-## MODULE MOCKING ##############################################################
+# Monkey patch in a field type for columns.
 
-if not tags.has('nomock'):
+# try:
+from sphinx.util.docfields import Field, GroupedField, TypedField
+from sphinx.domains.python import PythonDomain, PyObject, l_, PyField, PyTypedField
 
-    # ReadTheDocs doesn't support modules which depend on NumPy, so we must mock
-    # them up as suggested by the FAQ:
-    # http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
-    import sys
-
-    class Mock(object):
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def __call__(self, *args, **kwargs):
-            return Mock()
-
-        @classmethod
-        def __getattr__(cls, name):
-            if name in ('__file__', '__path__'):
-                return '/dev/null'
-            elif name[0] == name[0].upper():
-                mockType = type(name, (), {})
-                mockType.__module__ = __name__
-                return mockType
-            else:
-                return Mock()
-
-    # TODO: replace with RTD build from requirements.txt!
-    MOCK_MODULES = [
-        'scipy',
-        'scipy.ndimage',
-        'scipy.ndimage.filters',
-        'scipy.linalg',
-        'scipy.optimize',
-        'scipy.spatial',
-        'scipy.special',
-        'scipy.stats',
-        'scipy.stats.distributions',
-        'scipy.interpolate',
-        'scipy.integrate',
-        'sklearn',
-        'sklearn.cluster',
-        'sklearn.metrics',
-        'sklearn.metrics.pairwise',
-    ]
-    for mod_name in MOCK_MODULES:
-        sys.modules[mod_name] = Mock() 
+PyObject.doc_field_types += [
+    GroupedField('modelparam', label='Model Parameters', names=('modelparam', ), can_collapse=True,
+        rolename='math'
+    ),
+    PyTypedField('expparam', 
+        label=l_('Experiment Parameters'), names=('expparam', ), can_collapse=False,
+        rolename='obj'
+    ),
+    PyField('scalar-expparam',
+        label=l_('Experiment Parameter'), names=('scalar-expparam', ),
+        has_arg=True, rolename='obj'
+    ),
+    GroupedField('columns', label=l_('Columns'), names=('column', ), can_collapse=True),
+]
+# except:
+#   pass
 
 ###############################################################################
 
@@ -81,6 +56,9 @@ preamble = r"""
 \newcommand{\Tr}{\mathrm{Tr}}
 \newcommand{\ident}{\mathbbm{1}}
 \newcommand{\ave}{\mathrm{ave}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\expect}{\mathbb{E}}
+\usepackage{braket}
 
 \makeatletter
 \renewcommand{\maketitle}{%
@@ -139,7 +117,15 @@ preamble = r"""
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.mathjax', 'sphinx.ext.extlinks']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode', 'sphinx.ext.mathjax', 'sphinx.ext.extlinks',
+    'matplotlib.sphinxext.only_directives',
+    'matplotlib.sphinxext.plot_directive'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -205,7 +191,7 @@ modindex_common_prefix = ['qinfer']
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+# html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -385,11 +371,28 @@ epub_copyright = u'2012, Christopher Ferrie and Christopher Granade'
 extlinks = {
     'arxiv': ('http://arxiv.org/abs/%s', 'arXiv:'),
     'doi': ('https://dx.doi.org/%s', 'doi:'),
+    'example_nb': ('https://nbviewer.jupyter.org/github/qinfer/qinfer-examples/blob/master/%s.ipynb', ''),
+    'hdl': ('https://hdl.handle.net/%s', 'hdl:')
 }
 
 ## OTHER CONFIGURATION PARAMETERS ##############################################
 
+plot_pre_code = """
+import numpy as np
+from qinfer import *
 
+import matplotlib.pyplot as plt
+try: plt.style.use('ggplot')
+except: pass
+"""
+
+plot_include_source = True
+
+plot_formats = [
+    'svg', 'pdf',
+    ('hires.png', 250),
+    ('png', 125)
+]
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
@@ -397,7 +400,11 @@ intersphinx_mapping = {
     'numpy': ('https://docs.scipy.org/doc/numpy',None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference',None),
     'IPython': ('https://ipython.org/ipython-doc/stable/', None),
-    'ipyparallel': ('https://ipyparallel.readthedocs.io/en/latest/', None)
+    'ipyparallel': ('https://ipyparallel.readthedocs.io/en/latest/', None),
+    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+    # NB: change this to 3.2.0 when that is released, as we will need random object
+    # support from that version.
+    'qutip': ('http://qutip.org/docs/3.1.0/', None)
 }
 
 autodoc_member_order = 'bysource'

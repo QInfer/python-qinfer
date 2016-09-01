@@ -67,7 +67,7 @@ __all__ = [
 
 def gell_mann_basis(dim):
     """    
-    Returns a :ref:`~qinfer.tomography.TomographyBasis` on dim dimensions
+    Returns a :class:`~qinfer.tomography.TomographyBasis` on dim dimensions
     using the generalized Gell-Mann matrices.
 
     This implementation is based on a MATLAB-language implementation
@@ -76,8 +76,8 @@ def gell_mann_basis(dim):
 
     :param int dim: Dimension of the individual matrices making up
         the returned basis.
-    :return qinfer.tomography.TomographyBasis basis: A basis
-        of ``dim * dim`` Gell-Mann matrices.
+    :rtype: :class:`~qinfer.tomography.TomographyBasis`
+    :return: A basis of ``dim * dim`` Gell-Mann matrices.
     """
     # Start by making an empty array of the right shape to
     # hold the matrices that we construct.
@@ -183,7 +183,7 @@ class TomographyBasis(object):
     example, the Pauli matrices form a tomographic basis for qubits.
 
     Instances of TomographyBasis convert between representations of
-    tomographic objects as real vectors of model parameters and QuTiP ``Qobj``
+    tomographic objects as real vectors of model parameters and QuTiP :class:`~qutip.Qobj`
     instances. The latter is convienent for working with other libraries, and
     for reasoning about fidelities and other metrics, while model parameter
     representations are useful for defining prior distributions and
@@ -191,7 +191,7 @@ class TomographyBasis(object):
 
     :param np.ndarray data: Dense array of shape ``(dim ** 2, dim, dim)``
         containing all elements of the new tomographic basis. ``data[alpha, i, j]``
-        is the ``(i, j)``th element of the ``alpha``th matrix of the new basis.
+        is the ``(i, j)``-th element of the ``alpha``-th matrix of the new basis.
     :param list dims: Dimensions specification used in converting to QuTiP
         representations. The product of all elements of ``dims`` must equal
         the dimension of axes 1 and 2 of ``data``. For instance, ``[2, 3]``
@@ -206,7 +206,8 @@ class TomographyBasis(object):
     
     #: Dense matrix... TODO: document indices!
     data = None
-    #: Dimensions of each index, used when converting to QuTiP Qobjs.
+    #: Dimensions of each index, used when converting to QuTiP
+    #: :class:`~qutip.Qobj` instances.
     dims = None
     #: Labels for each basis element.
     labels = None
@@ -290,23 +291,41 @@ class TomographyBasis(object):
 
     @property
     def dim(self):
-        # TODO
+        """
+        Dimension of the Hilbert space on which elements of this basis act.
+
+        :type: `int`
+        """
         return np.prod(self.dims)
 
     @property
     def name(self):
+        """
+        Name to use when converting this basis to a string.
+
+        :type: `str`
+        """
         return self._name
 
     def flat(self):
-        """
+        r"""
         Returns a NumPy array that represents this operator basis
         in a flattened manner, such that ``basis.flat()[i, j]`` is
-        the ``j``th element of the flattened ``i``th basis operator.
+        the :math:`j\text{th}` element of the flattened
+        :math:`i\text{th}` basis operator.
         """
         return self._flat
     
 
     def state_to_modelparams(self, state):
+        """
+        Converts a QuTiP-represented state into a model parameter vector.
+
+        :param qutip.Qobj state: State to be converted.
+        :rtype: :class:`np.ndarray`
+        :return: The representation of the given state in this basis,
+            as a vector of real parameters.
+        """
         basis = self.flat()
         data = state.data.todense().view(np.ndarray).flatten()
 
@@ -314,6 +333,20 @@ class TomographyBasis(object):
         return np.real(np.dot(basis.conj(), data))
 
     def modelparams_to_state(self, modelparams):
+        """
+        Converts one or more vectors of model parameters into
+        QuTiP-represented states.
+
+        :param np.ndarray modelparams: Array of shape
+            ``(basis.dim ** 2, )`` or
+            ``(n_states, basis.dim ** 2)`` containing
+            states represented as model parameter vectors in this
+            basis.
+        :rtype: :class:`~qutip.Qobj` or `list` of :class:`~qutip.Qobj`
+            instances.
+        :return: The given states represented as :class:`~qutip.Qobj`
+            instances.
+        """
         if modelparams.ndim == 1:
             qobj = qt.Qobj(
                 np.tensordot(modelparams, self.data, 1),

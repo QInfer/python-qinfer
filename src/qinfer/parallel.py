@@ -66,11 +66,11 @@ logger.addHandler(logging.NullHandler())
 
 class DirectViewParallelizedModel(DerivedModel):
     r"""
-    Given an instance of a `Model`, parallelizes execution of that model's
+    Given an instance of a :class:`Model`, parallelizes execution of that model's
     likelihood by breaking the ``modelparams`` array into segments and
     executing a segment on each member of a :class:`~ipyparallel.DirectView`.
     
-    This :ref:`Model` assumes that it has ownership over the DirectView, such
+    This :class:`Model` assumes that it has ownership over the DirectView, such
     that no other processes will send tasks during the lifetime of the Model.
     
     :param qinfer.Model serial_model: Model to be parallelized. This
@@ -145,7 +145,7 @@ class DirectViewParallelizedModel(DerivedModel):
         The number of engines seen by the direct view owned by this parallelized
         model.
 
-        :rtype int:
+        :rtype: int
         """
         return len(self._dv) if self._dv is not None else 0
             

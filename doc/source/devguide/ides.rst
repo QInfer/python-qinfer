@@ -5,15 +5,15 @@
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
     
-.. _mixins:
+.. _ides_devguide:
     
 .. currentmodule:: qinfer
 
-Mixin Classes for Model Development
-===================================
+IDE/Editor Integration
+======================
 
-:class:`~qinfer.ScoreMixin` - Numerical Differentiation for Fisher Scores
--------------------------------------------------------------------------
+Sublime Text
+------------
 
-.. autoclass:: ScoreMixin
-    :members:
+Visual Studio Code
+------------------

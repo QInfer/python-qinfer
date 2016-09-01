@@ -131,12 +131,29 @@ def do_update(model, n_particles, prior, outcomes, expparams, return_all, resamp
 def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=6000, return_all=False):
     """
     Estimates a simple precession (cos²) from experimental data.
-    The columns of the data are assumed to be [counts, t, n_shots].
     Note that this model is mainly for testing purposes, as it does not
     consider the phase or amplitude of precession, leaving only the frequency.
 
-    :param data:
-    :type data: file, `str` or array
+    :param data: Data to be used in estimating the precession frequency.
+    :type data: see :ref:`simple_est_data_arg`
+    :param float freq_min: The minimum feasible frequency to consider.
+    :param float freq_max: The maximum feasible frequency to consider.
+    :param int n_particles: The number of particles to be used in estimating
+        the precession frequency.
+    :param bool return_all: Controls whether additional return
+        values are provided, such as the updater.
+
+    :column counts (int): How many counts were observed at the sampled
+        time.
+    :column t (float): The evolutions time at which the samples
+        were collected.
+    :column n_shots (int): How many samples were collected at the
+        given evolution time.
+
+    :return mean: Bayesian mean estimator for the precession frequency.
+    :return var: Variance of the final posterior over frequency.
+    :return extra: See :ref:`simple_est_extra_return`. Only returned
+        if ``return_all`` is `True`.
     """
     model = BinomialModel(SimplePrecessionModel(freq_min))
     prior = UniformDistribution([0, freq_max])
@@ -162,13 +179,36 @@ def simple_est_prec(data, freq_min=0.0, freq_max=1.0, n_particles=6000, return_a
 
 
 def simple_est_rb(data, interleaved=False, p_min=0.0, p_max=1.0, n_particles=8000, return_all=False):
-    """
+    r"""
     Estimates the fidelity of a gateset from a standard or interleaved randomized benchmarking
     experiment.
-    The columns of the data are assumed to be [counts, m, n_shots] for standard randomized
-    benchmarking, and [counts, m, n_shots, reference] for interleaved, where ``reference`` is a
-    Boolean variable indicating if that datum was collected for the reference or interleaved
-    curve.
+    
+    :param data: Data to be used in estimating the gateset fidelity.
+    :type data: see :ref:`simple_est_data_arg`
+    :param float p_min: Minimum value of the parameter :math:`p`
+        to consider feasible.
+    :param float p_max: Minimum value of the parameter :math:`p`
+        to consider feasible.
+    :param int n_particles: The number of particles to be used in estimating
+        the randomized benchmarking model.
+    :param bool return_all: Controls whether additional return
+        values are provided, such as the updater.
+
+    :column counts (int): How many sequences of length :math:`m` were observed to
+        survive.
+    :column m (int): How many gates were used for sequences in this row of the data.
+    :column n_shots (int): How many different sequences of length :math:`m`
+        were measured.
+    :column reference (bool): `True` if this row represents reference sequences, or
+        `False` if the gate of interest is interleaved. Note that this column is omitted
+        if ``interleaved`` is `False`.
+
+    :return mean: Bayesian mean estimator for the model vector
+        :math:`(p, A, B)`, or :math:`(\tilde{p}, p_{\text{ref}}, A, B)`
+        for the interleaved case.
+    :return var: Variance of the final posterior over RB model vectors.
+    :return extra: See :ref:`simple_est_extra_return`. Only returned
+        if ``return_all`` is `True`.
     """
     model = BinomialModel(RandomizedBenchmarkingModel(interleaved=interleaved))
     prior = PostselectedDistribution(UniformDistribution([

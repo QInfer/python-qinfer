@@ -88,7 +88,7 @@ class Distribution(with_metaclass(abc.ABCMeta, object)):
         """
         The number of random variables that this distribution is over.
 
-        :rtype: `int`
+        :type: `int`
         """
         pass
 
@@ -98,7 +98,8 @@ class Distribution(with_metaclass(abc.ABCMeta, object)):
         Returns one or more samples from this probability distribution.
 
         :param int n: Number of samples to return.
-        :return numpy.ndarray: An array containing samples from the
+        :rtype: numpy.ndarray
+        :return: An array containing samples from the
             distribution of shape ``(n, d)``, where ``d`` is the number of
             random variables.
         """
@@ -126,11 +127,12 @@ class ProductDistribution(Distribution):
     and returns their Cartesian product.
 
     In other words, the returned distribution is
-    :math:`\Pr(\prod_k D_k) = \prod_k \Pr(D_k)`.
-
-    :param *factors: Distribution objects representing :math:`D_k`.
-                     Alternatively, one iterable argument can be given,
-                     in which case the factors are the values drawn from that iterator.
+    :math:`\Pr(D_1, \dots, D_N) = \prod_k \Pr(D_k)`.
+    
+    :param Distribution factors:
+        Distribution objects representing :math:`D_k`.
+        Alternatively, one iterable argument can be given,
+        in which case the factors are the values drawn from that iterator.
     """
 
     def __init__(self, *factors):
@@ -217,7 +219,11 @@ class ConstantDistribution(Distribution):
 
 class NormalDistribution(Distribution):
     """
+    Normal or truncated normal distribution over a single random
+    variable.
 
+    :param float mean: Mean of the represented random variable.
+    :param float var: Variance of the represented random variable. 
     :param tuple trunc: Limits at which the PDF of this
         distribution should be truncated, or ``None`` if
         the distribution is to have infinite support.
@@ -246,6 +252,15 @@ class NormalDistribution(Distribution):
         return -(x - self.mean) / self.var
 
 class MultivariateNormalDistribution(Distribution):
+    """
+    Multivariate (vector-valued) normal distribution.
+
+    :param np.ndarray mean: Array of shape ``(n_rvs, )``
+        representing the mean of the distribution.
+    :param np.ndarray cov: Array of shape ``(n_rvs, n_rvs)``
+        representing the covariance matrix of the distribution.
+    """
+
     def __init__(self, mean, cov):
 
         # Flatten the mean first, so we have a strong guarantee about its
@@ -258,14 +273,11 @@ class MultivariateNormalDistribution(Distribution):
     @property
     def n_rvs(self):
         return self.mean.shape[0]
-
-    def sample(self, n=1):
-
+    def sample(self, n=1):        
         return np.einsum("ij,nj->ni", la.sqrtm(self.cov), np.random.randn(n, self.n_rvs)) + self.mean
 
-    def grad_log_pdf(self, x):
-
-        return -np.dot(self.invcov,(x - self.mean).transpose()).transpose()
+    def grad_log_pdf(self, x):        
+        return -np.dot(self.invcov, (x - self.mean).transpose()).transpose()
 
 
 class SlantedNormalDistribution(Distribution):
@@ -288,8 +300,6 @@ class SlantedNormalDistribution(Distribution):
         self._n_rvs = ranges.shape[0]
         #self._delta = ranges[:, 1] - ranges[:, 0]
         self._weight = weight
-
-
 
     @property
     def n_rvs(self):
@@ -323,10 +333,10 @@ class LogNormalDistribution(Distribution):
         return self.dist().rvs(size=n)[:, np.newaxis]
 
 class BetaDistribution(Distribution):
-    """
-    The beta distribution, whose pdf at $x$ is proportional to
-    $x^{\alpha-1}(1-x)^{\beta-1}$.
-    Note that either alpha and beta, or mean and var, must be
+    r"""
+    The beta distribution, whose pdf at :math:`x` is proportional to
+    :math:`x^{\alpha-1}(1-x)^{\beta-1}`.
+    Note that either ``alpha`` and ``beta``, or ``mean`` and ``var``, must be
     specified as inputs;
     either case uniquely determines the distribution.
 
@@ -347,7 +357,10 @@ class BetaDistribution(Distribution):
             self.alpha = mean ** 2 * (1 - mean) / var - mean
             self.beta = (1 - mean) ** 2 * mean / var - (1 - mean)
         else:
-            raise ValueError("BetaDistribution requires either (alpha and beta) or (mean and var).")
+            raise ValueError(
+                "BetaDistribution requires either (alpha and beta) " 
+                "or (mean and var)."
+            )
 
         self.dist = st.beta(a=self.alpha, b=self.beta)
 
@@ -359,18 +372,18 @@ class BetaDistribution(Distribution):
         return self.dist.rvs(size=n)[:, np.newaxis]
 
 class BetaBinomialDistribution(Distribution):
-    """
+    r"""
     The beta-binomial distribution, whose pmf at the non-negative
-    integer $k$ is equal to
-    $\binom{n}{k}\frac{B(k+\alpha,n-k+\beta)}{B(\alpha,\beta)}$
-    with $B(\cdot,\cdot)$ the beta function.
+    integer :math:`k` is equal to
+    :math:`\binom{n}{k}\frac{B(k+\alpha,n-k+\beta)}{B(\alpha,\beta)}`
+    with :math:`B(\cdot,\cdot)` the beta function.
     This is the compound distribution whose variates are binomial distributed
     with a bias chosen from a beta distribution.
-    Note that either alpha and beta, or mean and var, must be
+    Note that either ``alpha`` and ``beta``, or ``mean`` and ``var``, must be
     specified as inputs;
     either case uniquely determines the distribution.
 
-    :param int n: The $n$ parameter of the beta-binomial distribution.
+    :param int n: The :math:`n` parameter of the beta-binomial distribution.
     :param float alpha: The alpha shape parameter of the beta-binomial distribution.
     :param float beta: The beta shape parameter of the beta-binomial distribution.
     :param float mean: The desired mean value of the beta-binomial distribution.
@@ -407,9 +420,9 @@ class BetaBinomialDistribution(Distribution):
         return np.random.binomial(self.n, p_vals)
 
 class GammaDistribution(Distribution):
-    """
-    The gamma distribution, whose pdf at $x$ is proportional to
-    $x^{-\alpha-1}e^{-x\beta}$.
+    r"""
+    The gamma distribution, whose pdf at :math:`x` is proportional to
+    :math:`x^{-\alpha-1}e^{-x\beta}`.
     Note that either alpha and beta, or mean and var, must be
     specified as inputs;
     either case uniquely determines the distribution.

@@ -71,9 +71,6 @@ class Heuristic(with_metaclass(ABCMeta, object)):
     risk, and so would be appropriate as a `Heuristic` subclass.
     In particular, the [FGC12]_ heuristic is implemented by the
     :class:`ExpSparseHeuristic` class.
-
-    Note that the design of this abstract base class is still being decided,
-    such that it is a placeholder for now.
     """
 
     def __init__(self, updater):

@@ -2,9 +2,18 @@ sudo: false
 language: python
 python:
   - "2.7"
-  - "3.3"
+#  - "3.3"
   - "3.4"
   - "3.5"
+
+# Explicitly add doctest support as separate parts of the build matrix,
+# since these tests require additional packages that should be optional.
+matrix:
+  include:
+    - python: "2.7"
+      env: DOCTEST=1
+    - python: "3.5"
+      env: DOCTEST=1 
 
 env:
   global:
@@ -25,13 +34,26 @@ install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib scikit-learn sphinx
   - pip install -r requirements.txt
   - python setup.py install
+  # We need to run doctest, which requires installing at least what
+  # ReadTheDocs has. That said, we require that QInfer installs
+  # without the use of the additional optional libraries listed
+  # in rtd-requirements.txt, so we place this install command
+  # after the primary installation above.
+  # Note that as a work around for qutip/qutip#426, we must install
+  # cython first.
+  - if [[ "${DOCTEST}" == "1" ]]; then
+      pip install cython;
+      pip install -r doc/rtd-requirements.txt;
+    fi
   - cd src/
 
 script:
-  - py.test --cov-config .coveragerc --cov=qinfer
+  - py.test --cov-config .coveragerc --cov=qinfer qinfer/
   - pylint --py3k qinfer/
-  - cd $TRAVIS_BUILD_DIR/doc
-  - make doctest
+  - if [[ "${DOCTEST}" == "1" ]]; then
+      cd $TRAVIS_BUILD_DIR/doc;
+      make doctest;
+    fi
 
 after_success:
   - coveralls

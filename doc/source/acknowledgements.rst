@@ -13,14 +13,19 @@ Acknowledgements
 We gratefully acknowledge contributions and testing to the **QInfer** project
 by the following individuals:
 
-- `Yuval Sanders`_
-- `Nathan Wiebe`_
+- `Thomas Alexander <https://services.iqc.uwaterloo.ca/people/profile/t4alexan/>`_
+- `Steven Casagrande <http://steven.casagrande.io/>`_
+- `Jonathan Gross <http://www.unm.edu/~jagross/>`_
 - `Ian Hincks`_
+- `Michal Kononenko <https://services.iqc.uwaterloo.ca/people/profile/mkononenko/>`_
+- `Yuval Sanders`_
 
 Additionally, we thank those that have helped us to test **QInfer**, and that
 have made useful suggestions, pushing us forward.
 
+- `Joshua Combes <https://www.perimeterinstitute.ca/people/joshua-combes>`_
 - `Rahul Deshpande`_
+- `Nathan Wiebe`_
 
 .. _Rahul Deshpande: https://services.iqc.uwaterloo.ca/people/profile/rdeshpande/
 .. _Ian Hincks: https://github.com/ihincks

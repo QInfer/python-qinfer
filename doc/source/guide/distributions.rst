@@ -39,8 +39,8 @@ that produces an array of samples.
 >>> from qinfer import NormalDistribution
 >>> dist = NormalDistribution(0, 1)
 >>> samples = dist.sample(n=5)
->>> print(samples.shape)
-(5, 1)
+>>> samples.shape == (5, 1)
+True
 
 Combining Distributions
 -----------------------
@@ -55,8 +55,8 @@ then the product distribution on :math:`(a,b)` can be produced by using
 >>> b = UniformDistribution([0, 1])
 >>> ab = ProductDistribution(a, b)
 >>> samples = ab.sample(n=5)
->>> print(samples.shape)
-(5, 2)
+>>> samples.shape == (5, 2)
+True
 
     
 Making Custom Distributions

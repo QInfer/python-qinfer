@@ -61,8 +61,8 @@ Since :class:`SMCUpdater` inherits from :class:`Distribution`,
 it can be sampled in the same way described in :ref:`distributions_guide`.
 
 >>> posterior_samples = updater.sample(n=100)
->>> print(posterior_samples.shape)
-(100, 1)
+>>> posterior_samples.shape == (100, 1)
+True
 
 More commonly, however, one will want to calculate estimates such as
 :math:`\hat{\vec{x}} = \mathbb{E}_{\vec{x}|\text{data}}[\vec{x}]`. These
@@ -76,7 +76,68 @@ estimates are given methods such as :meth:`~SMCUpdater.est_mean` and
 Plotting Posterior Distributions
 """"""""""""""""""""""""""""""""
 
-TODO
+The :class:`SMCUpdater` also provides tools for producing plots to
+describe the updated posterior. For instance, the
+:meth:`~SMCUpdater.plot_posterior_marginal` method uses `kernel
+density estimation <https://en.wikipedia.org/wiki/Kernel_density_estimation>`_
+to plot the marginal over all but a single parameter over the posterior.
+
+.. plot::
+
+    prior = UniformDistribution([0, 1])
+    model = SimplePrecessionModel()
+    updater = SMCUpdater(model, 2000, prior)
+
+    # Plot according to the initial prior.
+    updater.plot_posterior_marginal()
+
+    # Simulate 50 different measurements and use
+    # them to update.
+    true = prior.sample()
+    heuristic = ExpSparseHeuristic(updater)
+
+    for idx_exp in range(25):
+        expparams = heuristic()
+        datum = model.simulate_experiment(true, expparams)
+        updater.update(datum, expparams)
+    
+    # Plot the posterior.
+    updater.plot_posterior_marginal()
+
+    # Add a legend and show the final plot.
+    plt.legend(['Prior', 'Posterior'])
+    plt.show()
+
+For multi-parameter models, the :meth:`~SMCUpdater.plot_covariance`
+method plots the covariance matrix for the current posterior
+as a `Hinton diagram <http://tonysyu.github.io/mpltools/auto_examples/special/plot_hinton.html>`_.
+That is, positive elements are shown as white squares, while negative elements
+are shown as black squares. The relative sizes of each square indicate the
+magnitude, making it easy to quickly identify correlations that impact estimator
+performance. In the example below, we use the :ref:`simple_est_guide` to
+quickly analyze :ref:`rb_guide` data and show the resulting correlation
+between the :math:`p`, :math:`A` and :math:`B` parameters. For more detail,
+please see the `randomized benchmarking example <http://nbviewer.jupyter.org/github/qinfer/qinfer-examples/blob/master/randomized_benchmarking.ipynb>`_.
+
+.. plot::
+
+    p = 0.995
+    A = 0.5
+    B = 0.5
+
+    ms = np.linspace(1, 800, 201).astype(int)
+    signal = A * p ** ms + B
+
+    n_shots = 25
+    counts = np.random.binomial(p=signal, n=n_shots)
+
+    data = np.column_stack([counts, ms, n_shots * np.ones_like(counts)])
+    mean, cov, extra = simple_est_rb(data, return_all=True, n_particles=12000, p_min=0.8)
+    extra['updater'].plot_covariance()
+
+    plt.show()
+
+
 
 Advanced Usage
 --------------
@@ -91,6 +152,15 @@ create an updater with :math:`a = 0.9` as was suggested by [WGFC13a]_:
 
 >>> from qinfer import LiuWestResampler
 >>> updater = SMCUpdater(model, 1000, prior, resampler=LiuWestResampler(0.9))
+
+This causes the resampling procedure to more aggressively approximate
+the posterior as a Gaussian distribution, and can allow for a much smaller
+number of particles to be used when the Gaussian approximation is accurate.
+For multimodal problems, it can make sense to relax the requirement that
+the resampler preserve the mean and covariance, and to instead allow the
+resampler to increase the uncertianty. For instance, the modified Liu-West
+resampler :math:`a = 1` and :math:`h = 0.005` can accurately find exactly
+degenrate peaks in precession models [Gra15]_.
 
 
 Posterior Credible Regions
@@ -114,11 +184,6 @@ estimator.
 The derivation of these estimators, as well as a detailed discussion of their
 performances, can be found in [GFWC12]_ and [Fer14]_.
 
-Cluster Analysis
-""""""""""""""""
-
-TODO
-
 Online Bayesian Cramer-Rao Bound Estimation
 """""""""""""""""""""""""""""""""""""""""""
 
@@ -141,7 +206,7 @@ the property :attr:`~SMCUpdater.log_total_likelihood` records the quantity
     \ell(D | M) = \sum_i \log \Pr(d_i | M)
     
 for :math:`M \in \{A, B\}`. This is related to the Bayes factor
-:math:`\text{f}` by
+:math:`f` by
 
 .. math::
 

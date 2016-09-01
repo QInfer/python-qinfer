@@ -9,8 +9,8 @@
     
 .. currentmodule:: qinfer
 
-Accelerated Randomized Benchmarking
-===================================
+Randomized Benchmarking
+=======================
 
 Introduction
 ------------
