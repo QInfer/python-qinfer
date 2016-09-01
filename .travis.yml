@@ -2,7 +2,7 @@ sudo: false
 language: python
 python:
   - "2.7"
-  - "3.3"
+#  - "3.3"
   - "3.4"
   - "3.5"
 
@@ -48,7 +48,7 @@ install:
   - cd src/
 
 script:
-  - py.test --cov-config .coveragerc --cov=qinfer
+  - py.test --cov-config .coveragerc --cov=qinfer qinfer/
   - pylint --py3k qinfer/
   - if [[ "${DOCTEST}" == "1" ]]; then
       cd $TRAVIS_BUILD_DIR/doc;

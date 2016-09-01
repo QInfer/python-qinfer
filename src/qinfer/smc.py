@@ -520,9 +520,6 @@ class SMCUpdater(Distribution):
         # Possibly canonicalize, if we've been asked to do so.
         if self._canonicalize:
             self.particle_locations[:, :] = self.model.canonicalize(self.particle_locations)
-
-        # Reset the weights to uniform.
-        self.particle_weights[:] = (1/self.n_particles)
         
         # Instruct the model to clear its cache, demoting any errors to
         # warnings.
@@ -651,9 +648,9 @@ class SMCUpdater(Distribution):
         #     rescaling matrix.  Non-diagonal could also be considered, but
         #     for the moment this is not implemented.
         nout = self.model.n_outcomes(expparams) # This is a vector so this won't work
-        w, L = self.hypothetical_update(np.arange(nout), expparams, return_likelihood=True)
+        w, N = self.hypothetical_update(np.arange(nout), expparams, return_normalization=True)
         w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
-        L = L[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
+        N = N[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
 
         xs = self.particle_locations.transpose([1, 0]) # shape (n_mp, n_particles).
         
@@ -676,8 +673,8 @@ class SMCUpdater(Distribution):
 
         rescale_var = np.sum(self.model.Q * var, axis=1)
         # Q has shape (n_mp,), therefore rescale_var has shape (n_outcomes,).
-        tot_like = np.sum(L, axis=1)
-        return np.dot(tot_like.T, rescale_var)
+        tot_norm = np.sum(N, axis=1)
+        return np.dot(tot_norm.T, rescale_var)
         
     def expected_information_gain(self, expparams):
         r"""
@@ -694,9 +691,9 @@ class SMCUpdater(Distribution):
         """
 
         nout = self.model.n_outcomes(expparams)
-        w, L = self.hypothetical_update(np.arange(nout), expparams, return_likelihood=True)
+        w, N = self.hypothetical_update(np.arange(nout), expparams, return_normalization=True)
         w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
-        L = L[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
+        N = N[:, :, 0] # Fix N.shape == (n_outcomes, n_particles).
         
         # This is a special case of the KL divergence estimator (see below),
         # in which the other distribution is guaranteed to share support.
@@ -705,12 +702,12 @@ class SMCUpdater(Distribution):
         # Est. KLD = E[KLD[idx_outcome] | outcomes].
         
         KLD = np.sum(
-            self.particle_weights * np.log(self.particle_weights / w),
+            w * np.log(w / self.particle_weights ),
             axis=1 # Sum over particles.
         )
         
-        tot_like = np.sum(L, axis=1)
-        return np.dot(tot_like, KLD)
+        tot_norm = np.sum(N, axis=1)
+        return np.dot(tot_norm, KLD)
         
     def est_entropy(self):
         r"""
