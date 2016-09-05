@@ -46,14 +46,8 @@ import numpy as np
 # Since the rest of QInfer does not require QuTiP,
 # we need to import it in a way that we don't propagate exceptions if QuTiP
 # is missing or is too early a version.
-try:
-    import qutip as qt
-    from distutils.version import LooseVersion
-    _qt_version = LooseVersion(qt.version.version)
-    if _qt_version < LooseVersion('3.2'):
-        qt = None
-except ImportError:
-    qt = None
+from qinfer.utils import get_qutip_module
+qt = get_qutip_module('3.2')
 
 import warnings
 

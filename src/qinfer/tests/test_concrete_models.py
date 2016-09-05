@@ -55,6 +55,7 @@ from qinfer import (
 )
 from qinfer.ale import ALEApproximateModel
 from qinfer.tomography import TomographyModel, DiffusiveTomographyModel, pauli_basis, GinibreDistribution
+from qinfer.utils import check_qutip_version
 
 import unittest
 
@@ -130,6 +131,7 @@ class TestNDieModel(ConcreteModelTest, DerandomizedTestCase):
 
 ## TOMOGRAPHY MODELS ##########################################################
 
+@unittest.skipIf(not check_qutip_version('3.2'), 'This test requires qutip 3.2 or higher to run.')
 class TestTomographyModel(ConcreteModelTest, DerandomizedTestCase):
     """
     Tests TomographyModel.

@@ -44,14 +44,8 @@ import scipy.linalg as la
 from qinfer.abstract_model import Model
 from qinfer.distributions import Distribution, SingleSampleMixin
 
-try:
-    import qutip as qt
-    from distutils.version import LooseVersion
-    _qt_version = LooseVersion(qt.version.version)
-    if _qt_version < LooseVersion('3.2'):
-        qt = None
-except ImportError:
-    qt = None
+from qinfer.utils import get_qutip_module
+qt = get_qutip_module('3.2')
 
 ## FUNCTIONS #################################################################
 

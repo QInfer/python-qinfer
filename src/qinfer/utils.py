@@ -46,6 +46,47 @@ from qinfer._exceptions import ApproximationWarning
 
 ## FUNCTIONS ##################################################################
 
+def get_qutip_module(required_version='3.2'):
+    """
+    Attempts to return the qutip module, but 
+    silently returns ``None`` if it can't be 
+    imported, or doesn't have version at 
+    least ``required_version``.
+
+    :param str required_version: Valid input to 
+        ``distutils.version.LoosVersion``.
+    :return: The qutip module or ``None``.
+    :rtype: ``module`` or ``NoneType``
+    """
+    try:
+        import qutip as qt
+        from distutils.version import LooseVersion
+        _qt_version = LooseVersion(qt.version.version)
+        if _qt_version < LooseVersion(required_version):
+            return None
+    except ImportError:
+        return None
+
+    return qt
+
+def check_qutip_version(required_version='3.2'):
+    """
+    Returns ``true`` iff the imported qutip 
+    version exists and has ``LooseVersion`` 
+    of at least ``required_version``.
+
+    :param str required_version: Valid input to 
+        ``distutils.version.LooseVersion``.
+    """
+    try:
+        qt = get_qutip_module(required_version)
+        return qt is not None
+    except:
+        # In any other case (including something other 
+        # than ImportError)we say it's not good enough
+        return False
+
+
 def binomial_pdf(N,n,p):
     r"""
     Returns the PDF of the binomial distribution
