@@ -23,4 +23,5 @@ User's Guide
     timedep
     perf_testing
     parallel
+    interop
     
