@@ -54,7 +54,7 @@ def get_qutip_module(required_version='3.2'):
     least ``required_version``.
 
     :param str required_version: Valid input to 
-        ``distutils.version.LoosVersion``.
+        ``distutils.version.LooseVersion``.
     :return: The qutip module or ``None``.
     :rtype: ``module`` or ``NoneType``
     """
@@ -77,13 +77,14 @@ def check_qutip_version(required_version='3.2'):
 
     :param str required_version: Valid input to 
         ``distutils.version.LooseVersion``.
+    :rtype: ``bool``
     """
     try:
         qt = get_qutip_module(required_version)
         return qt is not None
     except:
         # In any other case (including something other 
-        # than ImportError)we say it's not good enough
+        # than ImportError) we say it's not good enough
         return False
 
 
