@@ -464,7 +464,7 @@ class MultinomialDomain(Domain):
 
         :type: ``np.ndarray``
         """
-        return np.array([([self.n_meas] + list(0 for i in xrange(self.n_elements - 1)),)], dtype=self.dtype)
+        return np.array([([self.n_meas] + [0] * (self.n_elements-1))], dtype=self.dtype)
 
     @property
     def values(self):
