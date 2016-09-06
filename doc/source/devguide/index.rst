@@ -14,5 +14,4 @@ Development Guide
     :maxdepth: 2
     
     docs
-    ides
     unittesting
