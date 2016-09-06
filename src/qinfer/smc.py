@@ -611,18 +611,30 @@ class SMCUpdater(Distribution):
             self.particle_weights, fn(self.particle_locations)
         )
 
-    def est_covariance_mtx(self):
+    def est_covariance_mtx(self, corr=False):
         """
         Returns an estimate of the covariance of the current posterior model
         distribution, given by the covariance of the current SMC approximation.
+
+        :param bool corr: If `True`, the covariance matrix is normalized
+            by the outer product of the square root diagonal of the covariance matrix
+            such that the correlation matrix is returned instead.
         
         :rtype: :class:`numpy.ndarray`, shape
             ``(n_modelparams, n_modelparams)``.
         :returns: An array containing the estimated covariance matrix.
         """
-        return particle_covariance_mtx(
+
+        cov = particle_covariance_mtx(
             self.particle_weights,
             self.particle_locations)
+
+        if corr:
+            dstd = np.sqrt(np.diag(cov))
+            cov /= (np.outer(dstd, dstd))
+
+        return cov
+
 
     def bayes_risk(self, expparams):
         r"""
@@ -997,7 +1009,7 @@ class SMCUpdater(Distribution):
 
         :param bool corr: If `True`, the covariance matrix is first normalized
             by the outer product of the square root diagonal of the covariance matrix
-            such that the corrleation matrix is plotted instead.
+            such that the correlation matrix is plotted instead.
         :param slice param_slice: Slice of the modelparameters to
             be plotted.
         :param list tick_labels: List of tick labels for each component;
@@ -1016,11 +1028,7 @@ class SMCUpdater(Distribution):
             list(map(u"${}$".format, self.model.modelparam_names[param_slice]))
         )
 
-        cov = self.est_covariance_mtx()[param_slice, param_slice]
-
-        if corr:
-            dstd = np.sqrt(np.diag(cov))
-            cov /= (np.outer(dstd, dstd))
+        cov = self.est_covariance_mtx(corr=corr)[param_slice, param_slice]
 
         retval = mpls.hinton(cov)
         plt.xticks(*tick_labels, **(tick_params if tick_params is not None else {}))
