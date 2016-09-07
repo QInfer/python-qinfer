@@ -48,6 +48,7 @@ import numpy as np
 import warnings
 
 from qinfer.utils import safe_shape
+from qinfer.domains import IntegerDomain
     
 ## CLASSES ###################################################################
 
@@ -232,6 +233,9 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         """
         Returns an array of dtype ``uint`` describing the number of outcomes
         for each experiment specified by ``expparams``.
+        If the number of outcomes does not depend on expparams (i.e. 
+        ``is_n_outcomes_constant`` is ``True``), this method 
+        should return a single number.
         If there are an infinite (or intractibly large) number of outcomes, 
         this value specifies the number of outcomes to randomly sample.
         
@@ -555,6 +559,10 @@ class FiniteOutcomeModel(Model):
             outcome_warning_threshold=outcome_warning_threshold, 
             allow_identical_outcomes=allow_identical_outcomes)
         self._n_outcomes_cutoff = n_outcomes_cutoff
+
+        if self.is_n_outcomes_constant:
+            # predefine if we can
+            self._domain = IntegerDomain(min=0,max=self.n_outcomes(None)-1)
     
     ## CONCRETE PROPERTIES ##
 
@@ -587,6 +595,24 @@ class FiniteOutcomeModel(Model):
     ## CONCRETE METHODS ##
     # These methods depend on the abstract methods, and thus their behaviors
     # change in each inheriting class.
+
+    def domain(self, expparams):
+        """
+        Returns a list of ``Domain``s, one for each input expparam.
+
+        :param numpy.ndarray expparams:  Array of experimental parameters. This
+            array must be of dtype agreeing with the ``expparams_dtype``
+            property, or, in the case where ``n_outcomes_constant`` is ``True``,
+            ``None`` should be a valid input.
+
+        :rtype: list of ``Domain``
+        """
+        # As a convenience to most users, we define domain for them. If a 
+        # fancier domain is desired, this method can easily be overridden.
+        if self.is_n_outcomes_constant:
+            return self._domain if expparams is None else [self._domain for ep in expparams]
+        else:
+            return [IntegerDomain(min=0,max=n_o-1) for n_o in self.n_outcomes(expparams)]
 
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         # Call the superclass simulate_experiment, not recording the result.
