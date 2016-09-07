@@ -29,3 +29,9 @@ additional functionality or changing the behaviors of underlying models.
 
 .. autoclass:: BinomialModel
     :members:
+
+:class:`MLEModel` - Model for approximating maximum-likelihood estimation
+-------------------------------------------------------------------------
+
+.. autoclass:: MLEModel
+    :members:
