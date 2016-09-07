@@ -1,5 +1,6 @@
 src/qinfer/version.py
 
+*.sublime-project
 *.sublime-workspace
 
 ## Temporary files ##
