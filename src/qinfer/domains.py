@@ -382,7 +382,10 @@ class IntegerDomain(Domain):
 
         :rtype: `bool`
         """
-        return np.all(np.mod(points,1) == 0) and np.all(points >= self._min) and np.all(points <= self._max)
+        are_integer = np.all(np.mod(points,1) == 0)
+        are_greater = True if self._min is None else np.all(points >= self._min) 
+        are_smaller = True if self._max is None else np.all(points <= self._max)
+        return  are_integer and are_greater and are_smaller
     
 
 class MultinomialDomain(Domain):
