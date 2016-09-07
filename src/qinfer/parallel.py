@@ -74,7 +74,7 @@ class DirectViewParallelizedModel(DerivedModel):
     that no other processes will send tasks during the lifetime of the Model.
 
     If you are having trouble pickling your model, consider switching to 
-    ``dill`` by calling ``dview.use_dill()``. This mode gives more support 
+    ``dill`` by calling ``direct_view.use_dill()``. This mode gives more support 
     for closures.
     
     :param qinfer.Model serial_model: Model to be parallelized. This
