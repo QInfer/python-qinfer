@@ -46,7 +46,6 @@ import numpy as np
 from scipy.stats.distributions import binom
 
 from qinfer.abstract_model import Model, Simulatable, FiniteOutcomeModel
-from qinfer.domains import IntegerDomain
 from qinfer._exceptions import ApproximationWarning
 
 ## FUNCTIONS ##################################################################

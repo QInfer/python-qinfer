@@ -42,7 +42,7 @@ from __future__ import unicode_literals
 
 from builtins import range, map
 
-from qinfer import Model, IntegerDomain, FiniteOutcomeModel
+from qinfer import FiniteOutcomeModel
 
 import numpy as np
 
@@ -88,9 +88,6 @@ class TomographyModel(FiniteOutcomeModel):
         self._allow_subnormalied = allow_subnormalized
         super(TomographyModel, self).__init__()
 
-        # TODO: allow more outcomes
-        self._domain = IntegerDomain(min=0, max=0)
-
     @property
     def dim(self):
         """
@@ -133,10 +130,6 @@ class TomographyModel(FiniteOutcomeModel):
 
     def n_outcomes(self, expparams):
         return 2
-
-    def domain(self, expparams):
-        return self._domain if expparams is None else [self._domain for ep in expparams]
-
 
     def are_models_valid(self, modelparams):
         # This is wrong, but is wrong for the sake of speed.

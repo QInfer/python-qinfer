@@ -46,8 +46,7 @@ import numpy as np
 
 from .utils import binomial_pdf
 
-from .abstract_model import Model, FiniteOutcomeModel, DifferentiableModel
-from .domains import IntegerDomain
+from .abstract_model import FiniteOutcomeModel, DifferentiableModel
     
 ## CLASSES ####################################################################
 
@@ -68,7 +67,6 @@ class SimpleInversionModel(FiniteOutcomeModel, DifferentiableModel):
     def __init__(self, min_freq=0):
         super(SimpleInversionModel, self).__init__()
         self._min_freq = min_freq
-        self._domain = IntegerDomain(min=0, max=1)
 
     ## PROPERTIES ##
     
@@ -110,17 +108,6 @@ class SimpleInversionModel(FiniteOutcomeModel, DifferentiableModel):
             property.
         """
         return 2
-
-    def domain(self, expparams):
-        """
-        Returns a list of ``Domain``s, one for each input expparam.
-        :param numpy.ndarray expparams:  Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property.
-        :rtype: list of ``Domain``
-        """
-        return self._domain if expparams is None else [self._domain for ep in expparams]
-
     
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
@@ -215,7 +202,6 @@ class CoinModel(FiniteOutcomeModel, DifferentiableModel):
 
     def __init__(self):
         super(CoinModel, self).__init__()
-        self._domain = IntegerDomain(min=0, max=1)
 
     ## PROPERTIES ##
     
@@ -258,16 +244,6 @@ class CoinModel(FiniteOutcomeModel, DifferentiableModel):
             property.
         """
         return 2
-
-    def domain(self, expparams):
-        """
-        Returns a list of ``Domain``s, one for each input expparam.
-        :param numpy.ndarray expparams:  Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property.
-        :rtype: list of ``Domain``
-        """
-        return self._domain if expparams is None else [self._domain for ep in expparams]
     
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
@@ -320,7 +296,6 @@ class NoisyCoinModel(FiniteOutcomeModel):
         
     def __init__(self):
         super(NoisyCoinModel, self).__init__()
-        self._domain = IntegerDomain(min=0, max=1)
 
     ## PROPERTIES ##
     
@@ -344,17 +319,6 @@ class NoisyCoinModel(FiniteOutcomeModel):
     
     def n_outcomes(self, expparams):
         return 2
-
-    def domain(self, expparams):
-        """
-        Returns a list of ``Domain``s, one for each input expparam.
-        :param numpy.ndarray expparams:  Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property.
-        :rtype: list of ``Domain``
-        """
-        return self._domain if expparams is None else [self._domain for ep in expparams]
- 
     
     def likelihood(self, outcomes, modelparams, expparams):
         # Unpack alpha and beta.
@@ -386,7 +350,6 @@ class NDieModel(FiniteOutcomeModel):
         # calling super, which relies on n_modelparams
         self._n = n
         super(NDieModel, self).__init__()
-        self._domain = IntegerDomain(min=0, max=n-1)
         self._threshold = threshold
 
     ## PROPERTIES ##
@@ -428,18 +391,7 @@ class NDieModel(FiniteOutcomeModel):
             array must be of dtype agreeing with the ``expparams_dtype``
             property.
         """
-        return self._n
-
-    def domain(self, expparams):
-        """
-        Returns a list of ``Domain``s, one for each input expparam.
-        :param numpy.ndarray expparams:  Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property.
-        :rtype: list of ``Domain``
-        """
-        return self._domain if expparams is None else [self._domain for ep in expparams]
- 
+        return self._n 
     
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate

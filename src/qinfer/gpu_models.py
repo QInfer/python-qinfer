@@ -59,7 +59,6 @@ import numpy.linalg as la
 import time
 
 from qinfer.abstract_model import Model, FiniteOutcomeModel
-from qinfer.domains import IntegerDomain
 from qinfer.test_models import SimplePrecessionModel
 from qinfer.smc import SMCUpdater
 from qinfer.distributions import UniformDistribution
@@ -105,8 +104,6 @@ class AcceleratedPrecessionModel(FiniteOutcomeModel):
 
         
         self._prg = cl.Program(self._ctx, COS_MODEL_KERNEL).build()
-
-        self._domain = IntegerDomain(min=0,max=1)
         
     
     ## PROPERTIES ##
@@ -149,9 +146,6 @@ class AcceleratedPrecessionModel(FiniteOutcomeModel):
             property.
         """
         return 2
-
-    def domain(self, expparams):
-        return self._domain if expparams is None else [self._domain for ep in expparams]
 
     
     def likelihood(self, outcomes, modelparams, expparams):

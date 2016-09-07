@@ -34,8 +34,7 @@ import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 
 from qinfer.tests.base_test import DerandomizedTestCase
-from qinfer.abstract_model import Model, FiniteOutcomeModel
-from qinfer.domains import IntegerDomain
+from qinfer.abstract_model import FiniteOutcomeModel
     
 ## CLASSES ####################################################################
 
@@ -47,7 +46,6 @@ class MockModel(FiniteOutcomeModel):
 
     def __init__(self):
         super(MockModel, self).__init__()
-        self._domain = IntegerDomain(min=0, max=1)
     
     @property
     def n_modelparams(self):
@@ -63,9 +61,6 @@ class MockModel(FiniteOutcomeModel):
         
     def n_outcomes(self, expparams):
         return 2
-
-    def domain(self, expparams):
-        return self._domain if expparams is None else [self._domain for ep in expparams]
 
         
     @property

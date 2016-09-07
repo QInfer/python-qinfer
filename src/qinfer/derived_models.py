@@ -272,12 +272,15 @@ class BinomialModel(DerivedModel):
     def domain(self, expparams):
         """
         Returns a list of ``Domain``s, one for each input expparam.
+
         :param numpy.ndarray expparams:  Array of experimental parameters. This
             array must be of dtype agreeing with the ``expparams_dtype``
-            property.
+            property, or, in the case where ``n_outcomes_constant`` is ``True``,
+            ``None`` should be a valid input.
+
         :rtype: list of ``Domain``
         """
-        return [IntegerDomain(min=0, max=ep['n_meas']) for ep in expparams] 
+        return [IntegerDomain(min=0,max=n_o-1) for n_o in self.n_outcomes(expparams)]
     
     def are_expparam_dtypes_consistent(self, expparams):
         """
