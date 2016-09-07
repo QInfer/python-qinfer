@@ -49,7 +49,7 @@ try:
     import qutip as qt
     from distutils.version import LooseVersion
     _qt_version = LooseVersion(qt.version.version)
-    if _qt_version < LooseVersion('3.1'):
+    if _qt_version < LooseVersion('3.2'):
         qt = None
 except ImportError:
     qt = None
