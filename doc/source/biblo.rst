@@ -28,6 +28,8 @@
     Granade C. E., Ferrie C. & Cory D. G. `Accelerated randomized benchmarking <http://www.cgranade.com/research/arb/>`_. :arxiv:`1404.5275`.
 .. [Gra15]
     Granade C. E. Characterization, verification and control for large quantum systems. PhD thesis. :hdl:`10012/9217`.
+.. [JDD08]
+    Johansen A. M., Doucet A. & Davy M. Particle methods for maximum likelihood estimation in latent variable models. :doi:`0.1007/s11222-007-9037-8`.
 .. [KL+08]
     Knill E., Leibfried D., Reichle R., Britton J., Blakestad R. B., Jost J. D., Langer C., Ozeri R., Seidelin S., and Wineland D. J. Randomized benchmarking of quantum gates. Physical Review A. **77** 1, 012307 (2008). :doi:`10.1103/PhysRevA.77.012307`.
 .. [LW01]

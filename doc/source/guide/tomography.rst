@@ -81,7 +81,7 @@ The core of the tomography module is the :class:`TomographyModel`. The key assum
 
 >>> from qinfer.tomography import TomographyModel
 >>> model = TomographyModel(basis)
->>> print(model.expparams_dtype)
+>>> print(model.expparams_dtype) #doctest: +SKIP
 [('meas', <type 'float'>, 4)]
 
 Suppose we measure :math:`\sigma_z` on a random state. The measurement effects are :math:`\frac12 (I\pm \sigma_z)`. Since they sum to identity, we need only specify one of them. We can use :class:`TomographyModel` to calculate the Born rule probability of obtaining one of these outcomes as follows:

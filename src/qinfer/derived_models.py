@@ -545,9 +545,6 @@ class MLEModel(DerivedModel):
 
     :param float likelihood_power: Power to which the likelihood calls
         should be rasied in order to amplify the Bayes update.
-
-    .. [JDD08] Particle methods for maximum likelihood estimation
-        in latent variable models. :doi:`0.1007/s11222-007-9037-8`.
     """
 
     def __init__(self, underlying_model, likelihood_power):
