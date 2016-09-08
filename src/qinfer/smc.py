@@ -870,18 +870,20 @@ class SMCUpdater(Distribution):
         else:
             return self.particle_locations[id_sort][id_cred]
     
-    def region_est_hull(self, level=0.95):
+    def region_est_hull(self, level=0.95, modelparam_slice=None):
         """
         Estimates a credible region over models by taking the convex hull of
         a credible subset of particles.
         
         :param float level: The desired crediblity level (see
             :meth:`SMCUpdater.est_credible_region`).
+        :param modelparam_slice: Slice over which model parameters
+            to consider.
         """
         # TODO: document return values.
-        points = self.est_credible_region(level=level)
+        s_ = np.s_[modelparam_slice] if modelparam_slice is not None else np.s_[:]
+        points = self.est_credible_region(level=level)[:, s_]
         hull = ConvexHull(points)
-        vertices = points[uniquify(hull.flatten())]
         
         return points[uniquify(hull.vertices.flatten())], points[hull.simplices]
 
