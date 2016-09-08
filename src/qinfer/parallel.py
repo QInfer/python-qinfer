@@ -72,6 +72,10 @@ class DirectViewParallelizedModel(DerivedModel):
     
     This :class:`Model` assumes that it has ownership over the DirectView, such
     that no other processes will send tasks during the lifetime of the Model.
+
+    If you are having trouble pickling your model, consider switching to 
+    ``dill`` by calling ``direct_view.use_dill()``. This mode gives more support 
+    for closures.
     
     :param qinfer.Model serial_model: Model to be parallelized. This
         model will be distributed to the engines in the direct view, such that
@@ -93,7 +97,7 @@ class DirectViewParallelizedModel(DerivedModel):
     
     ## INITIALIZER ##
     
-    def __init__(self, serial_model, direct_view, purge_client=False, serial_theshold=None):
+    def __init__(self, serial_model, direct_view, purge_client=False, serial_threshold=None):
         if ipp is None:
             raise RuntimeError(
                 "This model requires IPython parallelization support, "
@@ -104,7 +108,7 @@ class DirectViewParallelizedModel(DerivedModel):
         self._purge_client = purge_client
         self._serial_threshold = (
             10 * self.n_engines
-            if serial_theshold is None else int(serial_theshold)
+            if serial_threshold is None else int(serial_threshold)
         )
         
         super(DirectViewParallelizedModel, self).__init__(serial_model)
@@ -177,7 +181,7 @@ class DirectViewParallelizedModel(DerivedModel):
         """
         super(DirectViewParallelizedModel, self).likelihood(outcomes, modelparams, expparams)
 
-        if modelparams.shape[1] <= self._serial_threshold:
+        if modelparams.shape[0] <= self._serial_threshold:
             return self._serial_model.likelihood(outcomes, modelparams, expparams)
         
         if self._dv is None:
