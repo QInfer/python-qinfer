@@ -528,7 +528,6 @@ class MultinomialDomain(Domain):
         :rtype: `bool`
         """
         array_view = self.to_regular_array(points)
-        print(np.all(array_view>=0))
         return np.all(array_view >= 0) and np.all(np.sum(array_view, axis=-1) == self.n_meas)
 
     
