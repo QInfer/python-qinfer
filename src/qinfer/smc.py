@@ -47,7 +47,7 @@ import numpy as np
 
 # from itertools import zip
 
-from scipy.spatial import Delaunay
+from scipy.spatial import ConvexHull
 import scipy.linalg as la
 import scipy.stats
 import scipy.interpolate
@@ -879,17 +879,11 @@ class SMCUpdater(Distribution):
             :meth:`SMCUpdater.est_credible_region`).
         """
         # TODO: document return values.
-        points = self.est_credible_region(level = level)
-        tri = Delaunay(points)
-        faces = []
-        hull = tri.convex_hull
-        
-        for ia, ib, ic in hull:
-            faces.append(points[[ia, ib, ic]])    
-
+        points = self.est_credible_region(level=level)
+        hull = ConvexHull(points)
         vertices = points[uniquify(hull.flatten())]
         
-        return faces, vertices
+        return points[uniquify(hull.vertices.flatten())], points[hull.simplices]
 
     def region_est_ellipsoid(self, level=0.95, tol=0.0001):
         """
