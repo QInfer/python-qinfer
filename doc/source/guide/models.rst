@@ -195,15 +195,13 @@ array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
 >>> bdomain.dtype
 int
 
-.. note::
-
-    We need to extract the :math:`0^\text{th}` element of 
-    ``bm.domain(eps)`` above because ``eps`` is a vector 
-    of length :math:`1` and :attr:`~Simulatable.domain` always 
-    returns one domain for every member of ``eps``.
-    In the case where the domain is completely independent of ``eps``, 
-    it should be possible to call ``m.domain(None)`` to return 
-    the unique domain of the model ``m``.
+We need to extract the :math:`0^\text{th}` element of 
+``bm.domain(eps)`` above because ``eps`` is a vector 
+of length :math:`1` and :attr:`~Simulatable.domain` always 
+returns one domain for every member of ``eps``.
+In the case where the domain is completely independent of ``eps``, 
+it should be possible to call ``m.domain(None)`` to return 
+the unique domain of the model ``m``.
 
 The :class:`MultinomialModel` requires a fancy 
 datatype so that outcomes can be tuples of integers.
@@ -285,6 +283,13 @@ will return a scalar:
 
 Note that in NumPy, a shape tuple of length zero indicates a scalar value,
 as such an array has no indices.
+
+.. note::
+    For users with fancy model outputs, it is demanded 
+    that the outcome data types, ``[d.dtype for d in m.domain(expparams)]``,
+    be identical for every experimental parameter ``expparams`` being 
+    simulated. This can be checked with 
+    :attr:`~Simulatable.are_expparam_dtypes_consistent`.
 
 .. todo::
     Ensure that the simulated data matches the likelihood.
