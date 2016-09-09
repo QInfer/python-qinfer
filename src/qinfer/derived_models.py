@@ -462,7 +462,7 @@ class MultinomialModel(DerivedModel):
 
     def domain(self, expparams):
         """
-        Returns a list of :class:`Domain`, one for each input expparam.
+        Returns a list of :class:`Domain` objects, one for each input expparam.
         :param numpy.ndarray expparams:  Array of experimental parameters. This
             array must be of dtype agreeing with the ``expparams_dtype``
             property.
