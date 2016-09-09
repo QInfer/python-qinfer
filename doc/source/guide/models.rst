@@ -326,7 +326,7 @@ describing the number of outcomes, model parameters, experimental parameters,
 etc. in addition to implementing the simulation and/or likelihood methods.
 
 Here, we demonstrate how to do so by walking through a simple subclass of
-:class:`~qinfer.abstract_model.Model`. For more detail, please see the
+:class:`~qinfer.abstract_model.FiniteOutcomeModel`. For more detail, please see the
 :ref:`apiref`.
 
 Suppose we wish to implement the likelihood function
@@ -345,6 +345,7 @@ parameters as a `property`:
     
 Next, we proceed to add a property and method indicating that this model always
 admits two outcomes, irrespective of what measurement is performed.
+This will also automatically define the :attr:`~Simulatable.domain` method.
 
 .. literalinclude:: multicos.py
     :lines: 10-14
