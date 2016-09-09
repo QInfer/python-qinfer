@@ -285,7 +285,7 @@ Note that in NumPy, a shape tuple of length zero indicates a scalar value,
 as such an array has no indices.
 
 .. note::
-    For users with fancy model outputs, it is demanded 
+    For models with fancy outcome datatypes, it is demanded 
     that the outcome data types, ``[d.dtype for d in m.domain(expparams)]``,
     be identical for every experimental parameter ``expparams`` being 
     simulated. This can be checked with 
