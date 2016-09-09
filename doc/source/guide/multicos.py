@@ -1,4 +1,4 @@
-from qinfer import Model
+from qinfer import FiniteOutcomeModel
 import numpy as np
 
 class MultiCosModel(FiniteOutcomeModel):
