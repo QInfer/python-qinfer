@@ -102,7 +102,7 @@ class Domain(with_metaclass(abc.ABCMeta, object)):
         """
         Returns any single point guaranteed to be in the domain, but 
         no other guarantees; useful for testing purposes. 
-        This is given as a size 1 ``np.array`` of type ``dtype``.
+        This is given as a size 1 ``np.array`` of type `dtype`.
 
         :type: ``np.ndarray``
         """
@@ -111,9 +111,9 @@ class Domain(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractproperty
     def values(self):
         """
-        Returns an `np.array` of type `self.dtype` containing 
+        Returns an `np.array` of type `dtype` containing 
         some values from the domain.
-        For domains where ``is_finite`` is ``True``, all elements 
+        For domains where `is_finite` is ``True``, all elements 
         of the domain will be yielded exactly once.
 
         :rtype: `np.ndarray`
@@ -168,7 +168,7 @@ class RealDomain(Domain):
     def min(self):
         """
         Returns the minimum value of the domain. The outcome 
-        None is interpreted as negative infinity.
+        ``None`` is interpreted as negative infinity.
 
         :rtype: `float`
         """
@@ -177,7 +177,7 @@ class RealDomain(Domain):
     def max(self):
         """
         Returns the maximum value of the domain. The outcome 
-        None is interpreted as positive infinity.
+        ``None`` is interpreted as positive infinity.
 
         :rtype: `float`
         """
@@ -284,7 +284,7 @@ class IntegerDomain(Domain):
     def min(self):
         """
         Returns the minimum value of the domain. The outcome 
-        None is interpreted as negative infinity.
+        ``None`` is interpreted as negative infinity.
 
         :rtype: `float`
         """
@@ -293,7 +293,7 @@ class IntegerDomain(Domain):
     def max(self):
         """
         Returns the maximum value of the domain. The outcome 
-        None is interpreted as positive infinity.
+        ``None`` is interpreted as positive infinity.
 
         :rtype: `float`
         """
