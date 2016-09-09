@@ -193,7 +193,7 @@ the integers between ``0`` and ``n_meas`` inclusive.
 >>> bdomain.values
 array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
 >>> bdomain.dtype
-int
+<class 'int'>
 
 We need to extract the :math:`0^\text{th}` element of 
 ``bm.domain(eps)`` above because ``eps`` is a vector 
@@ -220,7 +220,11 @@ dtype([('k', '<i8', (4,))])
 >>> mmdomain.n_members
 20
 >>> print(mmdomain.values)
-[([3, 0, 0, 0],), ([2, 1, 0, 0],), ([2, 0, 1, 0],), ... ([0, 0, 1, 2],), ([0, 0, 0, 3],)]
+[([3, 0, 0, 0],) ([2, 1, 0, 0],) ([2, 0, 1, 0],) ([2, 0, 0, 1],)
+ ([1, 2, 0, 0],) ([1, 1, 1, 0],) ([1, 1, 0, 1],) ([1, 0, 2, 0],)
+ ([1, 0, 1, 1],) ([1, 0, 0, 2],) ([0, 3, 0, 0],) ([0, 2, 1, 0],)
+ ([0, 2, 0, 1],) ([0, 1, 2, 0],) ([0, 1, 1, 1],) ([0, 1, 0, 2],)
+ ([0, 0, 3, 0],) ([0, 0, 2, 1],) ([0, 0, 1, 2],) ([0, 0, 0, 3],)]
 
 We see here all :math:`20` possible ways to roll this 
 die four times.
