@@ -209,21 +209,18 @@ In the following a single experiment of the model ``mm``
 consists of throwing a four sided die ``n_meas`` times 
 and recording how many times each side lands facing down.
 
+>>> from qinfer import MultinomialModel, NDieModel
 >>> mm = MultinomialModel(NDieModel(n=4))
 >>> mm.expparams_dtype
 [('exp_num', 'int'), ('n_meas', 'uint')]
->>> eps = np.array([(1, 3)], dtype=mm.expparams_dtype)
->>> mmdomain = mm.domain(eps)[0]
+>>> mmeps = np.array([(1, 3)], dtype=mm.expparams_dtype)
+>>> mmdomain = mm.domain(mmeps)[0]
 >>> mmdomain.dtype
 dtype([('k', '<i8', (4,))])
 >>> mmdomain.n_members
 20
 >>> print(mmdomain.values)
-[([3, 0, 0, 0],) ([2, 1, 0, 0],) ([2, 0, 1, 0],) ([2, 0, 0, 1],)
- ([1, 2, 0, 0],) ([1, 1, 1, 0],) ([1, 1, 0, 1],) ([1, 0, 2, 0],)
- ([1, 0, 1, 1],) ([1, 0, 0, 2],) ([0, 3, 0, 0],) ([0, 2, 1, 0],)
- ([0, 2, 0, 1],) ([0, 1, 2, 0],) ([0, 1, 1, 1],) ([0, 1, 0, 2],)
- ([0, 0, 3, 0],) ([0, 0, 2, 1],) ([0, 0, 1, 2],) ([0, 0, 0, 3],)]
+[([3, 0, 0, 0],), ([2, 1, 0, 0],), ([2, 0, 1, 0],), ... ([0, 0, 1, 2],), ([0, 0, 0, 3],)]
 
 We see here all :math:`20` possible ways to roll this 
 die four times.
