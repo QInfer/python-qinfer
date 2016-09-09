@@ -32,6 +32,7 @@ from __future__ import division, unicode_literals
 ## EXPORTS ###################################################################
 
 __all__ = [
+    'Simulatable',
     'Model',
     'FiniteOutcomeModel',
     'DifferentiableModel'
@@ -53,7 +54,7 @@ from qinfer.domains import IntegerDomain
 ## CLASSES ###################################################################
 
 class Simulatable(with_metaclass(abc.ABCMeta, object)):
-    """
+    r"""
     Represents a system which can be simulated according to
     various model parameters and experimental control parameters
     in order to produce representative data.
@@ -64,15 +65,16 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
         be allowed to return multiple identical outcomes for a given ``expparam``.
         It will be more efficient to set this to ``True`` whenever it is likely 
         that multiple identical outcomes will occur.
+    
     """
+
     def __init__(self):
         """
-        Initialize Model model
         :param bool always_resample_outcomes: Resample outcomes stochastically with 
-                    each outcome call.
+            each outcome call.
         :param :class:`~numpy.ndarray` initial_outcomes: Initial set of outcomes 
-                    that may be supplied. Otherwise initial outcomes default to 
-                    zeros. 
+            that may be supplied. Otherwise initial outcomes default to 
+            zeros. 
         """
         self._sim_count = 0
         
@@ -205,14 +207,14 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
 
     def are_expparam_dtypes_consistent(self, expparams):
         """
-        Returns `True` iff all of the given expparams 
+        Returns ``True`` iff all of the given expparams 
         correspond to outcome domains with the same dtype.
         For efficiency, concrete subclasses should override this method 
-        if the result is always `True`.
+        if the result is always ``True``.
 
         :param np.ndarray expparams: Array of expparamms 
-             of type `expparams_dtype`
-        :rtype: `bool`
+             of type ``expparams_dtype``
+        :rtype: ``bool``
         """
         if self.is_n_outcomes_constant:
             # This implies that all domains are equal, so this must be true
@@ -248,14 +250,14 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def domain(self, exparams):
         """
-        Returns a list of ``Domain``s, one for each input expparam.
+        Returns a list of :class:`Domain` objects, one for each input expparam.
 
         :param numpy.ndarray expparams:  Array of experimental parameters. This
             array must be of dtype agreeing with the ``expparams_dtype``
             property, or, in the case where ``n_outcomes_constant`` is ``True``,
             ``None`` should be a valid input.
 
-        :rtype: list of ``Domain``
+        :rtype: list of :class:`Domain`
         """
         pass
 
@@ -289,6 +291,7 @@ class Simulatable(with_metaclass(abc.ABCMeta, object)):
             ``k`` indexes which experimental parameters where used. If ``repeat == 1``,
             ``len(modelparams) == 1`` and ``len(expparams) == 1``, then a scalar
             datum is returned instead.
+        
         """
         self._sim_count += modelparams.shape[0] * expparams.shape[0] * repeat
         assert(self.are_expparam_dtypes_consistent(expparams))
@@ -432,6 +435,7 @@ class Model(Simulatable):
         r"""
         Calculates the probability of each given outcome, conditioned on each
         given model parameter vector and each given experimental control setting.
+
         :param np.ndarray modelparams: A shape ``(n_models, n_modelparams)``
             array of model parameter vectors describing the hypotheses for
             which the likelihood function is to be calculated.
@@ -439,6 +443,7 @@ class Model(Simulatable):
             experimental control settings, with ``dtype`` given by 
             :attr:`~qinfer.Simulatable.expparams_dtype`, describing the
             experiments from which the given outcomes were drawn.
+            
         :rtype: np.ndarray
         :return: A three-index tensor ``L[i, j, k]``, where ``i`` is the outcome
             being considered, ``j`` indexes which vector of model parameters was used,
@@ -598,7 +603,7 @@ class FiniteOutcomeModel(Model):
 
     def domain(self, expparams):
         """
-        Returns a list of ``Domain``s, one for each input expparam.
+        Returns a list of :class:`Domain` objects, one for each input expparam.
 
         :param numpy.ndarray expparams:  Array of experimental parameters. This
             array must be of dtype agreeing with the ``expparams_dtype``
