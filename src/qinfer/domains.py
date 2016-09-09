@@ -275,8 +275,8 @@ class IntegerDomain(Domain):
     """
 
     def __init__(self, min=0, max=None):
-        self._min = min
-        self._max = max
+        self._min = int(min)
+        self._max = int(max)
 
     ## PROPERTIES ##
 
@@ -336,7 +336,7 @@ class IntegerDomain(Domain):
         :type: ``int``
         """
         if self.is_finite:
-            return self.max - self.min + 1
+            return int(self.max - self.min + 1)
         else:
             return None
 
