@@ -46,6 +46,7 @@ from qinfer.derived_models import *
 from qinfer.ipy import *
 from qinfer.simple_est import *
 from qinfer.resamplers import *
+from qinfer.domains import *
 
 import qinfer.tomography
 

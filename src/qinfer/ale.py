@@ -45,7 +45,7 @@ import numpy as np
 
 from scipy.stats.distributions import binom
 
-from qinfer.abstract_model import Model, Simulatable
+from qinfer.abstract_model import Model, Simulatable, FiniteOutcomeModel
 from qinfer._exceptions import ApproximationWarning
 
 ## FUNCTIONS ##################################################################
@@ -75,9 +75,9 @@ def binom_est_error(p, N, hedge = float(0)):
 
 ## CLASSES ####################################################################
 
-class ALEApproximateModel(Model):
+class ALEApproximateModel(FiniteOutcomeModel):
     r"""
-    Given a :class:`~qinfer.abstract_model.Simulatable`, estiamtes the
+    Given a :class:`~qinfer.abstract_model.Simulatable`, estimates the
     likelihood of that simulator by using adaptive likelihood estimation (ALE).
     
     :param qinfer.abstract_model.Simulatable simulator: Simulator to estimate
@@ -118,7 +118,11 @@ class ALEApproximateModel(Model):
             raise ValueError("Estimator hedging (est_hedge) must be non-negative.")
         if adapt_hedge < 0:
             raise ValueError("Adaptive hedging (adapt_hedge) must be non-negative.")
-            
+
+        # this simulator constraint makes implementation easier
+        if not (simulator.is_n_outcomes_constant and simulator.n_outcomes(None) == 2):
+            raise ValueError("Decorated model must be a two-outcome model.")
+
         self._simulator = simulator
         # We had to have the simulator in place before we could call
         # the superclass.
@@ -147,9 +151,12 @@ class ALEApproximateModel(Model):
     def Q(self): return self._simulator.Q
     
     def n_outcomes(self, expparams): return self._simulator.n_outcomes(expparams)
+    def domain(self, expparams): return self._simulator.domain(expparams)
     def are_models_valid(self, modelparams): return self._simulator.are_models_valid(modelparams)
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         return self._simulator.simulate_experiment(modelparams, expparams, repeat)
+    def update_timestep(self, modelparams, expparams): 
+        return self._simulator.update_timestep(modelparams, expparams)
     def experiment_cost(self, expparams): return self._simulator.experiment_cost(expparams)
     
     ## IMPLEMENTATIONS OF MODEL METHODS ##
@@ -161,7 +168,7 @@ class ALEApproximateModel(Model):
         super(ALEApproximateModel, self).likelihood(outcomes, modelparams, expparams)
         # We will use the fact we have assumed a two-outcome model to make the
         # problem easier. As such, we will rely on the static method 
-        # Model.pr0_to_likelihood_array.
+        # FiniteOutcomeModel.pr0_to_likelihood_array.
         
         # Start off with min_samp samples.
         n = np.zeros((modelparams.shape[0], expparams.shape[0]))
@@ -174,5 +181,5 @@ class ALEApproximateModel(Model):
             error_est_p1 = binom_est_error(binom_est_p(n, N, self._adapt_hedge), N, self._adapt_hedge)
             if np.all(error_est_p1 < self._error_tol): break
             
-        return Model.pr0_to_likelihood_array(outcomes, 1 - binom_est_p(n, N, self._est_hedge))
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, 1 - binom_est_p(n, N, self._est_hedge))
     

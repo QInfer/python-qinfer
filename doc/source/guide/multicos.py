@@ -1,7 +1,7 @@
-from qinfer import Model
+from qinfer import FiniteOutcomeModel
 import numpy as np
 
-class MultiCosModel(Model):
+class MultiCosModel(FiniteOutcomeModel):
     
     @property
     def n_modelparams(self):
@@ -45,5 +45,5 @@ class MultiCosModel(Model):
         # Now we use pr0_to_likelihood_array to turn this two index array
         # above into the form expected by SMCUpdater and other consumers
         # of likelihood().
-        return Model.pr0_to_likelihood_array(outcomes, pr0)
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 

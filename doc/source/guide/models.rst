@@ -136,12 +136,127 @@ specify that we can use its :attr:`~Simulatable.expparams_dtype`:
 >>> print(bm.expparams_dtype)
 [('x', 'float'), ('n_meas', 'uint')]
 >>> eps = np.array([
-...     (11.0, 20)
+...     (5.0, 10)
 ... ], dtype=bm.expparams_dtype)
 
 
 .. _dtype: http://docs.scipy.org/doc/numpy/user/basics.types.html
 .. _record array: http://docs.scipy.org/doc/numpy/user/basics.rec.html
+
+Model Outcomes
+~~~~~~~~~~~~~~
+
+Given a specific vector of model parameters :math:`\vec{x}` and a specific 
+experimental configuration :math:`\vec{c}`, the experiment will 
+yield some *outcome* :math:`d` according to the model distribution 
+:math:`\Pr(d|\vec{x},\vec{c})`.
+
+In many cases, such as :class:`SimplePrecessionModel` discussed above,
+there will be a finite number of outcomes, which we can 
+label by some finite set of integers.
+For example, we labeled the outcome :math:`\left|0\right\rangle` by
+:math:`d=0` and the outcome :math:`\left|1\right\rangle` by 
+:math:`d=1`.
+If this is the case for you, the rest of this section will likely
+not be very relevant, and you may assume your outcomes are 
+zero-indexed integers ending at some value.
+
+In other cases, there may be an infinite number of possible outcomes.
+For example, if the measurement returns the total number of 
+photons measured in a time window, which can in principle 
+be arbitrarily large, or if the measuremnt is of a voltage or current, 
+which can be any real number.
+Or, we may have outcomes which require fancy data types.
+For instance, perhaps the output of a single experiment is a tuple 
+of numbers rather than a single number.
+
+To accomodate these possible situations, and to have a 
+systematic way of testing whether or not all possibe outcomes can be 
+enumerated, :class:`Simulatable` (and subclasses like :class:`Model`) 
+has a method :attr:`~Simulatable.domain` which for every given 
+experimental parameter, returns a :class:`Domain` object.
+One major benifit of explicitly storing these objects is that 
+certain quantities (like :attr:`~SMCUpdater.bayes_risk`)
+can be computed much more efficiently when all possible outcomes 
+can be enumerated.
+:class:`Domain` has attributes which specify whether or not it 
+are finite, how many members it has and what they are, 
+what data type they are, and so on.
+
+For the :class:`BinomialModel` defined above, there are 
+``n_meas+1`` possible outcomes, with possible values 
+the integers between ``0`` and ``n_meas`` inclusive.
+
+>>> bdomain = bm.domain(eps)[0]
+>>> bdomain.n_members
+11
+>>> bdomain.values
+array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+>>> bdomain.dtype == np.int
+True
+
+We need to extract the :math:`0^\text{th}` element of 
+``bm.domain(eps)`` above because ``eps`` is a vector 
+of length :math:`1` and :attr:`~Simulatable.domain` always 
+returns one domain for every member of ``eps``.
+In the case where the domain is completely independent of ``eps``, 
+it should be possible to call ``m.domain(None)`` to return 
+the unique domain of the model ``m``.
+
+The :class:`MultinomialModel` requires a fancy 
+datatype so that outcomes can be tuples of integers.
+In the following a single experiment of the model ``mm``
+consists of throwing a four sided die ``n_meas`` times 
+and recording how many times each side lands facing down.
+
+>>> from qinfer import MultinomialModel, NDieModel
+>>> mm = MultinomialModel(NDieModel(n=4))
+>>> mm.expparams_dtype
+[('exp_num', 'int'), ('n_meas', 'uint')]
+>>> mmeps = np.array([(1, 3)], dtype=mm.expparams_dtype)
+>>> mmdomain = mm.domain(mmeps)[0]
+>>> mmdomain.dtype
+dtype([('k', '<i8', (4,))])
+>>> mmdomain.n_members
+20
+>>> print(mmdomain.values)
+[([3, 0, 0, 0],) ([2, 1, 0, 0],) ([2, 0, 1, 0],) ([2, 0, 0, 1],)
+ ([1, 2, 0, 0],) ([1, 1, 1, 0],) ([1, 1, 0, 1],) ([1, 0, 2, 0],)
+ ([1, 0, 1, 1],) ([1, 0, 0, 2],) ([0, 3, 0, 0],) ([0, 2, 1, 0],)
+ ([0, 2, 0, 1],) ([0, 1, 2, 0],) ([0, 1, 1, 1],) ([0, 1, 0, 2],)
+ ([0, 0, 3, 0],) ([0, 0, 2, 1],) ([0, 0, 1, 2],) ([0, 0, 0, 3],)]
+
+We see here all :math:`20` possible ways to roll this 
+die four times.
+
+ .. note::
+
+    :class:`Model` inherits from :class:`Simulatable`, and 
+    :class:`FiniteOutcomeModel` inherits from :class:`Model`. 
+    The subclass :class:`FiniteOutcomeModel` is able to concretely define 
+    some methods (like :attr:`~Simulatable.simulate_experiment`) 
+    because of the guarantee that all domains have a finite 
+    number of elements.
+    Therefore, it is generally a bit less work to construct a 
+    :class:`FiniteOutcomeModel` than it is to construct 
+    a :class:`Model`.
+
+    Additionally, :class:`FiniteOutcomeModel` automatically 
+    defines the domain corresponding to the experimental 
+    parameter `ep` by looking at :attr:`~Simulatable.n_outcomes`, 
+    namely, if ``nep=n_outcomes(ep)``, then the corresponding 
+    domain has members ``0,1,...,nep`` by default.
+
+    Finally, make note of the slightly subtle role of the 
+    method :attr:`~Simulatable.n_outcomes`.
+    In principle, :attr:`~Simulatable.n_outcomes` is completely 
+    independent of :attr:`~Simulatable.domain`. 
+    For :class:`FiniteOutcomeModel`, it will almost always hold that 
+    ``m.n_outcomes(ep)==domain(ep)[0].n_members``. 
+    For models with an infinite number of outcomes, :attr:`~Domain.n_members`
+    is not defined, but :attr:`~Simulatable.n_outcomes` is defined
+    and refers to "enough outcomes" (at the user's discretion) to 
+    make estimates of quantities :attr:`~SMCUpdater.bayes_risk`.
 
 Simulation
 ~~~~~~~~~~
@@ -169,6 +284,13 @@ will return a scalar:
 
 Note that in NumPy, a shape tuple of length zero indicates a scalar value,
 as such an array has no indices.
+
+.. note::
+    For models with fancy outcome datatypes, it is demanded 
+    that the outcome data types, ``[d.dtype for d in m.domain(expparams)]``,
+    be identical for every experimental parameter ``expparams`` being 
+    simulated. This can be checked with 
+    :attr:`~Simulatable.are_expparam_dtypes_consistent`.
 
 .. todo::
     Ensure that the simulated data matches the likelihood.
@@ -205,7 +327,7 @@ describing the number of outcomes, model parameters, experimental parameters,
 etc. in addition to implementing the simulation and/or likelihood methods.
 
 Here, we demonstrate how to do so by walking through a simple subclass of
-:class:`~qinfer.abstract_model.Model`. For more detail, please see the
+:class:`~qinfer.abstract_model.FiniteOutcomeModel`. For more detail, please see the
 :ref:`apiref`.
 
 Suppose we wish to implement the likelihood function
@@ -224,6 +346,7 @@ parameters as a `property`:
     
 Next, we proceed to add a property and method indicating that this model always
 admits two outcomes, irrespective of what measurement is performed.
+This will also automatically define the :attr:`~Simulatable.domain` method.
 
 .. literalinclude:: multicos.py
     :lines: 10-14

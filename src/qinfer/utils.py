@@ -46,12 +46,145 @@ from qinfer._exceptions import ApproximationWarning
 
 ## FUNCTIONS ##################################################################
 
+def get_qutip_module(required_version='3.2'):
+    """
+    Attempts to return the qutip module, but 
+    silently returns ``None`` if it can't be 
+    imported, or doesn't have version at 
+    least ``required_version``.
+
+    :param str required_version: Valid input to 
+        ``distutils.version.LooseVersion``.
+    :return: The qutip module or ``None``.
+    :rtype: ``module`` or ``NoneType``
+    """
+    try:
+        import qutip as qt
+        from distutils.version import LooseVersion
+        _qt_version = LooseVersion(qt.version.version)
+        if _qt_version < LooseVersion(required_version):
+            return None
+    except ImportError:
+        return None
+
+    return qt
+
+def check_qutip_version(required_version='3.2'):
+    """
+    Returns ``true`` iff the imported qutip 
+    version exists and has ``LooseVersion`` 
+    of at least ``required_version``.
+
+    :param str required_version: Valid input to 
+        ``distutils.version.LooseVersion``.
+    :rtype: ``bool``
+    """
+    try:
+        qt = get_qutip_module(required_version)
+        return qt is not None
+    except:
+        # In any other case (including something other 
+        # than ImportError) we say it's not good enough
+        return False
+
+
 def binomial_pdf(N,n,p):
     r"""
     Returns the PDF of the binomial distribution
     :math:`\operatorname{Bin}(N, p)` evaluated at :math:`n`.
     """
     return binom(N, p).pmf(n)
+
+def multinomial_pdf(n,p):
+    r"""
+    Returns the PDF of the multinomial distribution
+    :math:`\operatorname{Multinomial}(N, n, p)=
+        \frac{N!}{n_1!\cdots n_k!}p_1^{n_1}\cdots p_k^{n_k}`
+
+    :param np.ndarray n : Array of outcome integers 
+        of shape ``(sides, ...)`` where sides is the number of 
+        sides on the dice and summing over this index indicates 
+        the number of rolls for the given experiment.
+    :param np.ndarray p : Array of (assumed) probabilities 
+        of shape ``(sides, ...)`` or ``(sides-1,...)`` 
+        with the rest of the dimensions the same as ``n``.
+        If ``sides-1``, the last probability is chosen so that the 
+        probabilities of all sides sums to 1. If ``sides`` 
+        is the last index, these probabilities are assumed 
+        to sum to 1.
+
+    Note that the numbers of experiments don't need to be given because 
+    they are implicit in the sum over the 0 index of ``n``.
+    """
+
+    # work in log space to avoid overflow
+    log_N_fac = gammaln(np.sum(n, axis=0) + 1)[np.newaxis,...]
+    log_n_fac_sum = np.sum(gammaln(n + 1), axis=0)
+
+    # since working in log space, we need special 
+    # consideration at p=0. deal with p=0, n>0 later.
+    def nlogp(n,p):
+        result = np.zeros(p.shape)
+        mask = p!=0
+        result[mask] = n[mask] * np.log(p[mask])
+        return result
+
+    if p.shape[0] == n.shape[0] - 1:
+        ep = np.empty(n.shape)
+        ep[:p.shape[0],...] = p 
+        ep[-1,...] = 1-np.sum(p,axis=0)
+    else:
+        ep = p
+    log_p_sum = np.sum(nlogp(n, ep), axis=0)
+
+    probs = np.exp(log_N_fac - log_n_fac_sum + log_p_sum)
+
+    # if n_k>0 but p_k=0, the whole probability must be 0 
+    mask = np.sum(np.logical_and(n!=0, ep==0), axis=0) == 0
+    probs = mask * probs
+
+    return probs[0,...]
+
+def sample_multinomial(N, p, size=None):
+    r"""
+    Draws fixed number of samples N from different 
+    multinomial distributions (with the same number dice sides).
+
+    :param int N: How many samples to draw from each distribution.
+    :param np.ndarray p: Probabilities specifying each distribution.
+        Sum along axis 0 should be 1.
+    :param size: Output shape. ``int`` or tuple of 
+        ``int``s. If the given shape is, 
+        e.g., ``(m, n, k)``, then m * n * k samples are drawn 
+        for each distribution. 
+        Default is None, in which case a single value 
+        is returned for each distribution.
+
+    :rtype: np.ndarray
+    :return: Array of shape ``(p.shape, size)`` or p.shape if 
+        size is ``None``.
+    """
+    # ensure s is array
+    s = np.array([1]) if size is None else np.array([size]).flatten()
+
+    def take_samples(ps):
+        # we have to flatten to make apply_along_axis work.
+        return np.random.multinomial(N, ps, np.prod(s)).flatten()
+
+    # should have shape (prod(size)*ps.shape[0], ps.shape[1:])
+    samples = np.apply_along_axis(take_samples, 0, p) 
+    # should have shape (size, p.shape)
+    samples = samples.reshape(np.concatenate([s, p.shape]))
+    # should have shape (p.shape, size)
+    samples = samples.transpose(np.concatenate(
+        [np.arange(s.ndim, p.ndim+s.ndim), np.arange(s.ndim)]
+    ))
+
+    if size is None:
+        # get rid of trailing singleton dimension.
+        samples = samples[...,0]
+
+    return samples
 
 
 def outer_product(vec):
