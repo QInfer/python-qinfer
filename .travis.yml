@@ -29,7 +29,7 @@ before_install:
   - export PATH=$HOME/miniconda/bin:$PATH
   - export PATH=$HOME/miniconda:$PATH
   - conda update --yes conda
-  - conda create -n=travis python=$TRAVIS_PYTHON_VERSION
+  - conda create --yes -n=travis python=$TRAVIS_PYTHON_VERSION
   - source activate travis
 
 install:
