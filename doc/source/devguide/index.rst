@@ -5,7 +5,7 @@
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
     
-.. _guide:
+.. _dev_guide:
 
 Development Guide
 =================

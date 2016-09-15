@@ -30,6 +30,12 @@ additional functionality or changing the behaviors of underlying models.
 .. autoclass:: BinomialModel
     :members:
 
+:class:`MultinomialModel` - Model over batches of D-outcome experiments
+----------------------------------------------------------------------
+
+.. autoclass:: MultinomialModel
+    :members:
+
 :class:`MLEModel` - Model for approximating maximum-likelihood estimation
 -------------------------------------------------------------------------
 

@@ -63,7 +63,8 @@ __all__ = [
     'GinibreUniform',
     'HaarUniform',
     'HilbertSchmidtUniform',
-    'PostselectedDistribution'
+    'PostselectedDistribution',
+    'ConstrainedSumDistribution'
 ]
 
 ## FUNCTIONS #################################################################
@@ -675,3 +676,31 @@ class InterpolatedUnivariateDistribution(Distribution):
 
     def sample(self, n=1):
         return self._interp_inv_cdf(np.random.random(n))[:, np.newaxis]
+
+class ConstrainedSumDistribution(Distribution):
+    """
+    Samples from an underlying distribution and then 
+    enforces that all samples must sum to some given 
+    value by normalizing each sample.
+
+    :param Distribution underlying_distribution: Underlying probability distribution.
+    :param float desired_total: Desired sum of each sample.
+    """
+
+    def __init__(self, underlying_distribution, desired_total=1):
+        super(ConstrainedSumDistribution, self).__init__()
+        self._ud = underlying_distribution
+        self.desired_total = desired_total
+
+    @property
+    def underlying_distribution(self):
+        return self._ud
+
+    @property
+    def n_rvs(self):
+        return self.underlying_distribution.n_rvs
+
+    def sample(self, n=1):
+        s = self.underlying_distribution.sample(n)
+        totals = np.sum(s, axis=1)[:,np.newaxis]
+        return self.desired_total * np.sign(totals) * s / totals

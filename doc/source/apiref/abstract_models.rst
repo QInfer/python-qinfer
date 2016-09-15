@@ -33,15 +33,27 @@ Class Reference
 ------------------------------------------------------------
     
 If a model supports explicit calculation of the likelihood function, then this
-is represented by subclassing from :class:`Model`. The likelihood function
-provided by a subclass is then used to implement
-:meth:`Simulatable.simulate_experiment`, so that the primary method to be defined
-by a :class:`Model` subclass is :meth:`Model.likelihood`.
+is represented by subclassing from :class:`Model`. 
     
 Class Reference
 ~~~~~~~~~~~~~~~
     
 .. autoclass:: Model
+    :members:
+
+:class:`FiniteOutcomeModel` - Base Class for  Models with a Finite Number of Outcomes
+-------------------------------------------------------------------------------------
+    
+The likelihood function provided by a subclass is used to implement
+:meth:`Simulatable.simulate_experiment`, which is possible because the 
+likelihood of all possible outcomes can be computed.
+This class also concretely implements the :attr:`~Simulatable.domain` method 
+by looking at the definition of :attr:`~Simulatable.n_outcomes`.
+    
+Class Reference
+~~~~~~~~~~~~~~~
+    
+.. autoclass:: FiniteOutcomeModel
     :members:
         
 :class:`DifferentiableModel` - Base Class for Explicit Models with Differentiable Likelihoods

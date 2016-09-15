@@ -42,7 +42,7 @@ from __future__ import unicode_literals
 
 from builtins import range, map
 
-from qinfer import Model
+from qinfer import FiniteOutcomeModel
 
 import numpy as np
 
@@ -70,7 +70,7 @@ def heisenberg_weyl_operators(d=2):
 
 ## CLASSES ###################################################################
 
-class TomographyModel(Model):
+class TomographyModel(FiniteOutcomeModel):
     r"""
     Model for tomographically learning a quantum state using
     two-outcome positive-operator valued measures (POVMs).
@@ -214,7 +214,7 @@ class TomographyModel(Model):
         )
         np.clip(pr1, 0, 1, out=pr1)
 
-        return Model.pr0_to_likelihood_array(outcomes, 1 - pr1)
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, 1 - pr1)
 
 class DiffusiveTomographyModel(TomographyModel):
     @property

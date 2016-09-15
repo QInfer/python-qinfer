@@ -33,6 +33,7 @@ from __future__ import division # Ensures that a/b is always a float.
 __all__ = [
     'SimpleInversionModel',
     'SimplePrecessionModel',
+    'CoinModel',
     'NoisyCoinModel',
     'NDieModel'
 ]
@@ -45,11 +46,11 @@ import numpy as np
 
 from .utils import binomial_pdf
 
-from .abstract_model import Model, DifferentiableModel
+from .abstract_model import FiniteOutcomeModel, DifferentiableModel
     
-## CLASSES ###################################################################
+## CLASSES ####################################################################
 
-class SimpleInversionModel(DifferentiableModel):
+class SimpleInversionModel(FiniteOutcomeModel, DifferentiableModel):
     r"""
     Describes the free evolution of a single qubit prepared in the
     :math:`\left|+\right\rangle` state under a Hamiltonian :math:`H = \omega \sigma_z / 2`,
@@ -128,7 +129,7 @@ class SimpleInversionModel(DifferentiableModel):
         pr0[:, :] = np.cos(t * dw / 2) ** 2
         
         # Now we concatenate over outcomes.
-        return Model.pr0_to_likelihood_array(outcomes, pr0)
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 
     def score(self, outcomes, modelparams, expparams, return_L=False):
         if len(modelparams.shape) == 1:
@@ -189,7 +190,92 @@ class SimplePrecessionModel(SimpleInversionModel):
 
         return super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L)
            
-class NoisyCoinModel(Model):
+class CoinModel(FiniteOutcomeModel, DifferentiableModel):
+    r"""
+    Arguably the simplest possible model; the unknown model parameter 
+    is the bias of a coin, and an experiment consists of flipping it and 
+    looking at the result.
+    The model parameter :math:`p` represents the probability of outcome 0.
+    """
+
+    ## INITIALIZER ##
+
+    def __init__(self):
+        super(CoinModel, self).__init__()
+
+    ## PROPERTIES ##
+    
+    @property
+    def n_modelparams(self):
+        return 1
+    
+    @property
+    def modelparam_names(self):
+        return [r'p']
+        
+    @property
+    def expparams_dtype(self):
+        return []
+    
+    @property
+    def is_outcomes_constant(self):
+        """
+        Returns ``True`` if and only if the number of outcomes for each
+        experiment is independent of the experiment being performed.
+        
+        This property is assumed by inference engines to be constant for
+        the lifetime of a FiniteOutcomeModel instance.
+        """
+        return True
+    
+    ## METHODS ##
+    
+    @staticmethod
+    def are_models_valid(modelparams):
+        return np.logical_and(modelparams >= 0, modelparams <= 1).all(axis=1)
+ 
+    def n_outcomes(self, expparams):
+        """
+        Returns an array of dtype ``uint`` describing the number of outcomes
+        for each experiment specified by ``expparams``.
+        
+        :param numpy.ndarray expparams: Array of experimental parameters. This
+            array must be of dtype agreeing with the ``expparams_dtype``
+            property.
+        """
+        return 2
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(CoinModel, self).likelihood(outcomes, modelparams, expparams)
+                  
+        # Our job is easy.
+        pr0 = np.tile(modelparams.flatten(), (expparams.shape[0], 1)).T
+        
+        # Now we concatenate over outcomes.
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
+
+    def score(self, outcomes, modelparams, expparams, return_L=False):
+
+        p = modelparams.flatten()[np.newaxis, :]
+        side = outcomes.flatten()[:, np.newaxis]
+
+        q = (1 - side) / p - side / (1 - p)
+
+        #  we need to add singleton dimension since there 
+        # is only one model param
+        q = q[np.newaxis, :, :]
+
+        # duplicate this for any exparams we have
+        q = np.tile(q, (expparams.shape[0], 1, 1, 1)).transpose((1,2,3,0))
+        
+        if return_L:
+            return q, self.likelihood(outcomes, modelparams, expparams)
+        else:
+            return q
+
+class NoisyCoinModel(FiniteOutcomeModel):
     r"""
     Implements the "noisy coin" model of [FB12]_, where the model parameter
     :math:`p` is the probability of the noisy coin. This model has two
@@ -208,6 +294,9 @@ class NoisyCoinModel(Model):
     :expparam float beta: Visibility parameter :math:`\beta`.
     """
         
+    def __init__(self):
+        super(NoisyCoinModel, self).__init__()
+
     ## PROPERTIES ##
     
     @property
@@ -240,18 +329,39 @@ class NoisyCoinModel(Model):
         pr0 = modelparams * a + (1 - modelparams) * b
         
         # Concatenate over outcomes.
-        return Model.pr0_to_likelihood_array(outcomes, pr0)
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
         
-class NDieModel(Model):
-    
+class NDieModel(FiniteOutcomeModel):
+    r"""
+    Implements a model of rolling a die with n sides,
+    whose unknown model parameters are the weights 
+    of each side; a generalization of CoinModel. An 
+    experiment consists of rolling the die once. The 
+    faces of the die are zero indexed, labeled 0,1,2,...,n-1.
+
+    :param int n: Number of sides on the die.
+    :param float threshold: How close to 1 the probabilites of the sides of the die must be.
+    """
+
+    ## INITIALIZERS ##
+
+    def __init__(self, n=6, threshold=1e-7):
+        # We need to set this private property before
+        # calling super, which relies on n_modelparams
+        self._n = n
+        super(NDieModel, self).__init__()
+        self._threshold = threshold
+
     ## PROPERTIES ##
     
     @property
     def n_modelparams(self):
-        return self.n
+        return self._n
         
     @property
     def expparams_dtype(self):
+        # This is a dummy parameter, its value doesn't come 
+        # into the likelihood.
         return [('exp_num', 'int')]
     
     @property
@@ -266,13 +376,11 @@ class NDieModel(Model):
         return True
     
     ## METHODS ##
-    def __init__(self, n = 6):
-        self.n = n
-        Model.__init__(self)
-
-    @staticmethod
-    def are_models_valid(modelparams):
-        return np.logical_and(modelparams >= 0, modelparams <= 1).all(axis=1)
+    
+    def are_models_valid(self, modelparams):
+        sums = np.abs(np.sum(modelparams, axis=1) - 1) <= self._threshold
+        bounds = np.logical_and(modelparams >= 0, modelparams <= 1).all(axis=1)
+        return np.logical_and(sums, bounds)
     
     def n_outcomes(self, expparams):
         """
@@ -283,11 +391,13 @@ class NDieModel(Model):
             array must be of dtype agreeing with the ``expparams_dtype``
             property.
         """
-        return self.n
+        return self._n 
     
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
         super(NDieModel, self).likelihood(outcomes, modelparams, expparams)
+        # Like for CoinModel, the modelparams _are_ the likelihoods;
+        # we just need to do some tedious reshaping and tiling.
         L = np.concatenate([np.array([modelparams[idx][outcomes]]) for idx in range(modelparams.shape[0])])
-        return L[...,np.newaxis].transpose([1,0,2])
+        return np.tile(L[np.newaxis,...],(expparams.shape[0],1,1)).transpose((2,1,0))
