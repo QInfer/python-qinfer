@@ -905,7 +905,7 @@ class SMCUpdater(Distribution):
         )
         hull = ConvexHull(points)
         
-        return points[uniquify(hull.vertices.flatten())], points[hull.simplices]
+        return points[hull.simplices], points[uniquify(hull.vertices.flatten())]
 
     def region_est_ellipsoid(self, level=0.95, tol=0.0001, modelparam_slice=None):
         """
