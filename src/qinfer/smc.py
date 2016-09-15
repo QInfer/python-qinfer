@@ -840,7 +840,9 @@ class SMCUpdater(Distribution):
         :rtype: :class:`numpy.ndarray`, shape ``(n_credible, n_modelparams)``,
             where ``n_credible`` is the number of particles in the credible
             region
-        :returns: An array of particles inside the estimated credible region.
+        :return: An array of particles inside the estimated credible region. Or,
+            if ``return_outside`` is ``True``, both the particles inside and the
+            particles outside, as a tuple.
         """
         
         # Start by sorting the particles by weight.
@@ -877,10 +879,18 @@ class SMCUpdater(Distribution):
         
         :param float level: The desired crediblity level (see
             :meth:`SMCUpdater.est_credible_region`).
-        :param modelparam_slice: Slice over which model parameters
+        :param slice modelparam_slice: Slice over which model parameters
             to consider.
+
+        :return: The tuple ``(faces, vertices)`` where ``faces`` describes all the 
+            vertices of all of the faces on the exterior of the convex hull, and 
+            ``vertices`` is a list of all vertices on the exterior of the 
+            convex hull.
+        :rtype: ``faces`` is a ``numpy.ndarray`` with shape 
+            ``(n_face, n_mps, n_mps)`` and indeces ``(idx_face, idx_vertex, idx_mps)`` 
+            where ``n_mps`` corresponds to the size of ``modelparam_slice``.
+            ``vertices`` is an  ``numpy.ndarray`` of shape ``(n_vertices, n_mps)``.
         """
-        # TODO: document return values.
         s_ = np.s_[modelparam_slice] if modelparam_slice is not None else np.s_[:]
         points = self.est_credible_region(level=level)[:, s_]
         hull = ConvexHull(points)
@@ -892,13 +902,18 @@ class SMCUpdater(Distribution):
         Estimates a credible region over models by finding the minimum volume
         enclosing ellipse (MVEE) of a credible subset of particles.
         
-        
         :param float level: The desired crediblity level (see
             :meth:`SMCUpdater.est_credible_region`).
         :param float tol: The allowed error tolerance in the MVEE optimization
             (see :meth:`~qinfer.utils.mvee`).
+
+        return: A tuple ``(A, c)`` where ``A`` is the covariance 
+            matrix of the ellipsoid and ``c`` is the center.
+            A point :math:`\vec{x}` is in the ellipsoid whenever 
+            :math:`(\vec{x}-\vec{c})^{T}A^{-1}(\vec{x}-\vec{c})\leq 1`.
+        :rtype: ``A`` is ``np.ndarray`` of shape ``(n_mps,n_mps)`` and 
+            ``centroid`` is ``np.ndarray`` of shape ``(n_mps)``. 
         """
-        # TODO: document return values.
         faces, vertices = self.region_est_hull(level=level)
                 
         A, centroid = mvee(vertices, tol)
