@@ -159,6 +159,13 @@ def mvee(points, tol=0.001):
     Returns the minimum-volume enclosing ellipse (MVEE)
     of a set of points, using the Khachiyan algorithm.
     """
+
+    # This function is a port of the matlab function by 
+    # Nima Moshtagh found here:
+    # https://www.mathworks.com/matlabcentral/fileexchange/9542-minimum-volume-enclosing-ellipsoid
+    # with accompanying writup here:
+    # https://www.researchgate.net/profile/Nima_Moshtagh/publication/254980367_MINIMUM_VOLUME_ENCLOSING_ELLIPSOIDS/links/54aab5260cf25c4c472f487a.pdf
+
     N, d = points.shape
     
     Q = np.zeros([N,d+1])
@@ -171,7 +178,6 @@ def mvee(points, tol=0.001):
     err = 1
     u = (1/N) * np.ones(shape = (N,))
 
-    # Khachiyan Algorithm TODO:find ref
     while err > tol:
         
         X = np.dot(np.dot(Q, np.diag(u)), np.transpose(Q))
