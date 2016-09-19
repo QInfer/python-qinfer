@@ -70,20 +70,25 @@ class DecimationModel(MockModel):
 
 ## TEST CASES ################################################################
 
-def test_min_n_ess():
-    n_updates = 6
-    n_particles = 4 ** n_updates # Pick factor of 4 to avoid discretization errors.
-    model = DecimationModel()
-    updater = SMCUpdater(model, n_particles, UniformDistribution([0, 1]), resample_thresh=0.0)
+class TestSMC(DerandomizedTestCase):
+    
+    def setUp(self):
+        super(TestSMC, self).setUp()
+        self.model = DecimationModel()
 
-    outcomes = np.array([0], dtype=int)
-    expparams = np.empty((1,), dtype=model.expparams_dtype)
+    def test_min_n_ess(self):
+        n_updates = 6
+        n_particles = 4 ** n_updates # Pick factor of 4 to avoid discretization errors.
+        updater = SMCUpdater(self.model, n_particles, UniformDistribution([0, 1]), resample_thresh=0.0)
 
-    for idx_update in range(n_updates):
-        expparams['alpha'][0] = 4 ** -(idx_update + 1)
-        updater.update(outcomes, expparams)
+        outcomes = np.array([0], dtype=int)
+        expparams = np.empty((1,), dtype=self.model.expparams_dtype)
+
+        for idx_update in range(n_updates):
+            expparams['alpha'][0] = 4 ** -(idx_update + 1)
+            updater.update(outcomes, expparams)
+            assert_equal(updater.min_n_ess, 4 ** (n_updates - idx_update - 1))
+
+        # Force a resample and ensure that the min_n_ess remains the same.
+        updater.resample()
         assert_equal(updater.min_n_ess, 4 ** (n_updates - idx_update - 1))
-
-    # Force a resample and ensure that the min_n_ess remains the same.
-    updater.resample()
-    assert_equal(updater.min_n_ess, 4 ** (n_updates - idx_update - 1))
