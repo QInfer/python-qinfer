@@ -45,34 +45,10 @@ import numpy as np
 
 from scipy.stats.distributions import binom
 
+from qinfer.utils import binom_est_error, binom_est_p
 from qinfer.derived_models import DerivedModel
 from qinfer.abstract_model import Model, Simulatable, FiniteOutcomeModel
 from qinfer._exceptions import ApproximationWarning
-
-## FUNCTIONS ##################################################################
-
-def binom_est_p(n, N, hedge=float(0)):
-    r"""
-    Given a number of successes :math:`n` and a number of trials :math:`N`,
-    estimates the binomial distribution parameter :math:`p` using the
-    hedged maximum likelihood estimator of [FB12]_.
-    
-    :param n: Number of successes.
-    :type n: `numpy.ndarray` or `int`
-    :param int N: Number of trials.
-    :param float hedge: Hedging parameter :math:`\beta`.
-    :rtype: `float` or `numpy.ndarray`.
-    :return: The estimated binomial distribution parameter :math:`p` for each
-        value of :math:`n`.
-    """
-    return (n + hedge) / (N + 2 * hedge)
-    
-def binom_est_error(p, N, hedge = float(0)):
-    r"""
-    """
-    
-    # asymptotic np.sqrt(p * (1 - p) / N)
-    return np.sqrt(p*(1-p)/(N+2*hedge+1))
 
 ## CLASSES ####################################################################
 
@@ -135,10 +111,13 @@ class ALEApproximateModel(DerivedModel):
         self._adapt_hedge = float(adapt_hedge)
         
     ## WRAPPED METHODS AND PROPERTIES ##
-    # We only need to wrap sim_count, since the rest are handled
-    # by DerivedModel.
+    # We only need to wrap sim_count and simulate_experiment,
+    # since the rest are handled by DerivedModel.
     @property
     def sim_count(self): return self.underlying_model.sim_count
+
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        return self.underlying_model.simulate_experiment(modelparams, expparams, repeat=repeat)
     
     ## IMPLEMENTATIONS OF MODEL METHODS ##
     
