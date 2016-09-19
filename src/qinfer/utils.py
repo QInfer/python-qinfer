@@ -448,3 +448,25 @@ if __name__ == "__main__":
     ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
     plt.show()
  
+def binom_est_p(n, N, hedge=float(0)):
+    r"""
+    Given a number of successes :math:`n` and a number of trials :math:`N`,
+    estimates the binomial distribution parameter :math:`p` using the
+    hedged maximum likelihood estimator of [FB12]_.
+    
+    :param n: Number of successes.
+    :type n: `numpy.ndarray` or `int`
+    :param int N: Number of trials.
+    :param float hedge: Hedging parameter :math:`\beta`.
+    :rtype: `float` or `numpy.ndarray`.
+    :return: The estimated binomial distribution parameter :math:`p` for each
+        value of :math:`n`.
+    """
+    return (n + hedge) / (N + 2 * hedge)
+    
+def binom_est_error(p, N, hedge = float(0)):
+    r"""
+    """
+    
+    # asymptotic np.sqrt(p * (1 - p) / N)
+    return np.sqrt(p*(1-p)/(N+2*hedge+1))
