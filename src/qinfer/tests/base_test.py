@@ -32,11 +32,14 @@ from future.utils import with_metaclass
 ## IMPORTS ####################################################################
 
 import sys
+import warnings
 import abc
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 import unittest
-from qinfer import Domain
+from qinfer import Domain, FiniteOutcomeModel
+
+from contextlib import contextmanager
 
 ## FUNCTIONS ##################################################################
 
@@ -73,7 +76,61 @@ def test_model(model, prior, expparams, stream=sys.stderr):
     runner = unittest.TextTestRunner(stream=stream)
     runner.run(test)
 
+@contextmanager
+def assert_warns(category):
+    """
+    Context manager which asserts that its contents raise a particular
+    warning.
+
+    :param type category: Category of the warning that should be raised.
+    """
+
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        # Catch everything.
+        warnings.simplefilter('always')
+
+        yield
+    
+    assert any([
+        issubclass(warning.category, category) for warning in caught_warnings
+    ]), "No warning of category {} raised.".format(category)
+
 ## CLASSES ####################################################################
+
+class MockModel(FiniteOutcomeModel):
+    """
+    Two-outcome model whose likelihood is always 0.5, irrespective of
+    model parameters, outcomes or experiment parameters.
+    """
+
+    def __init__(self):
+        super(MockModel, self).__init__()
+    
+    @property
+    def n_modelparams(self):
+        return 2
+        
+    @staticmethod
+    def are_models_valid(modelparams):
+        return np.ones((modelparams.shape[0], ), dtype=bool)
+        
+    @property
+    def is_n_outcomes_constant(self):
+        return True
+        
+    def n_outcomes(self, expparams):
+        return 2
+
+        
+    @property
+    def expparams_dtype(self):
+        return [('a', float), ('b', int)]
+        
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        super(MockModel, self).likelihood(outcomes, modelparams, expparams)
+        pr0 = np.ones((modelparams.shape[0], expparams.shape[0])) / 2
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 
 class DerandomizedTestCase(unittest.TestCase):
 

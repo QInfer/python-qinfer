@@ -126,6 +126,7 @@ class SMCUpdater(Distribution):
         
         # Initialize metadata on resampling performance.
         self._resample_count = 0
+        self._min_n_ess = n_particles
         
         self.model = model
         self.prior = prior
@@ -235,6 +236,18 @@ class SMCUpdater(Distribution):
         :return: The effective sample size, given by :math:`1/\sum_i w_i^2`.
         """
         return 1 / (np.sum(self.particle_weights**2))
+
+    @property
+    def min_n_ess(self):
+        """
+        Returns the smallest effective sample size (ESS) observed in the
+        history of this updater.
+
+        :type: `float`
+        :return: The minimum of observed effective sample sizes as
+            reported by :attr:`~qinfer.SMCUpdater.n_ess`.
+        """
+        return self._min_n_ess
 
     @property
     def data_record(self):
@@ -446,6 +459,10 @@ class SMCUpdater(Distribution):
         self.particle_locations = self.model.update_timestep(
             self.particle_locations, expparams
         )[:, :, 0]
+
+        # Check if we need to update our min_n_ess attribute.
+        if self.n_ess <= self._min_n_ess:
+            self._min_n_ess = self.n_ess
         
         # Resample if needed.
         if check_for_resample:

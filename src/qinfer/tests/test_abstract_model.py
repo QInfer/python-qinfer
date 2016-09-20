@@ -33,46 +33,10 @@ from __future__ import division # Ensures that a/b is always a float.
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 
-from qinfer.tests.base_test import DerandomizedTestCase
+from qinfer.tests.base_test import DerandomizedTestCase, MockModel
 from qinfer.abstract_model import FiniteOutcomeModel
     
 ## CLASSES ####################################################################
-
-class MockModel(FiniteOutcomeModel):
-    """
-    Two-outcome model whose likelihood is always 0.5, irrespective of
-    model parameters, outcomes or experiment parameters.
-    """
-
-    def __init__(self):
-        super(MockModel, self).__init__()
-    
-    @property
-    def n_modelparams(self):
-        return 2
-        
-    @staticmethod
-    def are_models_valid(modelparams):
-        return np.ones((modelparams.shape[0], ), dtype=bool)
-        
-    @property
-    def is_n_outcomes_constant(self):
-        return True
-        
-    def n_outcomes(self, expparams):
-        return 2
-
-        
-    @property
-    def expparams_dtype(self):
-        return [('a', float), ('b', int)]
-        
-    
-    def likelihood(self, outcomes, modelparams, expparams):
-        super(MockModel, self).likelihood(outcomes, modelparams, expparams)
-        pr0 = np.ones((modelparams.shape[0], expparams.shape[0])) / 2
-        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
-    
 
 class TestAbstractModel(DerandomizedTestCase):
     

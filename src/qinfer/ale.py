@@ -45,37 +45,14 @@ import numpy as np
 
 from scipy.stats.distributions import binom
 
+from qinfer.utils import binom_est_error, binom_est_p
+from qinfer.derived_models import DerivedModel
 from qinfer.abstract_model import Model, Simulatable, FiniteOutcomeModel
 from qinfer._exceptions import ApproximationWarning
 
-## FUNCTIONS ##################################################################
-
-def binom_est_p(n, N, hedge=float(0)):
-    r"""
-    Given a number of successes :math:`n` and a number of trials :math:`N`,
-    estimates the binomial distribution parameter :math:`p` using the
-    hedged maximum likelihood estimator of [FB12]_.
-    
-    :param n: Number of successes.
-    :type n: `numpy.ndarray` or `int`
-    :param int N: Number of trials.
-    :param float hedge: Hedging parameter :math:`\beta`.
-    :rtype: `float` or `numpy.ndarray`.
-    :return: The estimated binomial distribution parameter :math:`p` for each
-        value of :math:`n`.
-    """
-    return (n + hedge) / (N + 2 * hedge)
-    
-def binom_est_error(p, N, hedge = float(0)):
-    r"""
-    """
-    
-    # asymptotic np.sqrt(p * (1 - p) / N)
-    return np.sqrt(p*(1-p)/(N+2*hedge+1))
-
 ## CLASSES ####################################################################
 
-class ALEApproximateModel(FiniteOutcomeModel):
+class ALEApproximateModel(DerivedModel):
     r"""
     Given a :class:`~qinfer.abstract_model.Simulatable`, estimates the
     likelihood of that simulator by using adaptive likelihood estimation (ALE).
@@ -123,10 +100,9 @@ class ALEApproximateModel(FiniteOutcomeModel):
         if not (simulator.is_n_outcomes_constant and simulator.n_outcomes(None) == 2):
             raise ValueError("Decorated model must be a two-outcome model.")
 
-        self._simulator = simulator
         # We had to have the simulator in place before we could call
         # the superclass.
-        super(ALEApproximateModel, self).__init__()
+        super(ALEApproximateModel, self).__init__(simulator)
         
         self._error_tol = float(error_tol)
         self._min_samp = int(min_samp)
@@ -135,29 +111,13 @@ class ALEApproximateModel(FiniteOutcomeModel):
         self._adapt_hedge = float(adapt_hedge)
         
     ## WRAPPED METHODS AND PROPERTIES ##
-    # These methods and properties do nothing but pass along to the
-    # consumed Simulatable instance, and so we present them here in a
-    # compressed form.
-    
+    # We only need to wrap sim_count and simulate_experiment,
+    # since the rest are handled by DerivedModel.
     @property
-    def n_modelparams(self): return self._simulator.n_modelparams
-    @property
-    def expparams_dtype(self): return self._simulator.expparams_dtype
-    @property
-    def is_n_outcomes_constant(self): return self._simulator.is_n_outcomes_constant
-    @property
-    def sim_count(self): return self._simulator.sim_count
-    @property
-    def Q(self): return self._simulator.Q
-    
-    def n_outcomes(self, expparams): return self._simulator.n_outcomes(expparams)
-    def domain(self, expparams): return self._simulator.domain(expparams)
-    def are_models_valid(self, modelparams): return self._simulator.are_models_valid(modelparams)
+    def sim_count(self): return self.underlying_model.sim_count
+
     def simulate_experiment(self, modelparams, expparams, repeat=1):
-        return self._simulator.simulate_experiment(modelparams, expparams, repeat)
-    def update_timestep(self, modelparams, expparams): 
-        return self._simulator.update_timestep(modelparams, expparams)
-    def experiment_cost(self, expparams): return self._simulator.experiment_cost(expparams)
+        return self.underlying_model.simulate_experiment(modelparams, expparams, repeat=repeat)
     
     ## IMPLEMENTATIONS OF MODEL METHODS ##
     
@@ -166,6 +126,8 @@ class ALEApproximateModel(FiniteOutcomeModel):
         #        are below error tol.
         #        Should disable one-by-one, but that's tricky.
         super(ALEApproximateModel, self).likelihood(outcomes, modelparams, expparams)
+        simulator = self.underlying_model
+
         # We will use the fact we have assumed a two-outcome model to make the
         # problem easier. As such, we will rely on the static method 
         # FiniteOutcomeModel.pr0_to_likelihood_array.
@@ -173,7 +135,7 @@ class ALEApproximateModel(FiniteOutcomeModel):
         # Start off with min_samp samples.
         n = np.zeros((modelparams.shape[0], expparams.shape[0]))
         for N in count(start=self._min_samp, step=self._samp_step):
-            sim_data = self._simulator.simulate_experiment(
+            sim_data = simulator.simulate_experiment(
                 modelparams, expparams, repeat=self._samp_step
             )
             n += np.sum(sim_data, axis=0) # Sum over the outcomes axis to find the
