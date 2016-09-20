@@ -34,7 +34,7 @@ import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal, assert_array_less
 
 from qinfer.abstract_model import FiniteOutcomeModel
-from qinfer.tests.base_test import DerandomizedTestCase
+from qinfer.tests.base_test import DerandomizedTestCase, MockModel
 from qinfer.distributions import MultivariateNormalDistribution
 from qinfer.smc import SMCUpdater
 
@@ -49,41 +49,6 @@ def unique_rows(a):
     return a[ind[np.concatenate(([True],np.any(a[ind[1:]]!=a[ind[:-1]],axis=1)))]]
 
 ## CLASSES ####################################################################
-
-class MockModel(FiniteOutcomeModel):
-    """
-    Two-outcome model whose likelihood is always 0.5, irrespective of
-    model parameters, outcomes or experiment parameters. We are allowed to
-    specify any number of model parameters.
-    """
-
-    def __init__(self, n_mps):
-        self._n_mps = n_mps
-        super(MockModel, self).__init__()
-    
-    @property
-    def n_modelparams(self):
-        return self._n_mps
-        
-    @staticmethod
-    def are_models_valid(modelparams):
-        return np.ones((modelparams.shape[0], ), dtype=bool)
-        
-    @property
-    def is_n_outcomes_constant(self):
-        return True
-        
-    def n_outcomes(self, expparams):
-        return 2
-        
-    @property
-    def expparams_dtype(self):
-        return [('a', float), ('b', int)]
-          
-    def likelihood(self, outcomes, modelparams, expparams):
-        super(MockModel, self).likelihood(outcomes, modelparams, expparams)
-        pr0 = np.ones((modelparams.shape[0], expparams.shape[0])) / 2
-        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 
 class TestCredibleRegions(DerandomizedTestCase):
 

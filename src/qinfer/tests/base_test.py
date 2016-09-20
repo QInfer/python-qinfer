@@ -103,12 +103,13 @@ class MockModel(FiniteOutcomeModel):
     model parameters, outcomes or experiment parameters.
     """
 
-    def __init__(self):
+    def __init__(self, n_mps=2):
+        self._n_mps = n_mps
         super(MockModel, self).__init__()
     
     @property
     def n_modelparams(self):
-        return 2
+        return self._n_mps
         
     @staticmethod
     def are_models_valid(modelparams):
