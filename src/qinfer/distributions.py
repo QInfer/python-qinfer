@@ -137,6 +137,7 @@ class MixtureDistribution(Distribution):
     def __init__(self, weights, dist):
         super(MixtureDistribution, self).__init__()
         self._weights = weights
+        self._n_dist = len(weights)
 
         self._n_rvs = dist[0].n_rvs
         assert all(s.n_rvs==self._n_rvs for s in dist), 'Distributions are incompatible.'
@@ -148,11 +149,18 @@ class MixtureDistribution(Distribution):
     @property
     def n_rvs(self):
         return self._n_rvs
+
+    @property
+    def n_dist(self):
+        """
+        The number of distributions in the mixture distribution.
+        """
+        return self._n_dist
     
     def sample(self, n=1):
         # how many samples to take from each dist
         ns = np.random.multinomial(n, self._weights)
-        idxs = np.arange(len(self._dist))[ns > 0]
+        idxs = np.arange(self.n_dist)[ns > 0]
 
         return np.concatenate([
                 self._dist[k].sample(n=ns[k])
