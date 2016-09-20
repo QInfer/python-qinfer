@@ -47,7 +47,7 @@ import numpy as np
 
 # from itertools import zip
 
-from scipy.spatial import ConvexHull
+from scipy.spatial import ConvexHull, Delaunay
 import scipy.linalg as la
 import scipy.stats
 import scipy.interpolate
@@ -997,9 +997,8 @@ class SMCUpdater(Distribution):
             each of the points lies inside the confidence region.
         """
         
-        s_ = np.s_[modelparam_slice] if modelparam_slice is not None else np.s_[:]
-
         if method == 'pce':
+            s_ = np.s_[modelparam_slice] if modelparam_slice is not None else np.s_[:]
             A = self.est_covariance_mtx()[s_, s_]
             c = self.est_mean()[s_]
             # chi-squared distribution gives correct level curve conversion
@@ -1008,8 +1007,8 @@ class SMCUpdater(Distribution):
 
         elif method == 'hpd-mvee':
             tol = 0.0001 if tol is None else tol
-            A, c = region_est_ellipsoid(self, level=level, tol=tol, modelparam_slice=modelparam_slice)
-            results = in_ellipsoid(points, A, c)
+            A, c = self.region_est_ellipsoid(level=level, tol=tol, modelparam_slice=modelparam_slice)
+            results = in_ellipsoid(points, np.linalg.inv(A), c)
 
         elif method == 'hpd-hull':
             # it would be more natural to call region_est_hull,
@@ -1025,12 +1024,7 @@ class SMCUpdater(Distribution):
 
             # now we just check whether each of the given points are in 
             # any of the simplices. (http://stackoverflow.com/a/16898636/1082565)
-            results = hull.find_simplex(pts) >= 0
-        else:
-            raise TypeError('Unexpceted method encountered.')
-
-        if results.size == 1:
-            results = results[0]
+            results = hull.find_simplex(points) >= 0
 
         return results
             
