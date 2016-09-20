@@ -50,7 +50,7 @@ import warnings
 __all__ = [
     'Distribution',
     'SingleSampleMixin',
-    'SumDistribution',
+    'MixtureDistribution',
     'ProductDistribution',
     'UniformDistribution',
     'ConstantDistribution',
@@ -126,7 +126,7 @@ class SingleSampleMixin(with_metaclass(abc.ABCMeta, object)):
 
 ## CLASSES ###################################################################
 
-class SumDistribution(Distribution):
+class MixtureDistribution(Distribution):
     r"""
     Takes a non-zero number of QInfer distributions :math:`D_k` as input
     and returns their weighted sum.
