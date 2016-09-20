@@ -139,7 +139,7 @@ class MixtureDistribution(Distribution):
         self._weights = weights
 
         self._n_rvs = dist[0].n_rvs
-        assert all(s.n_rvs()==self._n_rvs for s in dist), 'Distributions are incompatible.'
+        assert all(s.n_rvs==self._n_rvs for s in dist), 'Distributions are incompatible.'
         assert len(weights) == len(dist), 'Lengths of inputs do not match.'
         assert sum(weights) == 1, 'Weights are not normalized.'
         self._dist = dist
@@ -150,8 +150,14 @@ class MixtureDistribution(Distribution):
         return self._n_rvs
     
     def sample(self, n=1):
-        indices = np.random.choice(len(self._dist), n, p=self._weights)
-        return np.hstack([self._dist[i].sample() for i in indices])
+        # how many samples to take from each dist
+        ns = np.random.multinomial(n, self._weights)
+        idxs = np.arange(len(self._dist))[ns > 0]
+
+        return np.concatenate([
+                self._dist[k].sample(n=ns[k])
+                for k in idxs
+            ])
 
 class ProductDistribution(Distribution):
     r"""
