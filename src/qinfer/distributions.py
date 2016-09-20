@@ -128,11 +128,11 @@ class SingleSampleMixin(with_metaclass(abc.ABCMeta, object)):
 
 class MixtureDistribution(Distribution):
     r"""
-    Takes a non-zero number of QInfer distributions :math:`D_k` as input
-    and returns their weighted sum.
+    Samples from a weighted list of distributions.
     
     :param summands: Distributions to be added together.
-    :param weights: The weights for the sum. 
+    :param weights: Length ``n_dist`` list or ``np.ndarray``
+        of probabilites summing to 1.
     """
     def __init__(self, summands, weights):
         self._n_rvs = summands[0].n_rvs
