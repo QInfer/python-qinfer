@@ -129,26 +129,77 @@ class SingleSampleMixin(with_metaclass(abc.ABCMeta, object)):
 class MixtureDistribution(Distribution):
     r"""
     Samples from a weighted list of distributions.
-    
-    :param dist: Distributions to be added together.
+
+
     :param weights: Length ``n_dist`` list or ``np.ndarray``
-        of probabilites summing to 1.
+    of probabilites summing to 1.
+    :param dist: Either a length ``n_dist`` list of ``Distribution`` instances, 
+        or a ``Distribution`` class, for example, ``NormalDistribution``.
+        It is assumed that a list of ``Distribution``s all 
+        have the same ``n_rvs``.
+    :param dist_args: If ``dist`` is a class, an array 
+        of shape ``(n_dist, n_rvs)`` where ``dist_args[k,:]`` defines 
+        the arguments of the k'th distribution. Use ``None`` if the distribution 
+        has no arguments.
+    :param dist_kw_args: If ``dist`` is a class, a dictionary
+        where each key's value is an array 
+        of shape ``(n_dist, n_rvs)`` where ``dist_kw_args[key][k,:]`` defines 
+        the keyword argument corresponding to ``key`` of the k'th distribution.
+        Use ``None`` if the distribution needs no keyword arguments.
     """
-    def __init__(self, weights, dist):
+
+    def __init__(self, weights, dist, dist_args=None, dist_kw_args=None):
         super(MixtureDistribution, self).__init__()
         self._weights = weights
         self._n_dist = len(weights)
+        try:
+            self._example_dist = dist[0]
+            self._is_dist_list = True
+            self._dist_list = dist
+            assert(self._n_dist == len(self._dist_list))
+        except:
+            self._is_dist_list = False
+            self._dist = dist
+            self._dist_args = dist_args
+            self._dist_kw_args = dist_kw_args
+            assert(self._n_dist == self._dist_args[0])
 
-        self._n_rvs = dist[0].n_rvs
-        assert all(s.n_rvs==self._n_rvs for s in dist), 'Distributions are incompatible.'
-        assert len(weights) == len(dist), 'Lengths of inputs do not match.'
-        assert sum(weights) == 1, 'Weights are not normalized.'
-        self._dist = dist
-        
-    
+            self._example_dist = self._dist(
+                *self._dist_arg(0),
+                **self._dist_kw_arg(0)
+            )
+            
+    def _dist_arg(self, k):
+        """
+        Returns the arguments for the k'th distribution.
+
+        :param int k: Index of distribution in question.
+        :rtype: ``np.ndarary``
+        """
+        if self._dist_args is not None:
+            return self._dist_args[k,:]
+        else:
+            return []
+
+    def _dist_kw_arg(self, k):
+        """
+        Returns a dictionary of keyword arguments 
+        for the k'th distribution.
+
+        :param int k: Index of the distribution in question.
+        :rtype: ``dict``
+        """
+        if self._dist_kw_args is not None:
+            return {
+                key:self._dist_kw_args[key][k,:] 
+                for key in self._dist_kw_args.keys()
+            }
+        else:
+            return {}
+
     @property
     def n_rvs(self):
-        return self._n_rvs
+        return self._example_dist.n_rvs
 
     @property
     def n_dist(self):
@@ -156,14 +207,25 @@ class MixtureDistribution(Distribution):
         The number of distributions in the mixture distribution.
         """
         return self._n_dist
-    
+
     def sample(self, n=1):
         # how many samples to take from each dist
         ns = np.random.multinomial(n, self._weights)
         idxs = np.arange(self.n_dist)[ns > 0]
 
-        return np.concatenate([
-                self._dist[k].sample(n=ns[k])
+        if self._is_dist_list:
+            # sample from each distribution
+            return np.concatenate([
+                self._dist_list[k].sample(n=ns[k])
+                for k in idxs
+            ])
+        else:
+            # instantiate each distribution and then sample
+            return np.concatenate([
+                self._dist(
+                        *self._dist_arg(k),
+                        **self._dist_kw_arg(k)
+                    ).sample(n=ns[k])
                 for k in idxs
             ])
 
