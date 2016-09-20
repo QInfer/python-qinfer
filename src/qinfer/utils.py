@@ -328,6 +328,27 @@ def mvee(points, tol=0.001):
     A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.outer(c,c) )    
     return A, np.transpose(c)
 
+def in_ellipsoid(x, A, c):
+    """
+    Determines which of the points ``x`` are in the 
+    closed ellipsoid with shape matrix ``A`` centered at ``c``.
+    For a single point ``x``, this is computed as 
+
+        .. math::
+            (c-x)^T\cdot A^{-1}\cdot (c-x) \leq 1 
+        
+    :param np.ndarray x: Shape ``(n_points, dim)`` or ``n_points``.
+    :param np.ndarray A: Shape ``(dim, dim)``, positive definite
+    :param np.ndarray c: Shape ``(dim)``
+    :return: `bool` or array of bools of length ``n_points``
+    """
+    if x.ndim == 1:
+        y = c - x
+        return np.einsum('j,jl,l', y, np.linalg.inv(A), y) <= 1
+    else:
+        y = c[np.newaxis,:] - x
+        return np.einsum('ij,jl,il->i', y, np.linalg.inv(A), y) <= 1
+
 def uniquify(seq):
     """
     Returns the unique elements of a sequence ``seq``.
