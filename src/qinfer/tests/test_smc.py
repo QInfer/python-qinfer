@@ -34,10 +34,11 @@ from __future__ import division # Ensures that a/b is always a float.
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 
-from qinfer.tests.base_test import DerandomizedTestCase, MockModel
+from qinfer.tests.base_test import DerandomizedTestCase, MockModel, assert_warns
 from qinfer.abstract_model import FiniteOutcomeModel
 from qinfer.distributions import UniformDistribution
 from qinfer.smc import SMCUpdater
+from qinfer.resamplers import ResamplerWarning
     
 ## CLASSES ####################################################################
 
@@ -70,16 +71,48 @@ class DecimationModel(MockModel):
 
 ## TEST CASES ################################################################
 
-class TestSMC(DerandomizedTestCase):
+class TestSMCEffectiveSampleSize(DerandomizedTestCase):
+    """
+    Tests that the SMCUpdater class correctly implements the effective
+    sample size criterion as a resampling threshold, postselection
+    herald, etc.
+    """
     
     def setUp(self):
-        super(TestSMC, self).setUp()
+        super(TestSMCEffectiveSampleSize, self).setUp()
         self.model = DecimationModel()
+
+    def _mk_updater(self, n_particles, **kwargs):
+        return SMCUpdater(self.model, n_particles, UniformDistribution([0, 1]), **kwargs)
+
+    def test_low_n_ess_warning(self):
+        n_particles = 1000
+        updater = self._mk_updater(n_particles, resample_thresh=0.0)
+        
+        outcomes = np.array([0], dtype=int)
+        expparams = np.ones((1,), dtype=self.model.expparams_dtype)
+        expparams['alpha'][0] = 2 / 1000 # Force the particle number to be 2.
+
+        with assert_warns(ResamplerWarning):
+            updater.update(outcomes, expparams) 
+
+    def test_resample_thresh(self):
+        n_updates = 10
+        n_particles = 1000
+        updater = self._mk_updater(n_particles, resample_thresh=0.5)
+
+        outcomes = np.array([0], dtype=int)
+        expparams = np.ones((1,), dtype=self.model.expparams_dtype)
+        expparams['alpha'][0] = 0.3 # Something less than the threshold, force resampling.
+
+        for idx_update in range(n_updates):
+            updater.update(outcomes, expparams)
+            assert_equal(updater.resample_count, 1 + idx_update)
 
     def test_min_n_ess(self):
         n_updates = 6
         n_particles = 4 ** n_updates # Pick factor of 4 to avoid discretization errors.
-        updater = SMCUpdater(self.model, n_particles, UniformDistribution([0, 1]), resample_thresh=0.0)
+        updater = self._mk_updater(n_particles, resample_thresh=0.0)
 
         outcomes = np.array([0], dtype=int)
         expparams = np.empty((1,), dtype=self.model.expparams_dtype)

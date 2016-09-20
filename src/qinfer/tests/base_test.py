@@ -32,11 +32,14 @@ from future.utils import with_metaclass
 ## IMPORTS ####################################################################
 
 import sys
+import warnings
 import abc
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 import unittest
 from qinfer import Domain, FiniteOutcomeModel
+
+from contextlib import contextmanager
 
 ## FUNCTIONS ##################################################################
 
@@ -72,6 +75,25 @@ def test_model(model, prior, expparams, stream=sys.stderr):
     test = unittest.TestSuite((TestGivenModel, ))
     runner = unittest.TextTestRunner(stream=stream)
     runner.run(test)
+
+@contextmanager
+def assert_warns(category):
+    """
+    Context manager which asserts that its contents raise a particular
+    warning.
+
+    :param type category: Category of the warning that should be raised.
+    """
+
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        # Catch everything.
+        warnings.simplefilter('always')
+
+        yield
+    
+    assert(any([
+        isinstance(warning, category) for warning in caught_warnings
+    ]), "No warning of category {} raised.".format(category))
 
 ## CLASSES ####################################################################
 
