@@ -130,9 +130,8 @@ class MixtureDistribution(Distribution):
     r"""
     Samples from a weighted list of distributions.
 
-
     :param weights: Length ``n_dist`` list or ``np.ndarray``
-    of probabilites summing to 1.
+        of probabilites summing to 1.
     :param dist: Either a length ``n_dist`` list of ``Distribution`` instances, 
         or a ``Distribution`` class, for example, ``NormalDistribution``.
         It is assumed that a list of ``Distribution``s all 
