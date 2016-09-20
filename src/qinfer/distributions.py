@@ -130,25 +130,28 @@ class MixtureDistribution(Distribution):
     r"""
     Samples from a weighted list of distributions.
     
-    :param summands: Distributions to be added together.
+    :param dist: Distributions to be added together.
     :param weights: Length ``n_dist`` list or ``np.ndarray``
         of probabilites summing to 1.
     """
-    def __init__(self, summands, weights):
-        self._n_rvs = summands[0].n_rvs
-        assert all(s.n_rvs()==self._n_rvs for s in summands), 'Summands are incompatible.'
-        assert len(weights) == len(summands), 'Lengths of inputs do not match.'
-        assert sum(weights) == 1, 'Weights are not normalized.'
-        self._summands = summands
+    def __init__(self, weights, dist):
+        super(MixtureDistribution, self).__init__()
         self._weights = weights
+
+        self._n_rvs = dist[0].n_rvs
+        assert all(s.n_rvs()==self._n_rvs for s in dist), 'Distributions are incompatible.'
+        assert len(weights) == len(dist), 'Lengths of inputs do not match.'
+        assert sum(weights) == 1, 'Weights are not normalized.'
+        self._dist = dist
+        
     
     @property
     def n_rvs(self):
         return self._n_rvs
     
     def sample(self, n=1):
-        indices = np.random.choice(len(self._summands), n, p=self._weights)
-        return np.hstack([self._summands[i].sample() for i in indices])
+        indices = np.random.choice(len(self._dist), n, p=self._weights)
+        return np.hstack([self._dist[i].sample() for i in indices])
 
 class ProductDistribution(Distribution):
     r"""
