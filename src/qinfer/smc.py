@@ -60,7 +60,7 @@ import qinfer.resamplers
 import qinfer.clustering
 import qinfer.metrics
 from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
-        particle_covariance_mtx, format_uncertainty
+        particle_covariance_mtx, format_uncertainty, in_ellipsoid
 from qinfer._exceptions import ApproximationWarning, ResamplerWarning
 
 try:
@@ -937,7 +937,7 @@ class SMCUpdater(Distribution):
         :param slice modelparam_slice: Slice over which model parameters
             to consider.
 
-        return: A tuple ``(A, c)`` where ``A`` is the covariance 
+        :return: A tuple ``(A, c)`` where ``A`` is the covariance 
             matrix of the ellipsoid and ``c`` is the center.
             A point :math:`\vec{x}` is in the ellipsoid whenever 
             :math:`(\vec{x}-\vec{c})^{T}A^{-1}(\vec{x}-\vec{c})\leq 1`.
@@ -949,6 +949,89 @@ class SMCUpdater(Distribution):
                 
         A, centroid = mvee(vertices, tol)
         return A, centroid
+
+    def in_credible_region(self, points, level=0.95, modelparam_slice=None, method='', tol=0.0001):
+        """
+        Decides whether each of the points lie within a credible region 
+        of the current distribution.
+
+        If ``tol`` is ``None``, the particles are tested directly against 
+        the convex hull object. If ``tol`` is a positive ``float``, 
+        particles are tested to be in the interior of the smallest 
+        enclosing ellipsoid of this convex hull, see 
+        :meth:`SMCUpdater.region_est_ellipsoid`.
+
+        :param np.ndarray points: An ``np.ndarray`` of shape ``(n_mps)`` for 
+        a single point, or of shape ``(n_points, n_mps)`` for multiple points,
+            where ``n_mps`` corresponds to the same dimensionality as ``param_slice``.
+        :param float level: The desired crediblity level (see
+            :meth:`SMCUpdater.est_credible_region`).
+        :param str method: A string specifying which credible region estimator to 
+            use.
+                - 'pce': Posterior Covariance Ellipsoid. Computes the covariance
+                    matrix of the particle distribution marginalized over the excluded
+                    slices and uses the :math:`\chi^2` distribution to determine
+                    how to rescale it such the the corresponding ellipsoid has 
+                    the correct size. The ellipsoid is translated by the 
+                    mean of the particle distribution. It is determined which 
+                    of the ``points`` are on the interior.
+                - 'hpd-hull': High Posterior Density Convex Hull. 
+                    See :meth:`SMCUpdater.region_est_hull`. Computes the 
+                    HPD region resulting from the particle approximation, computes 
+                    the convex hull of this, and it is determined which 
+                    of the ``points`` are on the interior.  
+                - 'hpd-mvee': High Posterior Density Minimum Volume Enclosing Ellipsoid. 
+                    See :meth:`SMCUpdater.region_est_ellipsoid` 
+                    and :meth:`~qinfer.utils.mvee`. Computes the 
+                    HPD region resulting from the particle approximation, computes 
+                    the convex hull of this, and determines the minimum enclosing 
+                    ellipsoid. Deterimines which 
+                    of the ``points`` are on the interior.  
+        :param float tol: The allowed error tolerance for those methods 
+            which require a tolerance (see :meth:`~qinfer.utils.mvee` and ).
+        :param slice modelparam_slice: A slice describing which model parameters 
+            to consider in the credible region, effectively marginizing out the
+            remaining parameters. By default, all model parameters are included.
+
+        :return: A boolean array of shape ``(n_points)`` specifying whether 
+            each of the points lies inside the confidence region.
+        """
+        
+        s_ = np.s_[modelparam_slice] if modelparam_slice is not None else np.s_[:]
+
+        if method == 'pce':
+            A = self.est_covariance_mtx()[s_, s_]
+            c = self.est_mean()[s_]
+            # chi-squared distribution gives correct level curve conversion
+            mult = scipy.stats.chi2.ppf(level, c.size)
+            results = in_ellipsoid(points, mult * A, c)
+
+        elif method == 'hpd-mvee':
+            tol = 0.0001 if tol is None else tol
+            A, c = region_est_ellipsoid(self, level=level, tol=tol, modelparam_slice=modelparam_slice)
+            results = in_ellipsoid(points, A, c)
+
+        elif method == 'hpd-hull':
+            # it would be more natural to call region_est_hull,
+            # but that function uses ConvexHull which has no 
+            # easy way of determining if a point is interior.
+            # Here, Delaunay gives us access to all of the 
+            # necessary simplices.
+
+            # this fills the convex hull with (n_mps+1)-dimensional
+            # simplices; the convex hull is an almost-everywhere 
+            # disjoint union of these simplices
+            hull = Delaunay(self.est_credible_region(level=level, modelparam_slice=modelparam_slice))
+
+            # now we just check whether each of the given points are in 
+            # any of the simplices. (http://stackoverflow.com/a/16898636/1082565)
+            results = hull.find_simplex(pts) >= 0
+
+        if results.size == 1:
+            results = results[0]
+
+        return results
+            
         
     ## MISC METHODS ###########################################################
     
