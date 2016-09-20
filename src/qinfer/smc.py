@@ -950,7 +950,7 @@ class SMCUpdater(Distribution):
         A, centroid = mvee(vertices, tol)
         return A, centroid
 
-    def in_credible_region(self, points, level=0.95, modelparam_slice=None, method='', tol=0.0001):
+    def in_credible_region(self, points, level=0.95, modelparam_slice=None, method='hpd-hull', tol=0.0001):
         """
         Decides whether each of the points lie within a credible region 
         of the current distribution.
@@ -1026,6 +1026,8 @@ class SMCUpdater(Distribution):
             # now we just check whether each of the given points are in 
             # any of the simplices. (http://stackoverflow.com/a/16898636/1082565)
             results = hull.find_simplex(pts) >= 0
+        else:
+            raise TypeError('Unexpceted method encountered.')
 
         if results.size == 1:
             results = results[0]
