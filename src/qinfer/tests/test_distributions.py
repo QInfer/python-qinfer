@@ -189,19 +189,35 @@ class TestDistributions(DerandomizedTestCase):
         ]
 
         # Test both input formats
-        mix = MixtureDistribution(weights, dist_list)
+        mix1 = MixtureDistribution(weights, dist_list)
+        mix2 = MixtureDistribution(weights, NormalDistribution, 
+            dist_args=np.vstack([means,vars]).T)
+        # Also test with kwargs
+        mix3 = MixtureDistribution(weights, NormalDistribution, 
+            dist_args=np.vstack([means,vars]).T,
+            dist_kw_args={'trunc': np.vstack([means-vars/5,means+vars/5]).T})
         
-        s = mix.sample(100000)
+        s1 = mix1.sample(100000)
+        s2 = mix2.sample(100000)
+        s3 = mix3.sample(100000)
 
         # The mean should be the weighted means.
-        assert_almost_equal(s.mean(), np.dot(weights, means), 2)
+        assert_almost_equal(s1.mean(), np.dot(weights, means), 2)
+        assert_almost_equal(s2.mean(), np.dot(weights, means), 2)
+        assert_almost_equal(s3.mean(), np.dot(weights, means), 2)
 
         # The variance should be given by the law of total variance
         assert_almost_equal(
-            np.var(s),
+            np.var(s1),
             np.dot(weights, vars) + np.dot(weights, means**2) - np.dot(weights, means)**2,
             2
         )
+        assert_almost_equal(
+            np.var(s2),
+            np.dot(weights, vars) + np.dot(weights, means**2) - np.dot(weights, means)**2,
+            2
+        )
+        # Skip the variance test for s3 because truncation messes with it.
 
 
 
