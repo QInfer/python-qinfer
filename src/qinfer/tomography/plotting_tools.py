@@ -265,8 +265,8 @@ def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_ax
     elif region_est_method == 'hull':
         # Find the convex hull from the updater, projected
         # on the rebit axes.
-        verticies, simplices = updater.region_est_hull(level, modelparam_slice=rebit_axes)
-        polygon = Polygon(verticies * np.sqrt(2),
+        faces, vertices = updater.region_est_hull(level, modelparam_slice=rebit_axes)
+        polygon = Polygon(vertices * np.sqrt(2),
             facecolor=pallette[0], alpha=0.4, zorder=-9,
             label=r'Credible Region ($\alpha = {}$)'.format(level),
             edgecolor='k', lw=2, fill=True

@@ -869,6 +869,7 @@ class SMCUpdater(Distribution):
 
         # which slice of modelparams to take
         s_ = np.s_[modelparam_slice] if modelparam_slice is not None else np.s_[:]
+        mps = self.particle_locations[:, s_]
         
         # Start by sorting the particles by weight.
         # We do so by obtaining an array of indices `id_sort` such that
@@ -891,11 +892,11 @@ class SMCUpdater(Distribution):
         # credible particles.
         if return_outside:
             return (
-                self.particle_locations[id_sort, s_][id_cred], 
-                self.particle_locations[id_sort, s_][np.logical_not(id_cred)] 
+                mps[id_sort][id_cred], 
+                mps[id_sort][np.logical_not(id_cred)] 
             )
         else:
-            return self.particle_locations[id_sort, s_][id_cred]
+            return mps[id_sort][id_cred]
     
     def region_est_hull(self, level=0.95, modelparam_slice=None):
         """
