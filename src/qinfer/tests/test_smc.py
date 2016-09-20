@@ -38,7 +38,7 @@ from qinfer.tests.base_test import DerandomizedTestCase, MockModel, assert_warns
 from qinfer.abstract_model import FiniteOutcomeModel
 from qinfer.distributions import UniformDistribution
 from qinfer.smc import SMCUpdater
-from qinfer.resamplers import ResamplerWarning
+from qinfer._exceptions import ApproximationWarning
     
 ## CLASSES ####################################################################
 
@@ -93,7 +93,7 @@ class TestSMCEffectiveSampleSize(DerandomizedTestCase):
         expparams = np.ones((1,), dtype=self.model.expparams_dtype)
         expparams['alpha'][0] = 2 / 1000 # Force the particle number to be 2.
 
-        with assert_warns(ResamplerWarning):
+        with assert_warns(ApproximationWarning):
             updater.update(outcomes, expparams) 
 
     def test_resample_thresh(self):
