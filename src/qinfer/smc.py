@@ -945,7 +945,7 @@ class SMCUpdater(Distribution):
             ``centroid`` is ``np.ndarray`` of shape ``(n_mps)``. 
             ``n_mps`` corresponds to the size of ``param_slice``.
         """
-        _, vertices = self.region_est_hull(level=level, modelparam_slice=None)
+        _, vertices = self.region_est_hull(level=level, modelparam_slice=modelparam_slice)
                 
         A, centroid = mvee(vertices, tol)
         return A, centroid
