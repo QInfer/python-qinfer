@@ -162,7 +162,7 @@ class MixtureDistribution(Distribution):
             self._dist = dist
             self._dist_args = dist_args
             self._dist_kw_args = dist_kw_args
-            assert(self._n_dist == self._dist_args[0])
+            assert(self._n_dist == self._dist_args.shape[0])
 
             self._example_dist = self._dist(
                 *self._dist_arg(0),
