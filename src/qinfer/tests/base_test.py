@@ -91,9 +91,9 @@ def assert_warns(category):
 
         yield
     
-    assert(any([
+    assert any([
         isinstance(warning, category) for warning in caught_warnings
-    ]), "No warning of category {} raised.".format(category))
+    ]), "No warning of category {} raised.".format(category)
 
 ## CLASSES ####################################################################
 
