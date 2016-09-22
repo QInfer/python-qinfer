@@ -50,7 +50,7 @@ class TestNormalDistributions(DerandomizedTestCase):
 
     ## TEST METHODS ##
 
-    def test_univ_normal_moments(self):
+    def test_normal_moments(self):
         """
         Distributions: Checks that the normal distribtion has the right moments.
         """
@@ -60,6 +60,20 @@ class TestNormalDistributions(DerandomizedTestCase):
 
         assert_almost_equal(1, samples.var(), 1)
         assert_almost_equal(0, samples.mean(), 2)
+
+    def test_multivar_normal_moments(self):
+        """
+        Distributions: Checks that the multivariate 
+        normal distribtion has the right moments.
+        """
+        MU = np.array([0,1])
+        COV = np.array([[1,0.2],[0.2,2]])
+        dist = MultivariateNormalDistribution(MU, COV)
+
+        samples = dist.sample(100000)
+
+        assert_almost_equal(COV, np.cov(samples[:,0],samples[:,1]), 1)
+        assert_almost_equal(MU, np.mean(samples, axis=0), 2)
 
 class TestUniformDistribution(DerandomizedTestCase):
     """
