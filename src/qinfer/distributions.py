@@ -145,12 +145,17 @@ class MixtureDistribution(Distribution):
         of shape ``(n_dist, n_rvs)`` where ``dist_kw_args[key][k,:]`` defines 
         the keyword argument corresponding to ``key`` of the k'th distribution.
         Use ``None`` if the distribution needs no keyword arguments.
+    :param bool shuffle: Whether or not to shuffle result after sampling. Not shuffling 
+        will result in variates being in the same order as 
+        the distributions. Default is ``True``.
     """
 
-    def __init__(self, weights, dist, dist_args=None, dist_kw_args=None):
+    def __init__(self, weights, dist, dist_args=None, dist_kw_args=None, shuffle=True):
         super(MixtureDistribution, self).__init__()
         self._weights = weights
         self._n_dist = len(weights)
+        self._shuffle = shuffle
+
         try:
             self._example_dist = dist[0]
             self._is_dist_list = True
@@ -214,19 +219,25 @@ class MixtureDistribution(Distribution):
 
         if self._is_dist_list:
             # sample from each distribution
-            return np.concatenate([
+            samples = np.concatenate([
                 self._dist_list[k].sample(n=ns[k])
                 for k in idxs
             ])
         else:
             # instantiate each distribution and then sample
-            return np.concatenate([
+            samples = np.concatenate([
                 self._dist(
                         *self._dist_arg(k),
                         **self._dist_kw_arg(k)
                     ).sample(n=ns[k])
                 for k in idxs
             ])
+
+        # in-place shuffling
+        if self._shuffle:
+            np.random.shuffle(samples)
+
+        return samples
 
 class ProductDistribution(Distribution):
     r"""
