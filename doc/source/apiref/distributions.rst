@@ -71,6 +71,9 @@ ones.
 .. autoclass:: PostselectedDistribution
     :members:
 
+.. autoclass:: MixtureDistribution
+    :members:
+
 Mixins for Distribution Development
 -----------------------------------
 

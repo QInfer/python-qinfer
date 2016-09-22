@@ -35,6 +35,7 @@ from numpy.testing import assert_equal, assert_almost_equal
 
 from qinfer.tests.base_test import DerandomizedTestCase
 from qinfer.distributions import (
+    MixtureDistribution,
     NormalDistribution,
     UniformDistribution, ConstantDistribution, ProductDistribution,
     BetaDistribution, BetaBinomialDistribution, GammaDistribution
@@ -172,5 +173,59 @@ class TestDistributions(DerandomizedTestCase):
         assert_almost_equal(samples.mean(), mean, 2)
         assert_almost_equal(samples.var(), var, 2)
 
+    def test_mixture_distribution(self):
+        """
+        Distributions: Checks that MixtureDistributions
+        has the correct mean value for the normal 
+        distrubution under both input formats.
+        """
+        weights = np.array([0.25, 0.25, 0.5])
+        means = np.array([1,2,3])
+        vars = np.array([.5, .2, .8])
+
+        dist_list = [
+            NormalDistribution(means[idx], vars[idx])
+            for idx in range(3)
+        ]
+
+        # Test both input formats
+        mix1 = MixtureDistribution(weights, dist_list)
+        mix2 = MixtureDistribution(weights, NormalDistribution, 
+            dist_args=np.vstack([means,vars]).T)
+        # Also test with kwargs
+        mix3 = MixtureDistribution(weights, NormalDistribution, 
+            dist_args=np.vstack([means,vars]).T,
+            dist_kw_args={'trunc': np.vstack([means-vars/5,means+vars/5]).T})
+        # Also test without the shuffle
+        mix4 = MixtureDistribution(weights, dist_list, shuffle=False)
+        
+        s1 = mix1.sample(150000)
+        s2 = mix2.sample(150000)
+        s3 = mix3.sample(150000)
+        s4 = mix4.sample(150000)
+
+        # The mean should be the weighted means.
+        assert_almost_equal(s1.mean(), np.dot(weights, means), 2)
+        assert_almost_equal(s2.mean(), np.dot(weights, means), 2)
+        assert_almost_equal(s3.mean(), np.dot(weights, means), 2)
+        assert_almost_equal(s4.mean(), np.dot(weights, means), 2)
+
+        # The variance should be given by the law of total variance
+        assert_almost_equal(
+            np.var(s1),
+            np.dot(weights, vars) + np.dot(weights, means**2) - np.dot(weights, means)**2,
+            1
+        )
+        assert_almost_equal(
+            np.var(s2),
+            np.dot(weights, vars) + np.dot(weights, means**2) - np.dot(weights, means)**2,
+            1
+        )
+        # Skip the variance test for s3 because truncation messes with it.
+        assert_almost_equal(
+            np.var(s4),
+            np.dot(weights, vars) + np.dot(weights, means**2) - np.dot(weights, means)**2,
+            1
+        )
 
 
