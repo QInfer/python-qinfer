@@ -36,16 +36,17 @@ from numpy.testing import assert_equal, assert_almost_equal
 from qinfer.tests.base_test import DerandomizedTestCase
 from qinfer.distributions import (
     MixtureDistribution,
-    NormalDistribution,
+    NormalDistribution, MultivariateNormalDistribution,
     UniformDistribution, ConstantDistribution, ProductDistribution,
     BetaDistribution, BetaBinomialDistribution, GammaDistribution
 )
 
 ## CLASSES ####################################################################
 
-class TestDistributions(DerandomizedTestCase):
-    # TODO
-
+class TestNormalDistributions(DerandomizedTestCase):
+    """
+    Tests ``NormalDistribution`` and ``MultivariateNormalDistribution``
+    """
 
     ## TEST METHODS ##
 
@@ -59,6 +60,13 @@ class TestDistributions(DerandomizedTestCase):
 
         assert_almost_equal(1, samples.var(), 1)
         assert_almost_equal(0, samples.mean(), 2)
+
+class TestUniformDistribution(DerandomizedTestCase):
+    """
+    Tests ``UniformDistribution``
+    """
+
+    ## TEST METHODS ##
 
     def test_univ_uniform_range(self):
         """
@@ -91,6 +99,13 @@ class TestDistributions(DerandomizedTestCase):
         dist = UniformDistribution([[0, 1], [0, 2], [0, 3]])
         assert dist.sample(100).shape == (100, 3)
 
+class TestConstantDistribution(DerandomizedTestCase):
+    """
+    Tests ``ConstantDistribution``
+    """
+
+    ## TEST METHODS ##
+
     def test_constant(self):
         """
         Distributions: Checks that the constant distribution is constant.
@@ -102,6 +117,13 @@ class TestDistributions(DerandomizedTestCase):
         assert np.all(samples[:, 0] == 1)
         assert np.all(samples[:, 1] == 2)
         assert np.all(samples[:, 2] == 3)
+
+class TestBetaDistributions(DerandomizedTestCase):
+    """
+    Tests ``BetaDistribution`` and ``BetaBinomialDistribution``
+    """
+
+    ## TEST METHODS ##
 
     def test_beta_moments(self):
         """
@@ -150,6 +172,13 @@ class TestDistributions(DerandomizedTestCase):
         assert_almost_equal(samples.mean(), mean, 1)
         assert_almost_equal(samples.var(), var, 1)
 
+class TestGammaDistribution(DerandomizedTestCase):
+    """
+    Tests ``GammaDistribution``
+    """
+
+    ## TEST METHODS ##
+
     def test_gamma_moments(self):
         """
         Distributions: Checks that the gamma distribution has the right
@@ -173,7 +202,14 @@ class TestDistributions(DerandomizedTestCase):
         assert_almost_equal(samples.mean(), mean, 2)
         assert_almost_equal(samples.var(), var, 2)
 
-    def test_mixture_distribution(self):
+class TestMixtureDistribution(DerandomizedTestCase):
+    """
+    Tests ``MixtureDistribution``
+    """
+
+    ## TEST METHODS ##
+
+    def test_mixture_moments(self):
         """
         Distributions: Checks that MixtureDistributions
         has the correct mean value for the normal 
