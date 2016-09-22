@@ -111,7 +111,6 @@ class TestCredibleRegions(DerandomizedTestCase):
         Tests that region_est_ellipsoid works.
         """
 
-        #dist = MultivariateNormalDistribution(self.MEAN, self.COV)
         dist = MultivariateNormalDistribution(self.MEAN, self.COV)
         # the model is irrelevant; we just want the updater to have some particles
         # with the desired normal distribution.
@@ -133,3 +132,68 @@ class TestCredibleRegions(DerandomizedTestCase):
             QC / np.linalg.norm(QC),
             1   
         )
+
+    def test_in_credible_region(self):
+        """
+        Tests that in_credible_region works.
+        """
+
+        dist = MultivariateNormalDistribution(self.MEAN, self.COV)
+        # the model is irrelevant; we just want the updater to have some particles
+        # with the desired normal distribution.
+        u = SMCUpdater(MockModel(4), self.N_PARTICLES, dist)
+
+        # some points to test with
+        test_points = np.random.multivariate_normal(self.MEAN, self.COV, self.N_PARTICLES)
+        
+        # method='pce'
+        results = [
+            u.in_credible_region(test_points, level=0.9, method='pce'),
+            u.in_credible_region(test_points, level=0.84, method='pce'),
+            u.in_credible_region(test_points, level=0.5, method='pce'),
+        ]
+        assert_almost_equal(
+            np.array([np.mean(x.astype('float')) for x in results]),
+            np.array([0.9, 0.84, 0.5]),
+            3
+        )
+
+        # method='hpd-hull'
+        results1 = [
+            u.in_credible_region(test_points, level=0.9, method='hpd-hull'),
+            u.in_credible_region(test_points, level=0.84, method='hpd-hull'),
+            u.in_credible_region(test_points, level=0.5, method='hpd-hull'),
+        ]
+        assert_array_less(
+            np.array([0.9, 0.84, 0.5]),
+            np.array([np.mean(x.astype('float')) for x in results1])
+        )
+
+        # method='hpd-mvee'
+        results2 = [
+            u.in_credible_region(test_points, level=0.9, method='hpd-mvee'),
+            u.in_credible_region(test_points, level=0.84, method='hpd-mvee'),
+            u.in_credible_region(test_points, level=0.5, method='hpd-mvee'),
+        ]
+        assert_array_less(
+            np.array([0.9, 0.84, 0.5]),
+            np.array([np.mean(x.astype('float')) for x in results2])
+        )
+
+        # the mvee should be bigger than the convex hull.
+        # this passes iff all points in the ellipses are 
+        # also in the hulls.
+        assert_array_less(
+            np.hstack([x.astype('float') for x in results1]),
+            np.hstack([x.astype('float') for x in results2]) + 0.5
+        )
+
+        # check for no failures with slices.
+        u.in_credible_region(test_points[:100,self.SLICE], level=0.9, method='pce', modelparam_slice=self.SLICE)
+        u.in_credible_region(test_points[:100,self.SLICE], level=0.9, method='hpd-hull', modelparam_slice=self.SLICE)
+        u.in_credible_region(test_points[:100,self.SLICE], level=0.9, method='hpd-mvee', modelparam_slice=self.SLICE)
+
+        # check for no failures with single inputs
+        assert(u.in_credible_region(test_points[0,:], level=0.9, method='pce').size == 1)
+        assert(u.in_credible_region(test_points[0,:], level=0.9, method='hpd-hull').size == 1)
+        assert(u.in_credible_region(test_points[0,:], level=0.9, method='hpd-mvee').size == 1)
