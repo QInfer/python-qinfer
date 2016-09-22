@@ -274,6 +274,39 @@ class TestGammaDistribution(DerandomizedTestCase):
         dist = GammaDistribution(alpha=10,beta=42)
         assert(dist.n_rvs == 1)
 
+class TestProductDistribution(DerandomizedTestCase):
+    """
+    Tests ``ProductDistribution``
+    """
+
+    ## TEST METHODS ##
+
+    def test_product_moments(self):
+        """
+        Distributions: Checks that product distributions
+        have the right moments.
+        """
+
+        dist1 = NormalDistribution(0,1)
+        dist2 = MultivariateNormalDistribution(np.array([1,2]),np.array([[2,0],[0,3]]))
+        dist = ProductDistribution(dist1, dist2)
+
+        samples = dist.sample(100000)
+
+        assert_almost_equal(np.round(np.mean(samples, axis=0)), np.array([0,1,2]))
+        assert_almost_equal(np.round(np.var(samples[:,0])), 1)
+        assert_almost_equal(np.round(np.var(samples[:,1])), 2)
+        assert_almost_equal(np.round(np.var(samples[:,2])), 3)
+
+    def test_product_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist1 = NormalDistribution(0,1)
+        dist2 = MultivariateNormalDistribution(np.array([1,2]),np.array([[2,0],[0,3]]))
+        dist = ProductDistribution(dist1, dist2)
+        assert(dist.n_rvs == 3)
+
 class TestMixtureDistribution(DerandomizedTestCase):
     """
     Tests ``MixtureDistribution``
