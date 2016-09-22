@@ -35,6 +35,7 @@ from numpy.testing import assert_equal, assert_almost_equal
 
 from qinfer.tests.base_test import DerandomizedTestCase
 from qinfer.distributions import (
+    Distribution, SingleSampleMixin,
     MixtureDistribution,
     NormalDistribution, MultivariateNormalDistribution,
     UniformDistribution, ConstantDistribution, ProductDistribution,
@@ -306,6 +307,41 @@ class TestProductDistribution(DerandomizedTestCase):
         dist2 = MultivariateNormalDistribution(np.array([1,2]),np.array([[2,0],[0,3]]))
         dist = ProductDistribution(dist1, dist2)
         assert(dist.n_rvs == 3)
+
+class TestSingleSampleMixin(DerandomizedTestCase):
+    """
+    Tests ``SingleSampleMixin``
+    """
+
+    ## TEST METHODS ##
+
+    def test_single_sample_mixin(self):
+        """
+        Distributions: Tests that subclassing from 
+        SingleSampleMixin works.
+        """
+
+        class TestDist(SingleSampleMixin, Distribution):
+            def __init__(self, dist):
+                super(TestDist, self).__init__()
+                self._dist = dist
+            @property
+            def n_rvs(self):
+                return self._dist.n_rvs
+            def _sample(self):
+                return self._dist.sample(n=1)
+
+        dist1 = TestDist(NormalDistribution(0,1))
+        dist2 = TestDist(MultivariateNormalDistribution(np.array([1,2]),np.array([[2,0],[0,3]])))
+
+        sample1 = dist1.sample(500)
+        sample2 = dist2.sample(500)
+
+        assert(sample1.shape == (500,1))
+        assert(sample2.shape == (500,2))
+
+        assert_almost_equal(np.round(np.mean(sample1,axis=0)), 0)
+        assert_almost_equal(np.round(np.mean(sample2,axis=0)), np.array([1,2]))
 
 class TestMixtureDistribution(DerandomizedTestCase):
     """
