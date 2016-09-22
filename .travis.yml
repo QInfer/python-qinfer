@@ -11,6 +11,7 @@ addons:
     packages:
       - texlive
       - texlive-latex-extra
+      - texlive-fonts-extra
 
 # Explicitly add doctest support as separate parts of the build matrix,
 # since these tests require additional packages that should be optional.
