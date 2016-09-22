@@ -61,6 +61,13 @@ class TestNormalDistributions(DerandomizedTestCase):
         assert_almost_equal(1, samples.var(), 1)
         assert_almost_equal(0, samples.mean(), 2)
 
+    def test_normal_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = NormalDistribution(0, 1)
+        assert(dist.n_rvs == 1)
+
     def test_multivar_normal_moments(self):
         """
         Distributions: Checks that the multivariate 
@@ -74,6 +81,15 @@ class TestNormalDistributions(DerandomizedTestCase):
 
         assert_almost_equal(COV, np.cov(samples[:,0],samples[:,1]), 1)
         assert_almost_equal(MU, np.mean(samples, axis=0), 2)
+    
+    def test_multivar_normal_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        MU = np.array([0,1])
+        COV = np.array([[1,0.2],[0.2,2]])
+        dist = MultivariateNormalDistribution(MU, COV)
+        assert(dist.n_rvs == 2)
 
 class TestUniformDistribution(DerandomizedTestCase):
     """
@@ -106,12 +122,26 @@ class TestUniformDistribution(DerandomizedTestCase):
         assert_almost_equal(1 / 12, samples.var(), 2)
         assert_almost_equal(1 / 2, samples.mean(), 2)
 
+    def test_univ_uniform_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = UniformDistribution([[0, 1]])
+        assert(dist.n_rvs == 1)
+
     def test_uniform_shape(self):
         """
         Distributions: Checks that the multivar. uni. dist has the right shape.
         """
         dist = UniformDistribution([[0, 1], [0, 2], [0, 3]])
         assert dist.sample(100).shape == (100, 3)
+
+    def test_uniform_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = UniformDistribution([[0, 1], [0, 2], [0, 3]])
+        assert(dist.n_rvs == 3)
 
 class TestConstantDistribution(DerandomizedTestCase):
     """
@@ -131,6 +161,13 @@ class TestConstantDistribution(DerandomizedTestCase):
         assert np.all(samples[:, 0] == 1)
         assert np.all(samples[:, 1] == 2)
         assert np.all(samples[:, 2] == 3)
+
+    def test_constant_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = ConstantDistribution([1, 2, 3])
+        assert(dist.n_rvs == 3)
 
 class TestBetaDistributions(DerandomizedTestCase):
     """
@@ -162,6 +199,13 @@ class TestBetaDistributions(DerandomizedTestCase):
         assert_almost_equal(samples.mean(), mean, 2)
         assert_almost_equal(samples.var(), var, 2)
 
+    def test_beta_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = BetaDistribution(alpha=10,beta=42)
+        assert(dist.n_rvs == 1)
+
     def test_betabinomial_moments(self):
         """
         Distributions: Checks that the beta-binomial distribution has the right
@@ -185,6 +229,13 @@ class TestBetaDistributions(DerandomizedTestCase):
         assert samples.shape == (1000000,1)
         assert_almost_equal(samples.mean(), mean, 1)
         assert_almost_equal(samples.var(), var, 1)
+
+    def test_betabinomial_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = BetaBinomialDistribution(10, alpha=10,beta=42)
+        assert(dist.n_rvs == 1)
 
 class TestGammaDistribution(DerandomizedTestCase):
     """
@@ -215,6 +266,13 @@ class TestGammaDistribution(DerandomizedTestCase):
         assert samples.shape == (100000,1)
         assert_almost_equal(samples.mean(), mean, 2)
         assert_almost_equal(samples.var(), var, 2)
+    
+    def test_gamma_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = GammaDistribution(alpha=10,beta=42)
+        assert(dist.n_rvs == 1)
 
 class TestMixtureDistribution(DerandomizedTestCase):
     """
@@ -277,5 +335,29 @@ class TestMixtureDistribution(DerandomizedTestCase):
             np.dot(weights, vars) + np.dot(weights, means**2) - np.dot(weights, means)**2,
             1
         )
+
+    def test_mixture_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        weights = np.array([0.25, 0.25, 0.5])
+        means = np.array([1,2,3])
+        vars = np.array([.5, .2, .8])
+        dist_list = [
+            NormalDistribution(means[idx], vars[idx])
+            for idx in range(3)
+        ]
+        dist = MixtureDistribution(weights, dist_list)
+        assert(dist.n_rvs == 1)
+
+        weights = np.array([0.25, 0.25, 0.5])
+        means = np.array([[1,0],[2,0],[3,1]])
+        vars = np.array([[[1,0.2],[0.2,2]],[[3,0.2],[0.2,2]],[[2,0.2],[0.2,2]]])
+        dist_list = [
+            MultivariateNormalDistribution(means[idx], vars[idx])
+            for idx in range(3)
+        ]
+        dist = MixtureDistribution(weights, dist_list)
+        assert(dist.n_rvs == 2)
 
 
