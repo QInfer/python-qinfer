@@ -926,7 +926,7 @@ class SMCUpdater(Distribution):
         return points[hull.simplices], points[uniquify(hull.vertices.flatten())]
 
     def region_est_ellipsoid(self, level=0.95, tol=0.0001, modelparam_slice=None):
-        """
+        r"""
         Estimates a credible region over models by finding the minimum volume
         enclosing ellipse (MVEE) of a credible subset of particles.
         
@@ -962,39 +962,46 @@ class SMCUpdater(Distribution):
         :meth:`SMCUpdater.region_est_ellipsoid`.
 
         :param np.ndarray points: An ``np.ndarray`` of shape ``(n_mps)`` for 
-        a single point, or of shape ``(n_points, n_mps)`` for multiple points,
+            a single point, or of shape ``(n_points, n_mps)`` for multiple points,
             where ``n_mps`` corresponds to the same dimensionality as ``param_slice``.
         :param float level: The desired crediblity level (see
             :meth:`SMCUpdater.est_credible_region`).
         :param str method: A string specifying which credible region estimator to 
-            use.
-                - 'pce': Posterior Covariance Ellipsoid. Computes the covariance
-                    matrix of the particle distribution marginalized over the excluded
-                    slices and uses the :math:`\chi^2` distribution to determine
-                    how to rescale it such the the corresponding ellipsoid has 
-                    the correct size. The ellipsoid is translated by the 
-                    mean of the particle distribution. It is determined which 
-                    of the ``points`` are on the interior.
-                - 'hpd-hull': High Posterior Density Convex Hull. 
-                    See :meth:`SMCUpdater.region_est_hull`. Computes the 
-                    HPD region resulting from the particle approximation, computes 
-                    the convex hull of this, and it is determined which 
-                    of the ``points`` are on the interior.  
-                - 'hpd-mvee': High Posterior Density Minimum Volume Enclosing Ellipsoid. 
-                    See :meth:`SMCUpdater.region_est_ellipsoid` 
-                    and :meth:`~qinfer.utils.mvee`. Computes the 
-                    HPD region resulting from the particle approximation, computes 
-                    the convex hull of this, and determines the minimum enclosing 
-                    ellipsoid. Deterimines which 
-                    of the ``points`` are on the interior.  
+            use. One of ``'pce'``, ``'hpd-hull'`` or ``'hpd-mvee'`` (see below).
         :param float tol: The allowed error tolerance for those methods 
-            which require a tolerance (see :meth:`~qinfer.utils.mvee` and ).
+            which require a tolerance (see :meth:`~qinfer.utils.mvee`).
         :param slice modelparam_slice: A slice describing which model parameters 
             to consider in the credible region, effectively marginizing out the
             remaining parameters. By default, all model parameters are included.
 
-        :return: A boolean array of shape ``(n_points)`` specifying whether 
+        :return: A boolean array of shape ``(n_points, )`` specifying whether 
             each of the points lies inside the confidence region.
+
+        Methods
+        ~~~~~~~
+
+        The following values are valid for the ``method`` argument.
+
+        - ``'pce'``: Posterior Covariance Ellipsoid.
+            Computes the covariance
+            matrix of the particle distribution marginalized over the excluded
+            slices and uses the :math:`\chi^2` distribution to determine
+            how to rescale it such the the corresponding ellipsoid has 
+            the correct size. The ellipsoid is translated by the 
+            mean of the particle distribution. It is determined which 
+            of the ``points`` are on the interior.
+        - ``'hpd-hull'``: High Posterior Density Convex Hull. 
+            See :meth:`SMCUpdater.region_est_hull`. Computes the 
+            HPD region resulting from the particle approximation, computes 
+            the convex hull of this, and it is determined which 
+            of the ``points`` are on the interior.  
+        - ``'hpd-mvee'``: High Posterior Density Minimum Volume Enclosing Ellipsoid. 
+            See :meth:`SMCUpdater.region_est_ellipsoid` 
+            and :meth:`~qinfer.utils.mvee`. Computes the 
+            HPD region resulting from the particle approximation, computes 
+            the convex hull of this, and determines the minimum enclosing 
+            ellipsoid. Deterimines which 
+            of the ``points`` are on the interior.  
         """
         
         if method == 'pce':
