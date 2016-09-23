@@ -151,7 +151,7 @@ class TestLogNormalDistribution(DerandomizedTestCase):
 
 class TestUniformDistribution(DerandomizedTestCase):
     """
-    Tests ``UniformDistribution``
+    Tests ``UniformDistribution`` and ``DiscreteUniformDistribution``
     """
 
     ## TEST METHODS ##
@@ -200,6 +200,25 @@ class TestUniformDistribution(DerandomizedTestCase):
         """
         dist = UniformDistribution([[0, 1], [0, 2], [0, 3]])
         assert(dist.n_rvs == 3)
+
+    def test_discrete_uniform_moments(self):
+        """
+        Distributions: Checks that the discrete uniform dist. has the right moments.
+        """
+        dist = DiscreteUniformDistribution(5)
+        samples = dist.sample(200000).astype(float)
+
+        assert_sigfigs_equal((2**10-1)/12, np.var(samples), 1)
+        assert_sigfigs_equal(16, np.mean(samples), 1)
+
+    def test_discrete_uniform_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = DiscreteUniformDistribution(5)
+        assert(dist.n_rvs == 1)
+
+        
 
 class TestMVUniformDistribution(DerandomizedTestCase):
     """

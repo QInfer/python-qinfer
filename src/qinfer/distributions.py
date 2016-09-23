@@ -53,6 +53,7 @@ __all__ = [
     'MixtureDistribution',
     'ProductDistribution',
     'UniformDistribution',
+    'DiscreteUniformDistribution',
     'MVUniformDistribution',
     'ConstantDistribution',
     'NormalDistribution',
@@ -608,7 +609,7 @@ class MVUniformDistribution(Distribution):
 class DiscreteUniformDistribution(Distribution):
     """
     Discrete uniform distribution over the integers between 
-    ``0`` and ``2**num_bits`` inclusive.
+    ``0`` and ``2**num_bits-1`` inclusive.
 
     :param int num_bits: non-negative integer specifying
         how big to make the interval.
@@ -622,7 +623,7 @@ class DiscreteUniformDistribution(Distribution):
         return 1
 
     def sample(self, n=1):
-        z = np.random.randint(2**self._num_bits,n)
+        z = np.random.randint(2**self._num_bits,size=n)
         return z
 
 class HilbertSchmidtUniform(SingleSampleMixin, Distribution):
