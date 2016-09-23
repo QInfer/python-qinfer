@@ -43,6 +43,11 @@ install:
   - conda install --yes numpy scipy matplotlib scikit-learn sphinx
   - conda update --yes --all
   - pip install -r requirements.txt
+  # Before proceeding, we pause to list all installed conda and pip
+  # packages for later debugging.
+  - conda list
+  - pip list
+  # Now we run the installer for QInfer itself.
   - python setup.py install
   # We need to run doctest, which requires installing at least what
   # ReadTheDocs has. That said, we require that QInfer installs
