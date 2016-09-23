@@ -398,12 +398,19 @@ class MultivariateNormalDistribution(Distribution):
 
 
 class SlantedNormalDistribution(Distribution):
-    """
-    Uniform distribution on a given rectangular region.
+    r"""
+    Uniform distribution on a given rectangular region  with 
+    additive noise. Random variates from this distribution 
+    follow :math:`X+Y` where :math:`X` is drawn uniformly 
+    with respect to the rectangular region defined by ranges, and 
+    :math:`Y` is normally distributed about 0 with variance 
+    ``1/weight``.
 
     :param numpy.ndarray ranges: Array of shape ``(n_rvs, 2)``, where ``n_rvs``
         is the number of random variables, specifying the upper and lower limits
         for each variable.
+    :param float weight: Number specifying the inverse variance 
+        of the additive noise term.
     """
 
     def __init__(self, ranges=_DEFAULT_RANGES, weight=0.01):
@@ -415,7 +422,7 @@ class SlantedNormalDistribution(Distribution):
 
         self._ranges = ranges
         self._n_rvs = ranges.shape[0]
-        #self._delta = ranges[:, 1] - ranges[:, 0]
+        self._delta = ranges[:, 1] - ranges[:, 0]
         self._weight = weight
 
     @property
@@ -425,7 +432,7 @@ class SlantedNormalDistribution(Distribution):
     def sample(self, n=1):
         shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
         z = np.random.randn(n,self._n_rvs)
-        return self._ranges[:, 0] +self._weight*z+np.random.rand(n)*self._ranges[:, 1];
+        return self._ranges[:, 0] +self._weight*z+np.random.rand(n)*self._delta;
 
 class LogNormalDistribution(Distribution):
     """
