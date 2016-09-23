@@ -133,6 +133,55 @@ class MockModel(FiniteOutcomeModel):
         pr0 = np.ones((modelparams.shape[0], expparams.shape[0])) / 2
         return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 
+class MockAsyncResult(object):
+    def __init__(self, value):
+        self._value = value
+
+def MockAsyncMapResult(MockAsyncResult):
+    def __iter__(self):
+        return iter(self._value)
+
+class MockDirectView(object):
+    """
+    Object that mocks up an ipyparallel DirectView
+    using serial execution, allowing for testing of
+    classes that make use of ipyparallel without needing
+    to install more libraries.
+    """
+
+    n_engines = None
+
+    def __init__(self, n_engines=1):
+        self.n_engines = n_engines
+
+    def __len__(self):
+        return self.n_engines
+
+    def clear(targets=None, block=None):
+        raise NotImplementedError
+
+    def execute(self, code, silent=True, targets=None, block=None):
+        exec(code)
+    
+    def gather(self, key, dist='b', targets=None, block=None):
+        raise NotImplementedError
+
+    def get(self, key_s):
+        raise NotImplementedError
+
+    def map(self, f, *sequences, **kwargs):
+        if 'block' in kwargs and kwargs['block']:
+            return list(map(f, *sequences))
+        else:
+            return MockAsyncMapResult(list(map(f, *sequences)))
+
+    def map_sync(self, f, *sequences):
+        return self.map(f, *sequences, **dict(block=True))
+
+    def map_async(self, f, *sequences):
+        return self.map(f, *sequences, **dict(block=False))
+
+
 class DerandomizedTestCase(unittest.TestCase):
 
     ## SETUP AND TEARDOWN ##
