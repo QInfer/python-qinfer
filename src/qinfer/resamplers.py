@@ -97,6 +97,7 @@ class ClusteringResampler(object):
     """
     
     def __init__(self, eps=0.5, secondary_resampler=None, min_particles=5, metric='euclidean', weighted=False, w_pow=0.5, quiet=True):
+        warnings.warn("This class is deprecated, and will be removed in a future version.", DeprecationWarning)
         self.secondary_resampler = (
             secondary_resampler
             if secondary_resampler is not None
