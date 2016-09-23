@@ -41,7 +41,7 @@ before_install:
 
 install:
   - conda install --yes numpy scipy matplotlib scikit-learn sphinx
-  - conda update --yes conda
+  - conda update --yes --all
   - pip install -r requirements.txt
   - python setup.py install
   # We need to run doctest, which requires installing at least what
