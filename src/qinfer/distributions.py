@@ -53,6 +53,7 @@ __all__ = [
     'MixtureDistribution',
     'ProductDistribution',
     'UniformDistribution',
+    'MVUniformDistribution',
     'ConstantDistribution',
     'NormalDistribution',
     'MultivariateNormalDistribution',
@@ -583,6 +584,16 @@ class GammaDistribution(Distribution):
         return self._dist.rvs(size=n)[:, np.newaxis] / self.beta
 
 class MVUniformDistribution(object):
+    r"""
+    Uniform distribution over the rectangle
+    :math:`[0,1]^{\text{dim}}` with the restriction
+    that vector must sum to 1. Equivalently, a 
+    uniform distribution over the ``dim-1`` simplex 
+    whose vertices are the canonical unit vectors of
+    :math:`\mathbb{R}^\text{dim}`.
+
+    :param int dim: Number of dimensions; ``n_rvs``.
+    """
 
     def __init__(self, dim = 6):
         self.dim = dim

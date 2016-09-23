@@ -201,6 +201,30 @@ class TestUniformDistribution(DerandomizedTestCase):
         dist = UniformDistribution([[0, 1], [0, 2], [0, 3]])
         assert(dist.n_rvs == 3)
 
+class TestMVUniformDistribution(DerandomizedTestCase):
+    """
+    Tests ``MVUniformDistribution``
+    """
+
+    ## TEST METHODS ##
+
+def test_mvuniform_moments(self):
+        """
+        Distributions: Checks that ``MVUniformDistribution`` has the right moments.
+        """
+        dist = MVUniformDistribution(dim=6)
+        samples = dist.sample(100000)
+
+        assert_sigfigs_equal(5/(36*7), samples[:,3].var(), 2)
+        assert_sigfigs_equal(np.array([1/6]*6), np.mean(samples, axis=0), 2)
+
+def test_mvuniform_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = MVUniformDistribution(dim=3)
+        assert(dist.n_rvs == 3)
+
 class TestConstantDistribution(DerandomizedTestCase):
     """
     Tests ``ConstantDistribution``
