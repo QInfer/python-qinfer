@@ -38,9 +38,49 @@ from numpy.testing import assert_equal, assert_almost_equal
 
 from qinfer.tests.base_test import DerandomizedTestCase, MockModel, assert_warns
 
-from qinfer.utils import in_ellipsoid
+from qinfer.utils import in_ellipsoid, assert_sigfigs_equal
 
 ## TESTS #####################################################################
+
+class TestNumericTests(DerandomizedTestCase):
+
+    def test_assert_sigfigs_equal(self):
+        """
+        Tests to make sure assert_sigfigs_equal
+        only passes if the correct number of 
+        significant figures match
+        """
+
+        # these are the same to 6 sigfigs
+        assert_sigfigs_equal(
+            np.array([3.141592]),
+            np.array([3.141593]),
+            6
+        )
+        # these are only the same to 5 sigfigs
+        self.assertRaises(
+            AssertionError,
+            assert_sigfigs_equal,
+            np.array([3.14159]),
+            np.array([3.14158]),
+            6
+        )
+
+        # these are the same to 3 sigfigs
+        assert_sigfigs_equal(
+            np.array([1729]),
+            np.array([1728]),
+            3
+        )
+        # these are only the same to 3 sigfigs
+        self.assertRaises(
+            AssertionError,
+            assert_sigfigs_equal,
+            np.array([1729]),
+            np.array([1728]),
+            4
+        )
+        
 
 class TestEllipsoids(DerandomizedTestCase):
 
