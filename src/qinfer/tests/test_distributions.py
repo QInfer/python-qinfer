@@ -96,7 +96,24 @@ class TestSlantedNormalDistribution(DerandomizedTestCase):
     ## TEST METHODS ##
 
     #TODO
-    pass
+    def test_slantednormal_moments(self):
+        """
+        Distributions: Checks that the slanted normal
+        distribution has the right moments.
+        """
+        ranges = [[0,1],[0,2],[2,3]]
+        weight = 2
+        dist = SlantedNormalDistribution(ranges=ranges, weight=weight)
+
+        samples = dist.sample(150000)
+
+        assert_sigfigs_equal(
+            np.mean(np.array(ranges), axis=1), 
+            np.mean(samples, axis=0), 
+        1)
+        assert_sigfigs_equal(1/12+4, samples[:,0].var(), 1)
+        assert_sigfigs_equal(4/12+4, samples[:,1].var(), 1)
+        assert_sigfigs_equal(1/12+4, samples[:,2].var(), 1)
 
 class TestLogNormalDistribution(DerandomizedTestCase):
     """

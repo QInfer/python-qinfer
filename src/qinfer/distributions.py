@@ -404,7 +404,7 @@ class SlantedNormalDistribution(Distribution):
     follow :math:`X+Y` where :math:`X` is drawn uniformly 
     with respect to the rectangular region defined by ranges, and 
     :math:`Y` is normally distributed about 0 with variance 
-    ``1/weight``.
+    ``weight**2``.
 
     :param numpy.ndarray ranges: Array of shape ``(n_rvs, 2)``, where ``n_rvs``
         is the number of random variables, specifying the upper and lower limits
@@ -431,8 +431,10 @@ class SlantedNormalDistribution(Distribution):
 
     def sample(self, n=1):
         shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
-        z = np.random.randn(n,self._n_rvs)
-        return self._ranges[:, 0] +self._weight*z+np.random.rand(n)*self._delta;
+        z = np.random.randn(n, self._n_rvs)
+        return self._ranges[:, 0] + \
+                self._weight*z + \
+                np.random.rand(n, self._n_rvs)*self._delta[np.newaxis,:]
 
 class LogNormalDistribution(Distribution):
     """
