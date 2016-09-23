@@ -20,6 +20,16 @@ algorithm as the effective sample size is reduced, *resampling* is used to
 adaptively move particles so as to better represent the posterior distribution.
 **QInfer** allows for such algorithms to be specified in a modular way.
 
+:class:`Resampler` - Abstract base class for resampling algorithms
+------------------------------------------------------------------
+
+Class Reference
+~~~~~~~~~~~~~~~
+
+.. autoclass:: Resampler
+    :members:
+    :special-members: __call__
+
 :class:`LiuWestResampler` -  Liu and West (2000) resampling algorithm
 ---------------------------------------------------------------------
 
@@ -28,3 +38,4 @@ Class Reference
 
 .. autoclass:: LiuWestResampler
     :members:
+    :special-members: __call__
