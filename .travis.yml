@@ -6,6 +6,13 @@ python:
   - "3.4"
   - "3.5"
 
+addons:
+  apt:
+    packages:
+      - texlive
+      - texlive-latex-extra
+      - texlive-fonts-extra
+
 # Explicitly add doctest support as separate parts of the build matrix,
 # since these tests require additional packages that should be optional.
 matrix:
@@ -55,6 +62,7 @@ script:
   - if [[ "${DOCTEST}" == "1" ]]; then
       cd $TRAVIS_BUILD_DIR/doc;
       make doctest;
+      make latexpdf;
     fi
 
 after_success:
