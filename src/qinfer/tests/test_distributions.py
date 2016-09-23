@@ -208,7 +208,7 @@ class TestMVUniformDistribution(DerandomizedTestCase):
 
     ## TEST METHODS ##
 
-def test_mvuniform_moments(self):
+    def test_mvuniform_moments(self):
         """
         Distributions: Checks that ``MVUniformDistribution`` has the right moments.
         """
@@ -218,7 +218,7 @@ def test_mvuniform_moments(self):
         assert_sigfigs_equal(5/(36*7), samples[:,3].var(), 2)
         assert_sigfigs_equal(np.array([1/6]*6), np.mean(samples, axis=0), 2)
 
-def test_mvuniform_n_rvs(self):
+    def test_mvuniform_n_rvs(self):
         """
         Distributions: Tests for expected number of RVS.
         """

@@ -583,7 +583,7 @@ class GammaDistribution(Distribution):
     def sample(self, n=1):
         return self._dist.rvs(size=n)[:, np.newaxis] / self.beta
 
-class MVUniformDistribution(object):
+class MVUniformDistribution(Distribution):
     r"""
     Uniform distribution over the rectangle
     :math:`[0,1]^{\text{dim}}` with the restriction
@@ -596,12 +596,24 @@ class MVUniformDistribution(object):
     """
 
     def __init__(self, dim = 6):
-        self.dim = dim
+        self._dim = dim
+
+    @property
+    def n_rvs(self):
+        return self._dim
 
     def sample(self, n = 1):
-        return np.random.mtrand.dirichlet(np.ones(self.dim),n)
+        return np.random.mtrand.dirichlet(np.ones(self._dim),n)
 
 class DiscreteUniformDistribution(Distribution):
+    """
+    Discrete uniform distribution over the integers between 
+    ``0`` and ``2**num_bits`` inclusive.
+
+    :param int num_bits: non-negative integer specifying
+        how big to make the interval.
+    """
+
     def __init__(self, num_bits):
         self._num_bits = num_bits
 
