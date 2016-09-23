@@ -24,7 +24,7 @@ matrix:
 
 env:
   global:
-    - MPL_BACKEND: Agg
+    - MPLBACKEND: Agg
     - secure: 
 
 notifications:
@@ -44,7 +44,7 @@ install:
   - conda install --yes numpy scipy matplotlib scikit-learn sphinx
   # Before proceeding to install anything else, we debu
   # by making sure that the conda install didn't break matplotlib.
-  - python -c "import matplotlib.pyplot as plt"
+  - python -c "import matplotlib.pyplot as plt; print('Using MPL backend:'); print(plt.get_backend())" 
   - pip install -r requirements.txt
   # Before proceeding, we pause to list all installed conda and pip
   # packages for later debugging.
