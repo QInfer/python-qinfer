@@ -292,6 +292,13 @@ def mvee(points, tol=0.001):
     Returns the minimum-volume enclosing ellipse (MVEE)
     of a set of points, using the Khachiyan algorithm.
     """
+
+    # This function is a port of the matlab function by 
+    # Nima Moshtagh found here:
+    # https://www.mathworks.com/matlabcentral/fileexchange/9542-minimum-volume-enclosing-ellipsoid
+    # with accompanying writup here:
+    # https://www.researchgate.net/profile/Nima_Moshtagh/publication/254980367_MINIMUM_VOLUME_ENCLOSING_ELLIPSOIDS/links/54aab5260cf25c4c472f487a.pdf
+
     N, d = points.shape
     
     Q = np.zeros([N,d+1])
@@ -304,7 +311,6 @@ def mvee(points, tol=0.001):
     err = 1
     u = (1/N) * np.ones(shape = (N,))
 
-    # Khachiyan Algorithm TODO:find ref
     while err > tol:
         
         X = np.dot(np.dot(Q, np.diag(u)), np.transpose(Q))
@@ -321,6 +327,27 @@ def mvee(points, tol=0.001):
     c = np.dot(points,u)
     A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.outer(c,c) )    
     return A, np.transpose(c)
+
+def in_ellipsoid(x, A, c):
+    """
+    Determines which of the points ``x`` are in the 
+    closed ellipsoid with shape matrix ``A`` centered at ``c``.
+    For a single point ``x``, this is computed as 
+
+        .. math::
+            (c-x)^T\cdot A^{-1}\cdot (c-x) \leq 1 
+        
+    :param np.ndarray x: Shape ``(n_points, dim)`` or ``n_points``.
+    :param np.ndarray A: Shape ``(dim, dim)``, positive definite
+    :param np.ndarray c: Shape ``(dim)``
+    :return: `bool` or array of bools of length ``n_points``
+    """
+    if x.ndim == 1:
+        y = c - x
+        return np.einsum('j,jl,l', y, np.linalg.inv(A), y) <= 1
+    else:
+        y = c[np.newaxis,:] - x
+        return np.einsum('ij,jl,il->i', y, np.linalg.inv(A), y) <= 1
 
 def uniquify(seq):
     """
@@ -448,3 +475,25 @@ if __name__ == "__main__":
     ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
     plt.show()
  
+def binom_est_p(n, N, hedge=float(0)):
+    r"""
+    Given a number of successes :math:`n` and a number of trials :math:`N`,
+    estimates the binomial distribution parameter :math:`p` using the
+    hedged maximum likelihood estimator of [FB12]_.
+    
+    :param n: Number of successes.
+    :type n: `numpy.ndarray` or `int`
+    :param int N: Number of trials.
+    :param float hedge: Hedging parameter :math:`\beta`.
+    :rtype: `float` or `numpy.ndarray`.
+    :return: The estimated binomial distribution parameter :math:`p` for each
+        value of :math:`n`.
+    """
+    return (n + hedge) / (N + 2 * hedge)
+    
+def binom_est_error(p, N, hedge = float(0)):
+    r"""
+    """
+    
+    # asymptotic np.sqrt(p * (1 - p) / N)
+    return np.sqrt(p*(1-p)/(N+2*hedge+1))

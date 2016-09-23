@@ -52,7 +52,7 @@ from scipy.stats import binom
 from qinfer.utils import binomial_pdf, multinomial_pdf, sample_multinomial
 from qinfer.abstract_model import Model, DifferentiableModel
 from qinfer._lib import enum # <- TODO: replace with flufl.enum!
-from qinfer.ale import binom_est_error
+from qinfer.utils import binom_est_error
 from qinfer.domains import IntegerDomain, MultinomialDomain
 
 ## FUNCTIONS ###################################################################
