@@ -23,6 +23,8 @@ Function Reference
 
 .. autofunction:: particle_covariance_mtx
 
+.. autofunction:: in_ellipsoid
+
 .. autofunction:: ellipsoid_volume
 
 .. autofunction:: mvee

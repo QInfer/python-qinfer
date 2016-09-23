@@ -6,6 +6,13 @@ python:
   - "3.4"
   - "3.5"
 
+addons:
+  apt:
+    packages:
+      - texlive
+      - texlive-latex-extra
+      - texlive-fonts-extra
+
 # Explicitly add doctest support as separate parts of the build matrix,
 # since these tests require additional packages that should be optional.
 matrix:
@@ -17,6 +24,7 @@ matrix:
 
 env:
   global:
+    - MPLBACKEND: Agg
     - secure: 
 
 notifications:
@@ -34,7 +42,15 @@ before_install:
 
 install:
   - conda install --yes numpy scipy matplotlib scikit-learn sphinx
+  # Before proceeding to install anything else, we debu
+  # by making sure that the conda install didn't break matplotlib.
+  - python -c "import matplotlib.pyplot as plt; print('Using MPL backend:'); print(plt.get_backend())" 
   - pip install -r requirements.txt
+  # Before proceeding, we pause to list all installed conda and pip
+  # packages for later debugging.
+  - conda list
+  - pip list
+  # Now we run the installer for QInfer itself.
   - python setup.py install
   # We need to run doctest, which requires installing at least what
   # ReadTheDocs has. That said, we require that QInfer installs
@@ -55,6 +71,7 @@ script:
   - if [[ "${DOCTEST}" == "1" ]]; then
       cd $TRAVIS_BUILD_DIR/doc;
       make doctest;
+      make latexpdf;
     fi
 
 after_success:

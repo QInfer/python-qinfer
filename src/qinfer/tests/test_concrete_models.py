@@ -39,7 +39,9 @@ from qinfer.tests.base_test import (
     DerandomizedTestCase, 
     ConcreteDifferentiableModelTest,
     ConcreteModelTest,
-    ConcreteSimulatableTest
+    ConcreteSimulatableTest,
+    MockDirectView,
+    MockModel
 )
 import abc
 from qinfer import (
@@ -51,7 +53,8 @@ from qinfer import (
     NormalDistribution,
     BetaDistribution, UniformDistribution,
     PostselectedDistribution,
-    ConstrainedSumDistribution
+    ConstrainedSumDistribution,
+    DirectViewParallelizedModel
 )
 from qinfer.ale import ALEApproximateModel
 from qinfer.tomography import TomographyModel, DiffusiveTomographyModel, pauli_basis, GinibreDistribution
@@ -333,3 +336,37 @@ class TestRandomWalkModel(ConcreteModelTest, DerandomizedTestCase):
         return UniformDistribution(np.array([[5,8]]))
     def instantiate_expparams(self):
         return np.arange(10,20).astype(self.model.expparams_dtype)
+
+class TestDirectViewParallelizedModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests DirectViewParallelizedModel acting on a MockModel, using
+    mocked ipyparallel views.
+    """
+
+    _old_ipp = None
+
+    def setUp(self):
+        super(TestDirectViewParallelizedModel, self).setUp()
+
+        import qinfer.parallel
+        self._old_ipp = qinfer.parallel.ipp
+        qinfer.parallel.ipp = 'something other than None'
+    
+    def tearDown(self):
+        super(TestDirectViewParallelizedModel, self).tearDown()
+
+        import qinfer.parallel
+        qinfer.parallel.ipp = self._old_ipp
+
+    def instantiate_model(self):
+        return DirectViewParallelizedModel(
+            MockModel(n_mps=2),
+            MockDirectView(),
+            # Disable the serial threshold to force the parallel
+            # model to use our mocked direct view.
+            serial_threshold=0
+        )
+    def instantiate_prior(self):
+        return UniformDistribution([[0, 1]] * 2)
+    def instantiate_expparams(self):
+        return np.array([(10.0, 2)], dtype=MockModel().expparams_dtype)
