@@ -41,7 +41,7 @@ before_install:
 
 install:
   # Qt 4.8.7 has been causing build failures, so we disable it.
-  - conda install --yes numpy scipy matplotlib scikit-learn sphinx qt=4.8.6
+  - conda install --yes numpy scipy matplotlib scikit-learn sphinx qt=4.8.6 sip=4.16.5
   - pip install -r requirements.txt
   # Before proceeding, we pause to list all installed conda and pip
   # packages for later debugging.
