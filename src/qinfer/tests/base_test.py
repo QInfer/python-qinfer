@@ -149,8 +149,13 @@ class MockDirectView(object):
     to install more libraries.
     """
 
-    def __init__(self):
-        pass
+    n_engines = None
+
+    def __init__(self, n_engines=1):
+        self.n_engines = n_engines
+
+    def __len__(self):
+        return self.n_engines
 
     def clear(targets=None, block=None):
         raise NotImplementedError
