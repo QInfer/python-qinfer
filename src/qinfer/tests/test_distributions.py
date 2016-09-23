@@ -31,16 +31,12 @@ from __future__ import division # Ensures that a/b is always a float.
 ## IMPORTS ####################################################################
 
 import numpy as np
+import scipy.stats
 from numpy.testing import assert_equal, assert_almost_equal
 
 from qinfer.tests.base_test import DerandomizedTestCase
-from qinfer.distributions import (
-    Distribution, SingleSampleMixin,
-    MixtureDistribution,
-    NormalDistribution, MultivariateNormalDistribution,
-    UniformDistribution, ConstantDistribution, ProductDistribution,
-    BetaDistribution, BetaBinomialDistribution, GammaDistribution
-)
+from qinfer.utils import assert_sigfigs_equal
+from qinfer.distributions import *
 
 ## CLASSES ####################################################################
 
@@ -91,6 +87,50 @@ class TestNormalDistributions(DerandomizedTestCase):
         COV = np.array([[1,0.2],[0.2,2]])
         dist = MultivariateNormalDistribution(MU, COV)
         assert(dist.n_rvs == 2)
+
+class TestSlantedNormalDistribution(DerandomizedTestCase):
+    """
+    Tests ``SlantedNormalDistribution``
+    """
+
+    ## TEST METHODS ##
+
+    #TODO
+    pass
+
+class TestLogNormalDistribution(DerandomizedTestCase):
+    """
+    Tests ``LogNormalDistribution``
+    """
+
+    ## TEST METHODS ##
+
+    def test_lognormal_moments(self):
+        """
+        Distributions: Checks that the log normal
+        distribution has the right moments.
+        """
+        mu, sig = 3, 2
+        dist = LogNormalDistribution(mu=mu, sigma=sig)
+
+        samples = dist.sample(150000)
+
+        assert_sigfigs_equal(
+            scipy.stats.lognorm.mean(1,3,2), 
+            samples.mean(), 
+            1)
+        assert_sigfigs_equal(
+            np.round(scipy.stats.lognorm.var(1,3,2)), 
+            np.round(samples.var()), 
+            1)
+
+    def test_lognormal_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = LogNormalDistribution(mu=3, sigma=2)
+        assert(dist.n_rvs == 1)
+
 
 class TestUniformDistribution(DerandomizedTestCase):
     """
