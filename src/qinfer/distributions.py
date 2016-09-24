@@ -67,7 +67,8 @@ __all__ = [
     'HaarUniform',
     'HilbertSchmidtUniform',
     'PostselectedDistribution',
-    'ConstrainedSumDistribution'
+    'ConstrainedSumDistribution',
+    'InterpolatedUnivariateDistribution'
 ]
 
 ## FUNCTIONS #################################################################

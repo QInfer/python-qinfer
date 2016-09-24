@@ -529,4 +529,78 @@ class TestMixtureDistribution(DerandomizedTestCase):
         dist = MixtureDistribution(weights, dist_list)
         assert(dist.n_rvs == 2)
 
+class TestInterpolatedUnivariateDistribution(DerandomizedTestCase):
+    """
+    Tests ``InterpolatedUnivariateDistribution``
+    """
+
+    def test_interp_moments(self):
+        """
+        Distributions: Checks that the interpolated distribution
+        has the right moments.
+        """
+
+        # Interpolate the normal distribution because we 
+        # know the moments
+        dist = InterpolatedUnivariateDistribution(
+            scipy.stats.norm.pdf, 1, 1500
+        )
+
+        samples = dist.sample(40000)
+
+        assert_almost_equal(1, samples.var(), 1)
+        assert_almost_equal(0, samples.mean(), 1)
+
+    def test_interp_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        dist = InterpolatedUnivariateDistribution(
+            scipy.stats.norm.pdf, 1, 1500
+        )
+        assert(dist.n_rvs == 1)
+
+class TestConstrainedSumDistribution(DerandomizedTestCase):
+    """
+    Tests ``ConstrainedSumDistribution``
+    """
+
+    def test_constrained_sum_constraint(self):
+        """
+        Distributions: Tests that the contstraint is met in
+        the constrained sum distribution.
+        """
+
+        unif = UniformDistribution([[0,1],[0,2]])
+        dist = ConstrainedSumDistribution(unif, 3)
+
+        samples = dist.sample(1000)
+
+        assert_almost_equal(
+            np.sum(samples, axis=1),
+            3 * np.ones(1000)
+        )
+
+    def test_constrained_sum_moments(self):
+        """
+        Distributions: Tests that the contstraint is met in
+        the constrained sum distribution.
+        """
+
+        unif = UniformDistribution([[0,1],[0,1]])
+        dist = ConstrainedSumDistribution(unif, 1)
+
+        samples = dist.sample(100000)
+
+        assert_sigfigs_equal(np.array([1/2]*2), np.mean(samples, axis=0), 2)
+
+
+    def test_constrained_sum_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        unif = UniformDistribution([[0,1],[0,2]])
+        dist = ConstrainedSumDistribution(unif, 3)
+
+        assert(dist.n_rvs == 2)
 
