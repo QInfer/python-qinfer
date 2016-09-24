@@ -698,7 +698,7 @@ class HaarUniform(SingleSampleMixin, Distribution):
     def n_rvs(self):
         return 3
 
-    def sample(self):
+    def _sample(self):
         #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)
         z = (np.random.randn(self.dim,self.dim) + 1j*np.random.randn(self.dim,self.dim))/np.sqrt(2.0)
         q,r = la.qr(z)
@@ -734,7 +734,7 @@ class GinibreUniform(SingleSampleMixin, Distribution):
     def n_rvs(self):
         return 3
 
-    def sample(self):
+    def _sample(self):
         #Generate random matrix
         z = np.random.randn(self.dim,self.k) + 1j*np.random.randn(self.dim,self.k)
 
