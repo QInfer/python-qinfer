@@ -32,7 +32,7 @@ from __future__ import division # Ensures that a/b is always a float.
 
 import numpy as np
 import scipy.stats
-from numpy.testing import assert_equal, assert_almost_equal
+from numpy.testing import assert_equal, assert_almost_equal, assert_array_less
 
 from qinfer.tests.base_test import DerandomizedTestCase
 from qinfer.utils import assert_sigfigs_equal
@@ -557,6 +557,61 @@ class TestInterpolatedUnivariateDistribution(DerandomizedTestCase):
         """
         dist = InterpolatedUnivariateDistribution(
             scipy.stats.norm.pdf, 1, 1500
+        )
+        assert(dist.n_rvs == 1)
+
+class TestPostselectedDistribution(DerandomizedTestCase):
+    """
+    Tests ``PostselectedDistribution``
+    """
+
+    def test_postselected_validity(self):
+        """
+        Distributions: Checks that the postselected 
+        samples are valid.
+        """
+
+        ud = NormalDistribution(0, 1)
+        class FakeModel(object):
+            def are_models_valid(self, mps):
+                return mps >= 0
+        dist = PostselectedDistribution(
+            ud, FakeModel()
+        )
+
+        samples = dist.sample(40000)
+        assert_array_less(0, samples)
+
+    def test_postselected_fails(self):
+        """
+        Distributions: Checks that the postselected 
+        fails to generate enough points with a 
+        difficult constraint.
+        """
+
+        ud = NormalDistribution(0, 1)
+        class FakeModel(object):
+            def are_models_valid(self, mps):
+                return mps >= 1000
+        dist = PostselectedDistribution(
+            ud, FakeModel(), 30
+        )
+        self.assertRaises(
+            RuntimeError,
+            dist.sample,
+            10000
+        )
+
+    def test_postselected_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+        ud = NormalDistribution(0, 1)
+        class FakeModel(object):
+            def are_models_valid(self, mps):
+                return mps >= 1000
+        dist = PostselectedDistribution(
+            ud, FakeModel(), 30
         )
         assert(dist.n_rvs == 1)
 
