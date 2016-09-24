@@ -443,6 +443,39 @@ class TestSingleSampleMixin(DerandomizedTestCase):
         assert_almost_equal(np.round(np.mean(sample1,axis=0)), 0)
         assert_almost_equal(np.round(np.mean(sample2,axis=0)), np.array([1,2]))
 
+class TestHaarUniform(DerandomizedTestCase):
+    """
+    Tests ``HaarUniform``
+    """
+
+    ## TEST METHODS ##
+
+    def test_haar_state_mean(self):
+        """
+        Distributions: Checks that HaarUniform
+        has the correct mean.
+        """
+
+        dist = HaarUniform()
+        samples = dist.sample(1000)
+
+        x = np.mean(samples[:,0]) * np.array([[0,1],[1,0]])
+        y = np.mean(samples[:,1]) * np.array([[0,-1j],[1j,0]])
+        z = np.mean(samples[:,2]) * np.array([[1,0],[0,1]])
+
+        rho = x + y + z
+
+        assert_almost_equal(rho, np.zeros((2,2)), 2)
+
+    def test_haar_state_n_rvs(self):
+        """
+        Distributions: Tests for expected number of RVS.
+        """
+
+        dist = HaarUniform()
+        assert(dist.n_rvs == 3)
+
+
 class TestMixtureDistribution(DerandomizedTestCase):
     """
     Tests ``MixtureDistribution``
