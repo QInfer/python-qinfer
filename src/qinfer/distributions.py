@@ -679,12 +679,20 @@ class HilbertSchmidtUniform(SingleSampleMixin, Distribution):
 
 class HaarUniform(SingleSampleMixin, Distribution):
     """
-    Creates a new Haar uniform prior on state space of dimension ``dim``.
+    Haar uniform distribution of pure states of dimension ``dim``,
+    parameterized as coefficients of the Pauli basis.
 
     :param int dim: Dimension of the state space.
+
+    .. note::
+
+        This distribution presently only works for ``dim==2`` and
+        the Pauli basis.
     """
     def __init__(self, dim=2):
+        # TODO: add basis as an option
         self.dim = dim
+
 
     @property
     def n_rvs(self):
