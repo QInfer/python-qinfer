@@ -12,6 +12,10 @@
 Probability Distributions
 =========================
 
+.. seealso::
+
+    :ref:`Specific distributions (tomography) <tomography_distributions>`
+
 :class:`Distribution` - Abstract Base Class for Probability Distributions
 -------------------------------------------------------------------------
 
