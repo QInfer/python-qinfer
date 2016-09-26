@@ -42,6 +42,8 @@ from scipy.stats import logistic, binom
 from scipy.special import gammaln, gamma
 from scipy.linalg import sqrtm
 
+from numpy.testing import assert_almost_equal
+
 from qinfer._exceptions import ApproximationWarning
 
 ## FUNCTIONS ##################################################################
@@ -357,6 +359,29 @@ def uniquify(seq):
     seen = set()
     seen_add = seen.add
     return [ x for x in seq if x not in seen and not seen_add(x)]
+
+def assert_sigfigs_equal(x, y, sigfigs=3):
+    """
+    Tests if all elements in x and y 
+    agree up to a certain number of 
+    significant figures.
+
+    :param np.ndarray x: Array of numbers.
+    :param np.ndarray y: Array of numbers you want to
+        be equal to ``x``.
+    :param int sigfigs: How many significant 
+        figures you demand that they share.
+        Default is 3.
+    """
+    # determine which power of 10 best describes x
+    xpow =  np.floor(np.log10(x))
+    # now rescale 1 \leq x < 9
+    x = x * 10**(- xpow)
+    # scale y by the same amount
+    y = y * 10**(- xpow)
+
+    # now test if abs(x-y) < 0.5 * 10**(-sigfigs)
+    assert_almost_equal(x, y, sigfigs)
 
 def format_uncertainty(value, uncertianty, scinotn_break=4):
     """
