@@ -42,6 +42,10 @@ Built-in bases
 Specific Distributions
 ----------------------
 
+.. seealso::
+
+    :ref:`distributions`
+
 .. autoclass:: TensorProductDistribution
     :members:
 
