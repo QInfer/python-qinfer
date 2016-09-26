@@ -598,6 +598,11 @@ class MVUniformDistribution(Distribution):
     """
 
     def __init__(self, dim = 6):
+        warnings.warn(
+            "This class has been deprecated, and may "
+            "be renamed in future versions.",
+            DeprecationWarning
+        )
         self._dim = dim
 
     @property
@@ -635,6 +640,11 @@ class HilbertSchmidtUniform(SingleSampleMixin, Distribution):
     :param int dim: Dimension of the state space.
     """
     def __init__(self, dim=2):
+        warnings.warn(
+            "This class has been deprecated; please see "
+            "qinfer.tomography.GinibreDistribution(rank=None).",
+            DeprecationWarning
+        )
         self.dim = dim
         self.paulis1Q = np.array([[[1,0],[0,1]],[[1,0],[0,-1]],[[0,-1j],[1j,0]],[[0,1],[1,0]]])
 
@@ -690,6 +700,11 @@ class HaarUniform(SingleSampleMixin, Distribution):
         the Pauli basis.
     """
     def __init__(self, dim=2):
+        warnings.warn(
+            "This class has been deprecated; please see "
+            "qinfer.tomography.GinibreDistribution(rank=1).",
+            DeprecationWarning
+        )
         # TODO: add basis as an option
         self.dim = dim
 
@@ -727,6 +742,11 @@ class GinibreUniform(SingleSampleMixin, Distribution):
     :param int dim: Dimension of the state space.
     """
     def __init__(self,dim=2, k=2):
+        warnings.warn(
+            "This class has been deprecated; please see "
+            "qinfer.tomography.GinibreDistribution.",
+            DeprecationWarning
+        )
         self.dim = dim
         self.k = k
 
