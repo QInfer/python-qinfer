@@ -26,6 +26,12 @@ Specific Distributions
 .. autoclass:: UniformDistribution
     :members:
 
+.. autoclass:: DiscreteUniformDistribution
+    :members:
+
+.. autoclass:: MVUniformDistribution
+    :members:
+
 .. autoclass:: NormalDistribution
     :members:
 
@@ -50,6 +56,9 @@ Specific Distributions
 .. autoclass:: GammaDistribution 
     :members:
 
+.. autoclass:: InterpolatedUnivariateDistribution
+    :members:
+
 .. autoclass:: HilbertSchmidtUniform
     :members:
     
@@ -72,6 +81,9 @@ ones.
     :members:
 
 .. autoclass:: MixtureDistribution
+    :members:
+
+.. autoclass:: ConstrainedSumDistribution
     :members:
 
 Mixins for Distribution Development

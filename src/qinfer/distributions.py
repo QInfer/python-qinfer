@@ -53,6 +53,8 @@ __all__ = [
     'MixtureDistribution',
     'ProductDistribution',
     'UniformDistribution',
+    'DiscreteUniformDistribution',
+    'MVUniformDistribution',
     'ConstantDistribution',
     'NormalDistribution',
     'MultivariateNormalDistribution',
@@ -65,7 +67,8 @@ __all__ = [
     'HaarUniform',
     'HilbertSchmidtUniform',
     'PostselectedDistribution',
-    'ConstrainedSumDistribution'
+    'ConstrainedSumDistribution',
+    'InterpolatedUnivariateDistribution'
 ]
 
 ## FUNCTIONS #################################################################
@@ -398,12 +401,19 @@ class MultivariateNormalDistribution(Distribution):
 
 
 class SlantedNormalDistribution(Distribution):
-    """
-    Uniform distribution on a given rectangular region.
+    r"""
+    Uniform distribution on a given rectangular region  with 
+    additive noise. Random variates from this distribution 
+    follow :math:`X+Y` where :math:`X` is drawn uniformly 
+    with respect to the rectangular region defined by ranges, and 
+    :math:`Y` is normally distributed about 0 with variance 
+    ``weight**2``.
 
     :param numpy.ndarray ranges: Array of shape ``(n_rvs, 2)``, where ``n_rvs``
         is the number of random variables, specifying the upper and lower limits
         for each variable.
+    :param float weight: Number specifying the inverse variance 
+        of the additive noise term.
     """
 
     def __init__(self, ranges=_DEFAULT_RANGES, weight=0.01):
@@ -415,7 +425,7 @@ class SlantedNormalDistribution(Distribution):
 
         self._ranges = ranges
         self._n_rvs = ranges.shape[0]
-        #self._delta = ranges[:, 1] - ranges[:, 0]
+        self._delta = ranges[:, 1] - ranges[:, 0]
         self._weight = weight
 
     @property
@@ -424,8 +434,10 @@ class SlantedNormalDistribution(Distribution):
 
     def sample(self, n=1):
         shape = (n, self._n_rvs)# if n == 1 else (self._n_rvs, n)
-        z = np.random.randn(n,self._n_rvs)
-        return self._ranges[:, 0] +self._weight*z+np.random.rand(n)*self._ranges[:, 1];
+        z = np.random.randn(n, self._n_rvs)
+        return self._ranges[:, 0] + \
+                self._weight*z + \
+                np.random.rand(n, self._n_rvs)*self._delta[np.newaxis,:]
 
 class LogNormalDistribution(Distribution):
     """
@@ -573,15 +585,37 @@ class GammaDistribution(Distribution):
     def sample(self, n=1):
         return self._dist.rvs(size=n)[:, np.newaxis] / self.beta
 
-class MVUniformDistribution(object):
+class MVUniformDistribution(Distribution):
+    r"""
+    Uniform distribution over the rectangle
+    :math:`[0,1]^{\text{dim}}` with the restriction
+    that vector must sum to 1. Equivalently, a 
+    uniform distribution over the ``dim-1`` simplex 
+    whose vertices are the canonical unit vectors of
+    :math:`\mathbb{R}^\text{dim}`.
+
+    :param int dim: Number of dimensions; ``n_rvs``.
+    """
 
     def __init__(self, dim = 6):
-        self.dim = dim
+        self._dim = dim
+
+    @property
+    def n_rvs(self):
+        return self._dim
 
     def sample(self, n = 1):
-        return np.random.mtrand.dirichlet(np.ones(self.dim),n)
+        return np.random.mtrand.dirichlet(np.ones(self._dim),n)
 
 class DiscreteUniformDistribution(Distribution):
+    """
+    Discrete uniform distribution over the integers between 
+    ``0`` and ``2**num_bits-1`` inclusive.
+
+    :param int num_bits: non-negative integer specifying
+        how big to make the interval.
+    """
+
     def __init__(self, num_bits):
         self._num_bits = num_bits
 
@@ -590,7 +624,7 @@ class DiscreteUniformDistribution(Distribution):
         return 1
 
     def sample(self, n=1):
-        z = np.random.randint(2**self._num_bits,n)
+        z = np.random.randint(2**self._num_bits,size=n)
         return z
 
 class HilbertSchmidtUniform(SingleSampleMixin, Distribution):
@@ -645,18 +679,26 @@ class HilbertSchmidtUniform(SingleSampleMixin, Distribution):
 
 class HaarUniform(SingleSampleMixin, Distribution):
     """
-    Creates a new Haar uniform prior on state space of dimension ``dim``.
+    Haar uniform distribution of pure states of dimension ``dim``,
+    parameterized as coefficients of the Pauli basis.
 
     :param int dim: Dimension of the state space.
+
+    .. note::
+
+        This distribution presently only works for ``dim==2`` and
+        the Pauli basis.
     """
     def __init__(self, dim=2):
+        # TODO: add basis as an option
         self.dim = dim
+
 
     @property
     def n_rvs(self):
         return 3
 
-    def sample(self):
+    def _sample(self):
         #Generate random unitary (see e.g. http://arxiv.org/abs/math-ph/0609050v2)
         z = (np.random.randn(self.dim,self.dim) + 1j*np.random.randn(self.dim,self.dim))/np.sqrt(2.0)
         q,r = la.qr(z)
@@ -692,7 +734,7 @@ class GinibreUniform(SingleSampleMixin, Distribution):
     def n_rvs(self):
         return 3
 
-    def sample(self):
+    def _sample(self):
         #Generate random matrix
         z = np.random.randn(self.dim,self.k) + 1j*np.random.randn(self.dim,self.k)
 
