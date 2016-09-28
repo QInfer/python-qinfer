@@ -36,7 +36,7 @@ suggest using Python 3.5, but **QInfer**
 works with either.
 
 If using Anaconda, you should go ahead now and install from their repository
-all the dependencies that we can. If you are using "regular"-Python then you can
+all the dependencies that you can. If you are using "regular" Python then you can
 ignore this step. Replace ``python=3.5`` with your version (typically
 either 2.7 or 3.5).
 
@@ -44,7 +44,7 @@ either 2.7 or 3.5).
 
     $ conda install python=3.5 numpy scipy matplotlib scikit-learn
 
-If you are **not** using Anaconda, but are instead using "regular"-Python,
+If you are **not** using Anaconda, but are instead using "regular" Python,
 and you are on Linux, you will need the Python development package:
 
 .. code-block:: console
@@ -70,7 +70,7 @@ Once Anaconda and Git are installed, simply run ``pip`` to install **QInfer**:
 
     $ pip install git+https://github.com/QInfer/python-qinfer.git
 
-Lastely, **QInfer** can be installed manually by downloading from GitHub,
+Lastly, **QInfer** can be installed manually by downloading from GitHub,
 then running the provided installer:
 
 .. code-block:: console
@@ -84,7 +84,7 @@ More Information
 ================
 
 Full documentation for **QInfer** is
-`available on ReadTheDocs <http://python-qinfer.readthedocs.org/en/latest/>`_,
+`available on ReadTheDocs <http://docs.qinfer.org/>`_,
 or may be built locally by running the documentation
 build script in ``doc/``::
 
