@@ -10,7 +10,7 @@ import os, sys
 
 MAJOR = 1
 MINOR = 0
-PRE = 'b4'
+PRE = None
 VERSION = "{major}.{minor}{pre}".format(
     major=MAJOR, minor=MINOR, pre=PRE if PRE is not None else ''
 )
