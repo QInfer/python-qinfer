@@ -48,7 +48,7 @@ If you use **QInfer** in your publication or presentation, we would appreciate i
 if you cited our work. We recommend citing **QInfer** by using the BibTeX
 entry::
 
-    @misc{qinfer-1_0b4,
+    @misc{qinfer-1_0,
       author       = {Christopher Granade and
                       Christopher Ferrie and
                       Steven Casagrande and
@@ -57,10 +57,10 @@ entry::
                       Thomas Alexander and
                       Yuval Sanders},
       title        = {{QInfer}: Library for Statistical Inference in Quantum Information},
-      month        = may,
+      month        = september,
       year         = 2016,
-      doi          = {10.5281/zenodo.51273},
-      url          = {http://dx.doi.org/10.5281/zenodo.51273}
+      doi          = {10.5281/zenodo.157007},
+      url          = {http://dx.doi.org/10.5281/zenodo.157007}
     }
 
 If you wish to cite **QInfer** functionality that has not yet appeared in a
