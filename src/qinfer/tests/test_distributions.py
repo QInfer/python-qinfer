@@ -576,8 +576,9 @@ class TestParticleDistribution(DerandomizedTestCase):
         """
         dim = 5
         n_particles = 100
-        particle_weights = np.random.rand(dim)
-        particle_weights = particle_weights / np.sum(particle_weights)
+        # note that these weights are not all positive!
+        particle_weights = np.random.randn(dim)
+        particle_weights = particle_weights
         particle_locations = np.random.rand(n_particles, dim)
 
         dist1 = ParticleDistribution(dim=dim)
@@ -589,10 +590,47 @@ class TestParticleDistribution(DerandomizedTestCase):
         assert(dist1.n_particles == 1)
         assert(dist1.n_rvs == dim)
         assert_almost_equal(dist1.sample(3), np.zeros((3, dim)))
+        assert_almost_equal(np.sum(dist1.particle_weights), 1)
 
         assert(dist2.n_particles == n_particles)
         assert(dist2.n_rvs == dim)
-        assert(dist1.sample(3).shape == (3,dim))
+        assert(dist2.sample(3).shape == (3,dim))
+        # the following demands that ParticleDistribution
+        # retcifies and normalizes whichever weights it is given
+        assert_almost_equal(np.sum(dist2.particle_weights), 1)
+
+    def test_ness(self):
+        """
+        Distributions: Tests the n_ess property of the
+        ParticleDistribution.
+        """
+
+        dim = 5
+        n_particles = 100
+        particle_weights1 = np.ones(n_particles) / n_particles
+        particle_weights2 = np.zeros(n_particles)
+        particle_weights2[0] = 1
+        particle_weights3 = np.random.rand(dim)
+        particle_weights3 = particle_weights3 / np.sum(particle_weights3)
+        particle_locations = np.random.rand(n_particles, dim)
+
+        dist1 = ParticleDistribution(
+            particle_weights=particle_weights1,
+            particle_locations=particle_locations
+        )
+        dist2 = ParticleDistribution(
+            particle_weights=particle_weights2,
+            particle_locations=particle_locations
+        )
+        dist3 = ParticleDistribution(
+            particle_weights=particle_weights3,
+            particle_locations=particle_locations
+        )
+
+        assert_almost_equal(dist1.n_ess, n_particles)
+        assert_almost_equal(dist2.n_ess, 1)
+        assert(dist3.n_ess < n_particles and dist3.n_ess > 1)
+
 
 class TestInterpolatedUnivariateDistribution(DerandomizedTestCase):
     """

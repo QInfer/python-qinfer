@@ -262,10 +262,11 @@ class ParticleDistribution(Distribution):
         if particle_locations is None or particle_weights is None:
             # Initialize with single particle at origin.
             self.particle_locations = np.zeros((1, dim))
-            self.particle_weights = np.zeros((1,))
+            self.particle_weights = np.ones((1,))
         elif dim is None:
             self.particle_locations = particle_locations
-            self.particle_weights = particle_weights / np.sum(particle_weights)
+            self.particle_weights = np.abs(particle_weights)
+            self.particle_weights = self.particle_weights / np.sum(self.particle_weights)
         else:
             raise ValueError('Either the dimension of parameter space, `dim`, or the particles, `particle_locations` and `particle_weights` must be specified.')
 
