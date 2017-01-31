@@ -246,29 +246,30 @@ class MixtureDistribution(Distribution):
 class ParticleDistribution(Distribution):
     r"""
     A distribution consisting of a list of weighted vectors.
-    Note that either `dim` or (`particle_locations`,`particle_weights`)
+    Note that either `n_mps` or (`particle_locations`,`particle_weights`)
     must be specified, or an error will be raised.
 
     :param numpy.ndarray particle_weights: Length ``n_particles`` list
         of particle weights.
-    :param particle_locations: Shape ``(n_particles, dim)`` array of
+    :param particle_locations: Shape ``(n_particles, n_mps)`` array of
         particle locations.
-    :param int dim: Dimension of parameter space, used for initializing length
-        0 list of particle locations and weights.
+    :param int n_mps: Dimension of parameter space. This parameter should
+        only be set when `particle_weights` and `particle_locations` are
+        not set (and vice versa).
     """
 
-    def __init__(self, dim=None, particle_locations=None, particle_weights=None):
+    def __init__(self, n_mps=None, particle_locations=None, particle_weights=None):
         super(ParticleDistribution, self).__init__()
         if particle_locations is None or particle_weights is None:
             # Initialize with single particle at origin.
-            self.particle_locations = np.zeros((1, dim))
+            self.particle_locations = np.zeros((1, n_mps))
             self.particle_weights = np.ones((1,))
-        elif dim is None:
+        elif n_mps is None:
             self.particle_locations = particle_locations
             self.particle_weights = np.abs(particle_weights)
             self.particle_weights = self.particle_weights / np.sum(self.particle_weights)
         else:
-            raise ValueError('Either the dimension of parameter space, `dim`, or the particles, `particle_locations` and `particle_weights` must be specified.')
+            raise ValueError('Either the dimension of parameter space, `n_mps`, or the particles, `particle_locations` and `particle_weights` must be specified.')
 
     @property
     def n_rvs(self):
@@ -313,6 +314,66 @@ class ParticleDistribution(Distribution):
             np.random.random((n,)),
             side='right'
         ), len(cumsum_weights) - 1)]
+
+    def est_mean(self):
+        """
+        Returns the mean value of the current particle distribution.
+
+        :rtype: :class:`numpy.ndarray`, shape ``(n_mps,)``.
+        :returns: An array containing the an estimate of the mean model vector.
+        """
+        return np.sum(
+            # We need the particle index to be the rightmost index, so that
+            # the two arrays align on the particle index as opposed to the
+            # modelparam index.
+            self.particle_weights * self.particle_locations.transpose([1, 0]),
+            axis=1
+        )
+
+    def est_meanfn(self, fn):
+        """
+        Returns an the expectation value of a given function
+        :math:`f` over the current particle distribution.
+
+        Here, :math:`f` is represented by a function ``fn`` that is vectorized
+        over particles, such that ``f(modelparams)`` has shape
+        ``(n_particles, k)``, where ``n_particles = modelparams.shape[0]``, and
+        where ``k`` is a positive integer.
+
+        :param callable fn: Function implementing :math:`f` in a vectorized
+            manner. (See above.)
+
+        :rtype: :class:`numpy.ndarray`, shape ``(k, )``.
+        :returns: An array containing the an estimate of the mean of :math:`f`.
+        """
+
+        return np.einsum('i...,i...',
+            self.particle_weights, fn(self.particle_locations)
+        )
+
+    def est_covariance_mtx(self, corr=False):
+        """
+        Returns the full-rank covariance matrix of the current particle
+        distribution.
+
+        :param bool corr: If `True`, the covariance matrix is normalized
+            by the outer product of the square root diagonal of the covariance matrix,
+            i.e. the correlation matrix is returned instead.
+
+        :rtype: :class:`numpy.ndarray`, shape
+            ``(n_modelparams, n_modelparams)``.
+        :returns: An array containing the estimated covariance matrix.
+        """
+
+        cov = u.particle_covariance_mtx(
+            self.particle_weights,
+            self.particle_locations)
+
+        if corr:
+            dstd = np.sqrt(np.diag(cov))
+            cov /= (np.outer(dstd, dstd))
+
+        return cov
 
 class ProductDistribution(Distribution):
     r"""

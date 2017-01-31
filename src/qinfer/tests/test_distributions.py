@@ -581,7 +581,7 @@ class TestParticleDistribution(DerandomizedTestCase):
         particle_weights = particle_weights
         particle_locations = np.random.rand(n_particles, dim)
 
-        dist1 = ParticleDistribution(dim=dim)
+        dist1 = ParticleDistribution(n_mps=dim)
         dist2 = ParticleDistribution(
             particle_weights=particle_weights,
             particle_locations=particle_locations
@@ -630,6 +630,31 @@ class TestParticleDistribution(DerandomizedTestCase):
         assert_almost_equal(dist1.n_ess, n_particles)
         assert_almost_equal(dist2.n_ess, 1)
         assert(dist3.n_ess < n_particles and dist3.n_ess > 1)
+
+    def test_moments(self):
+        """
+        Distributions: Tests the moment function (est_mean, etc)
+        of ParticleDistribution.
+        """
+
+        dim = 5
+        n_particles = 100000
+        mu = np.random.randn(dim)
+        cov = np.random.randn(dim,dim)
+        cov = np.dot(cov,cov.T)
+        particle_locations = np.random.multivariate_normal(mu, cov, n_particles)
+        particle_weights = np.random.rand(n_particles)
+
+        dist = ParticleDistribution(
+            particle_weights=particle_weights,
+            particle_locations=particle_locations
+        )
+
+        assert_sigfigs_equal(mu, dist.est_mean(), 1)
+        assert_almost_equal(dist.est_meanfn(lambda x: x**2),np.diag(cov) + mu**2, 0)
+        assert(np.linalg.norm(dist.est_covariance_mtx() - cov) < 0.5)
+
+
 
 
 class TestInterpolatedUnivariateDistribution(DerandomizedTestCase):
