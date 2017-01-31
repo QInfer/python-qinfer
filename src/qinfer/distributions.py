@@ -51,6 +51,7 @@ __all__ = [
     'Distribution',
     'SingleSampleMixin',
     'MixtureDistribution',
+    'ParticleDistribution',
     'ProductDistribution',
     'UniformDistribution',
     'DiscreteUniformDistribution',
@@ -135,21 +136,21 @@ class MixtureDistribution(Distribution):
 
     :param weights: Length ``n_dist`` list or ``np.ndarray``
         of probabilites summing to 1.
-    :param dist: Either a length ``n_dist`` list of ``Distribution`` instances, 
+    :param dist: Either a length ``n_dist`` list of ``Distribution`` instances,
         or a ``Distribution`` class, for example, ``NormalDistribution``.
-        It is assumed that a list of ``Distribution``s all 
+        It is assumed that a list of ``Distribution``s all
         have the same ``n_rvs``.
-    :param dist_args: If ``dist`` is a class, an array 
-        of shape ``(n_dist, n_rvs)`` where ``dist_args[k,:]`` defines 
-        the arguments of the k'th distribution. Use ``None`` if the distribution 
+    :param dist_args: If ``dist`` is a class, an array
+        of shape ``(n_dist, n_rvs)`` where ``dist_args[k,:]`` defines
+        the arguments of the k'th distribution. Use ``None`` if the distribution
         has no arguments.
     :param dist_kw_args: If ``dist`` is a class, a dictionary
-        where each key's value is an array 
-        of shape ``(n_dist, n_rvs)`` where ``dist_kw_args[key][k,:]`` defines 
+        where each key's value is an array
+        of shape ``(n_dist, n_rvs)`` where ``dist_kw_args[key][k,:]`` defines
         the keyword argument corresponding to ``key`` of the k'th distribution.
         Use ``None`` if the distribution needs no keyword arguments.
-    :param bool shuffle: Whether or not to shuffle result after sampling. Not shuffling 
-        will result in variates being in the same order as 
+    :param bool shuffle: Whether or not to shuffle result after sampling. Not shuffling
+        will result in variates being in the same order as
         the distributions. Default is ``True``.
     """
 
@@ -175,7 +176,7 @@ class MixtureDistribution(Distribution):
                 *self._dist_arg(0),
                 **self._dist_kw_arg(0)
             )
-            
+
     def _dist_arg(self, k):
         """
         Returns the arguments for the k'th distribution.
@@ -190,7 +191,7 @@ class MixtureDistribution(Distribution):
 
     def _dist_kw_arg(self, k):
         """
-        Returns a dictionary of keyword arguments 
+        Returns a dictionary of keyword arguments
         for the k'th distribution.
 
         :param int k: Index of the distribution in question.
@@ -198,7 +199,7 @@ class MixtureDistribution(Distribution):
         """
         if self._dist_kw_args is not None:
             return {
-                key:self._dist_kw_args[key][k,:] 
+                key:self._dist_kw_args[key][k,:]
                 for key in self._dist_kw_args.keys()
             }
         else:
@@ -242,6 +243,76 @@ class MixtureDistribution(Distribution):
 
         return samples
 
+class ParticleDistribution(Distribution):
+    r"""
+    A distribution consisting of a list of weighted vectors.
+    Note that either `dim` or (`particle_locations`,`particle_weights`)
+    must be specified, or an error will be raised.
+
+    :param numpy.ndarray particle_weights: Length ``n_particles`` list
+        of particle weights.
+    :param particle_locations: Shape ``(n_particles, dim)`` array of
+        particle locations.
+    :param int dim: Dimension of parameter space, used for initializing length
+        0 list of particle locations and weights.
+    """
+
+    def __init__(self, dim=None, particle_locations=None, particle_weights=None):
+        super(ParticleDistribution, self).__init__()
+        if particle_locations is None or particle_weights is None:
+            # Initialize with single particle at origin.
+            self.particle_locations = np.zeros((1, dim))
+            self.particle_weights = np.zeros((1,))
+        elif dim is None:
+            self.particle_locations = particle_locations
+            self.particle_weights = particle_weights / np.sum(particle_weights)
+        else:
+            raise ValueError('Either the dimension of parameter space, `dim`, or the particles, `particle_locations` and `particle_weights` must be specified.')
+
+    @property
+    def n_rvs(self):
+        """
+        Returns the dimension of each particle.
+
+        :type: `int`
+        """
+        return self.particle_locations.shape[1]
+
+    @property
+    def n_particles(self):
+        """
+        Returns the number of particles in the distribution
+
+        :type: `int`
+        """
+        return self.particle_locations.shape[0]
+
+    @property
+    def n_ess(self):
+        """
+        Returns the effective sample size (ESS) of the current particle
+        distribution.
+
+        :type: `float`
+        :return: The effective sample size, given by :math:`1/\sum_i w_i^2`.
+        """
+        return 1 / (np.sum(self.particle_weights**2))
+
+    def sample(self, n=1):
+        """
+        Returns random samples from the current particle distribution according
+        to particle weights.
+
+        :param int n: The number of samples to draw.
+        :return: The sampled model parameter vectors.
+        :rtype: `~numpy.ndarray` of shape ``(n, updater.n_rvs)``.
+        """
+        cumsum_weights = np.cumsum(self.particle_weights)
+        return self.particle_locations[np.minimum(cumsum_weights.searchsorted(
+            np.random.random((n,)),
+            side='right'
+        ), len(cumsum_weights) - 1)]
+
 class ProductDistribution(Distribution):
     r"""
     Takes a non-zero number of QInfer distributions :math:`D_k` as input
@@ -249,7 +320,7 @@ class ProductDistribution(Distribution):
 
     In other words, the returned distribution is
     :math:`\Pr(D_1, \dots, D_N) = \prod_k \Pr(D_k)`.
-    
+
     :param Distribution factors:
         Distribution objects representing :math:`D_k`.
         Alternatively, one iterable argument can be given,
@@ -343,7 +414,7 @@ class NormalDistribution(Distribution):
     variable.
 
     :param float mean: Mean of the represented random variable.
-    :param float var: Variance of the represented random variable. 
+    :param float var: Variance of the represented random variable.
     :param tuple trunc: Limits at which the PDF of this
         distribution should be truncated, or ``None`` if
         the distribution is to have infinite support.
@@ -393,26 +464,26 @@ class MultivariateNormalDistribution(Distribution):
     @property
     def n_rvs(self):
         return self.mean.shape[0]
-    def sample(self, n=1):        
+    def sample(self, n=1):
         return np.einsum("ij,nj->ni", la.sqrtm(self.cov), np.random.randn(n, self.n_rvs)) + self.mean
 
-    def grad_log_pdf(self, x):        
+    def grad_log_pdf(self, x):
         return -np.dot(self.invcov, (x - self.mean).transpose()).transpose()
 
 
 class SlantedNormalDistribution(Distribution):
     r"""
-    Uniform distribution on a given rectangular region  with 
-    additive noise. Random variates from this distribution 
-    follow :math:`X+Y` where :math:`X` is drawn uniformly 
-    with respect to the rectangular region defined by ranges, and 
-    :math:`Y` is normally distributed about 0 with variance 
+    Uniform distribution on a given rectangular region  with
+    additive noise. Random variates from this distribution
+    follow :math:`X+Y` where :math:`X` is drawn uniformly
+    with respect to the rectangular region defined by ranges, and
+    :math:`Y` is normally distributed about 0 with variance
     ``weight**2``.
 
     :param numpy.ndarray ranges: Array of shape ``(n_rvs, 2)``, where ``n_rvs``
         is the number of random variables, specifying the upper and lower limits
         for each variable.
-    :param float weight: Number specifying the inverse variance 
+    :param float weight: Number specifying the inverse variance
         of the additive noise term.
     """
 
@@ -487,7 +558,7 @@ class BetaDistribution(Distribution):
             self.beta = (1 - mean) ** 2 * mean / var - (1 - mean)
         else:
             raise ValueError(
-                "BetaDistribution requires either (alpha and beta) " 
+                "BetaDistribution requires either (alpha and beta) "
                 "or (mean and var)."
             )
 
@@ -589,8 +660,8 @@ class MVUniformDistribution(Distribution):
     r"""
     Uniform distribution over the rectangle
     :math:`[0,1]^{\text{dim}}` with the restriction
-    that vector must sum to 1. Equivalently, a 
-    uniform distribution over the ``dim-1`` simplex 
+    that vector must sum to 1. Equivalently, a
+    uniform distribution over the ``dim-1`` simplex
     whose vertices are the canonical unit vectors of
     :math:`\mathbb{R}^\text{dim}`.
 
@@ -614,7 +685,7 @@ class MVUniformDistribution(Distribution):
 
 class DiscreteUniformDistribution(Distribution):
     """
-    Discrete uniform distribution over the integers between 
+    Discrete uniform distribution over the integers between
     ``0`` and ``2**num_bits-1`` inclusive.
 
     :param int num_bits: non-negative integer specifying
@@ -857,8 +928,8 @@ class InterpolatedUnivariateDistribution(Distribution):
 
 class ConstrainedSumDistribution(Distribution):
     """
-    Samples from an underlying distribution and then 
-    enforces that all samples must sum to some given 
+    Samples from an underlying distribution and then
+    enforces that all samples must sum to some given
     value by normalizing each sample.
 
     :param Distribution underlying_distribution: Underlying probability distribution.
