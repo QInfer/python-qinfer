@@ -684,6 +684,36 @@ class TestParticleDistribution(DerandomizedTestCase):
         #TODO: test that est_kl_divergence does more than not fail
         dist1.est_kl_divergence(dist2)
 
+    def test_clustering(self):
+        """
+        Distributions: Tests that clustering works.
+        """
+
+        dim = 3
+        n_particles = 1000
+        # make two multivariate normal clusters
+        mu1 = 50+np.zeros(dim)
+        mu2 = -50+np.zeros(dim)
+        cov = np.random.randn(dim,dim)
+        cov = np.dot(cov,cov.T)
+        particle_locations = np.concatenate([
+            np.random.multivariate_normal(mu1, cov, int(n_particles/2)),
+            np.random.multivariate_normal(mu2, cov, int(n_particles/2))
+        ])
+        particle_weights = np.ones(n_particles)
+
+        dist = ParticleDistribution(
+            particle_weights=particle_weights,
+            particle_locations=particle_locations
+        )
+
+        # TODO: do more than check these don't fail (I didn't have time
+        # to figure out the undocumented code.)
+        dist.est_cluster_moments()
+        dist.est_cluster_covs()
+        dist.est_cluster_metric()
+
+
 
 class TestInterpolatedUnivariateDistribution(DerandomizedTestCase):
     """
