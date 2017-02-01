@@ -4,9 +4,9 @@
     license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ or send a
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
-    
+
 .. _distributions:
-    
+
 .. currentmodule:: qinfer
 
 Probability Distributions
@@ -42,7 +42,7 @@ Specific Distributions
 .. autoclass:: MultivariateNormalDistribution
     :members:
 
-.. autoclass:: SlantedNormalDistribution 
+.. autoclass:: SlantedNormalDistribution
     :members:
 
 .. autoclass:: LogNormalDistribution
@@ -51,13 +51,13 @@ Specific Distributions
 .. autoclass:: ConstantDistribution
     :members:
 
-.. autoclass:: BetaDistribution 
+.. autoclass:: BetaDistribution
     :members:
 
-.. autoclass:: BetaBinomialDistribution 
+.. autoclass:: BetaBinomialDistribution
     :members:
 
-.. autoclass:: GammaDistribution 
+.. autoclass:: GammaDistribution
     :members:
 
 .. autoclass:: InterpolatedUnivariateDistribution
@@ -65,13 +65,16 @@ Specific Distributions
 
 .. autoclass:: HilbertSchmidtUniform
     :members:
-    
+
 .. autoclass:: HaarUniform
     :members:
-    
+
 .. autoclass:: GinibreUniform
     :members:
-    
+
+.. autoclass:: ParticleDistribution
+    :members:
+
 Combining Distributions
 -----------------------
 
