@@ -42,6 +42,7 @@ from functools import partial
 import abc
 
 from qinfer import utils as u
+from qinfer.metrics import rescaled_distance_mtx
 
 import warnings
 
@@ -272,15 +273,6 @@ class ParticleDistribution(Distribution):
             raise ValueError('Either the dimension of parameter space, `n_mps`, or the particles, `particle_locations` and `particle_weights` must be specified.')
 
     @property
-    def n_rvs(self):
-        """
-        Returns the dimension of each particle.
-
-        :type: `int`
-        """
-        return self.particle_locations.shape[1]
-
-    @property
     def n_particles(self):
         """
         Returns the number of particles in the distribution
@@ -300,6 +292,17 @@ class ParticleDistribution(Distribution):
         """
         return 1 / (np.sum(self.particle_weights**2))
 
+    ## DISTRIBUTION CONTRACT ##
+
+    @property
+    def n_rvs(self):
+        """
+        Returns the dimension of each particle.
+
+        :type: `int`
+        """
+        return self.particle_locations.shape[1]
+
     def sample(self, n=1):
         """
         Returns random samples from the current particle distribution according
@@ -314,6 +317,8 @@ class ParticleDistribution(Distribution):
             np.random.random((n,)),
             side='right'
         ), len(cumsum_weights) - 1)]
+
+    ## MOMENT FUNCTIONS ##
 
     def est_mean(self):
         """
@@ -374,6 +379,54 @@ class ParticleDistribution(Distribution):
             cov /= (np.outer(dstd, dstd))
 
         return cov
+
+    ## INFORMATION QUANTITIES ##
+
+    def est_entropy(self):
+        r"""
+        Estimates the entropy of the current particle distribution
+        as :math:`-\sum_i w_i \log w_i` where :math:`\{w_i\}`
+        is the set of particles with nonzero weight.
+        """
+        nz_weights = self.particle_weights[self.particle_weights > 0]
+        return -np.sum(np.log(nz_weights) * nz_weights)
+
+    def _kl_divergence(self, other_locs, other_weights, kernel=None, delta=1e-2):
+        """
+        Finds the KL divergence between this and another particle
+        distribution by using a kernel density estimator to smooth over the
+        other distribution's particles.
+        """
+        if kernel is None:
+            kernel = st.norm(loc=0, scale=1).pdf
+
+        dist = rescaled_distance_mtx(self, other_locs) / delta
+        K = kernel(dist)
+
+        return -self.est_entropy() - (1 / delta) * np.sum(
+            self.particle_weights *
+            np.log(
+                np.sum(
+                    other_weights * K,
+                    axis=1 # Sum over the particles of ``other``.
+                )
+            ),
+            axis=0  # Sum over the particles of ``self``.
+        )
+
+    def est_kl_divergence(self, other, kernel=None, delta=1e-2):
+        """
+        Finds the KL divergence between this and another particle
+        distribution by using a kernel density estimator to smooth over the
+        other distribution's particles.
+
+        :param SMCUpdater other:
+        """
+        return self._kl_divergence(
+            other.particle_locations,
+            other.particle_weights,
+            kernel, delta
+        )
 
 class ProductDistribution(Distribution):
     r"""

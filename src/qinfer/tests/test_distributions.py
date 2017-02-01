@@ -639,6 +639,7 @@ class TestParticleDistribution(DerandomizedTestCase):
 
         dim = 5
         n_particles = 100000
+        # draw particles from a randomly chosen mutivariate normal
         mu = np.random.randn(dim)
         cov = np.random.randn(dim,dim)
         cov = np.dot(cov,cov.T)
@@ -654,7 +655,34 @@ class TestParticleDistribution(DerandomizedTestCase):
         assert_almost_equal(dist.est_meanfn(lambda x: x**2),np.diag(cov) + mu**2, 0)
         assert(np.linalg.norm(dist.est_covariance_mtx() - cov) < 0.5)
 
+    def test_entropy(self):
+        """
+        Distributions: Tests the entropy and related functions of
+        ParticleDistributions.
+        """
 
+        dim = 3
+        n_particles = 100
+        # draw particles from a randomly chosen mutivariate normal
+        mu = np.random.randn(dim)
+        cov = np.random.randn(dim,dim)
+        cov = np.dot(cov,cov.T)
+        particle_locations = np.random.multivariate_normal(mu, cov, n_particles)
+        particle_weights1 = np.ones(n_particles)
+        particle_weights2 = np.random.rand(n_particles)
+
+        dist1 = ParticleDistribution(
+            particle_weights=particle_weights1,
+            particle_locations=particle_locations
+        )
+        dist2 = ParticleDistribution(
+            particle_weights=particle_weights2,
+            particle_locations=particle_locations
+        )
+
+        assert_almost_equal(dist1.est_entropy(), np.log(n_particles))
+        #TODO: test that est_kl_divergence does more than not fail
+        dist1.est_kl_divergence(dist2)
 
 
 class TestInterpolatedUnivariateDistribution(DerandomizedTestCase):
