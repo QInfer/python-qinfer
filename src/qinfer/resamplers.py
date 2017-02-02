@@ -56,6 +56,23 @@ import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+## FUNCTIONS ##################################################################
+
+def sqrtm_psd(A, est_error=True):
+    """
+    Returns the matrix square root of a positive semidefinite matrix,
+    truncating negative eigenvalues.
+    """
+    w, v = la.eigh(a, check_finite=check_finite)
+    w[w <= 0] = 0
+    w[w > 0] = np.sqrt(w)
+    A_sqrt = (v * w).dot(v.conj().T)
+
+    if est_error:
+        return A, np.linalg.norm(np.dot(A_sqrt, A_sqrt) - A, 'fro')
+    else:
+        return A
+
 ## CLASSES ####################################################################
 
 class Resampler(with_metaclass(ABCMeta, object)):
@@ -260,7 +277,7 @@ class LiuWestResampler(Resampler):
                 ResamplerWarning
             )
             cov = self._zero_cov_comp * np.eye(cov.shape[0])
-        S, S_err = la.sqrtm(cov, disp=False)
+        S, S_err = sqrtm_psd(cov)
         if not np.isfinite(S_err):
             raise ResamplerError(
                 "Infinite error in computing the square root of the "
