@@ -158,7 +158,7 @@ class RealDomain(Domain):
         domain. If left as `None`, positive infinity is assumed.
     """
 
-    def __init__(self, min=None, max=None):
+    def __init__(self, min=-np.inf, max=np.inf):
         self._min = min
         self._max = max
 
@@ -274,7 +274,7 @@ class IntegerDomain(Domain):
     Note: Yes, it is slightly unpythonic to specify `max` instead of `max`+1.
     """
 
-    def __init__(self, min=0, max=None):
+    def __init__(self, min=0, max=np.inf):
         self._min = int(min)
         self._max = int(max)
 
