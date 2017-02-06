@@ -25,7 +25,8 @@ matrix:
 env:
   global:
     - MPLBACKEND: Agg
-    - secure: 
+    - PYPI_USERNAME: cgranade
+    - secure: XhLK4jvMAdrSVHa2u4AhZGA6aseKGaS7GJy+HHq/O6w4DnECKvkagjm07bA0aK/OW+MlTy7hh4COf/OaUSmsciwtZ4JpJ2K5UzwUjmZAxXorkmi5aF6FCPfT1id5Qz0vWF1QLO1Fl4fEH3cHuHNL2pJ3dURK4DitehKgjEHwhm8=
 
 notifications:
   email: false
