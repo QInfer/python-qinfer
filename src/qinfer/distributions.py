@@ -249,7 +249,7 @@ class MixtureDistribution(Distribution):
 class ParticleDistribution(Distribution):
     r"""
     A distribution consisting of a list of weighted vectors.
-    Note that either `n_mps` or (`particle_locations`,`particle_weights`)
+    Note that either `n_mps` or both (`particle_locations`, `particle_weights`)
     must be specified, or an error will be raised.
 
     :param numpy.ndarray particle_weights: Length ``n_particles`` list
