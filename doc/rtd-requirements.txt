@@ -4,7 +4,7 @@ scikit-learn
 ipython
 future>=0.15
 matplotlib
--e git+https://github.com/qutip/qutip.git#egg=QuTiP
+qutip
 
 # We also add additional tools for plotting.
 mpltools
