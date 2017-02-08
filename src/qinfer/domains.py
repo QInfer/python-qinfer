@@ -277,8 +277,8 @@ class IntegerDomain(Domain):
     """
 
     def __init__(self, min=0, max=np.inf):
-        self._min = min
-        self._max = max
+        self._min = int(min) if not np.isinf(min) else min
+        self._max = int(max) if not np.isinf(max) else max
 
     ## PROPERTIES ##
 
