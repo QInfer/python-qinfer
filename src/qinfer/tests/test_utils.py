@@ -131,3 +131,13 @@ class TestLinearAlgebra(DerandomizedTestCase):
             np.dot(sqrt_Y, sqrt_Y),
             Y
         )
+
+        # Try again, but with a singular matrix.
+        Y_singular = np.zeros((6, 6))
+        Y_singular[:5, :5] = Y
+        sqrt_Y_singular = sqrtm_psd(Y_singular, est_error=False)
+
+        np.testing.assert_allclose(
+            np.dot(sqrt_Y_singular, sqrt_Y_singular),
+            Y_singular
+        )
