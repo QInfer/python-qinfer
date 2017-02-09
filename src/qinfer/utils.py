@@ -455,6 +455,20 @@ def safe_shape(arr, idx=0, default=1):
     shape = np.shape(arr)
     return shape[idx] if idx < len(shape) else default
 
+def sqrtm_psd(A, est_error=True, check_finite=True):
+    """
+    Returns the matrix square root of a positive semidefinite matrix,
+    truncating negative eigenvalues.
+    """
+    w, v = la.eigh(A, check_finite=check_finite)
+    sqrt_w = np.sqrt(w)
+    sqrt_w[w <= 0] = 0
+    A_sqrt = (v * sqrt_w).dot(v.conj().T)
+
+    if est_error:
+        return A, np.linalg.norm(np.dot(A_sqrt, A_sqrt) - A, 'fro')
+    else:
+        return A
     
 #==============================================================================
 #Test Code

@@ -42,7 +42,7 @@ import numpy as np
 import scipy.linalg as la
 import warnings
 
-from .utils import outer_product, particle_meanfn, particle_covariance_mtx
+from .utils import outer_product, particle_meanfn, particle_covariance_mtx, sqrtm_psd
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 from future.utils import with_metaclass
@@ -55,23 +55,6 @@ from qinfer._exceptions import ResamplerWarning, ResamplerError
 import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-## FUNCTIONS ##################################################################
-
-def sqrtm_psd(A, est_error=True, check_finite=True):
-    """
-    Returns the matrix square root of a positive semidefinite matrix,
-    truncating negative eigenvalues.
-    """
-    w, v = la.eigh(A, check_finite=check_finite)
-    sqrt_w = np.sqrt(w)
-    sqrt_w[w <= 0] = 0
-    A_sqrt = (v * sqrt_w).dot(v.conj().T)
-
-    if est_error:
-        return A, np.linalg.norm(np.dot(A_sqrt, A_sqrt) - A, 'fro')
-    else:
-        return A
 
 ## CLASSES ####################################################################
 
