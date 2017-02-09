@@ -58,15 +58,15 @@ logger.addHandler(logging.NullHandler())
 
 ## FUNCTIONS ##################################################################
 
-def sqrtm_psd(A, est_error=True):
+def sqrtm_psd(A, est_error=True, check_finite=True):
     """
     Returns the matrix square root of a positive semidefinite matrix,
     truncating negative eigenvalues.
     """
-    w, v = la.eigh(a, check_finite=check_finite)
-    w[w <= 0] = 0
-    w[w > 0] = np.sqrt(w)
-    A_sqrt = (v * w).dot(v.conj().T)
+    w, v = la.eigh(A, check_finite=check_finite)
+    sqrt_w = np.sqrt(w)
+    sqrt_w[w <= 0] = 0
+    A_sqrt = (v * sqrt_w).dot(v.conj().T)
 
     if est_error:
         return A, np.linalg.norm(np.dot(A_sqrt, A_sqrt) - A, 'fro')
