@@ -37,6 +37,7 @@ from functools import wraps
 from distutils.version import LooseVersion
 
 import warnings
+import unittest
 
 import numpy as np
 import numpy.linalg as la
@@ -70,7 +71,9 @@ def get_optional_module(module_name, required_version=None):
     return module
 
 
-def requires_optional_module(module_name, required_version=None):
+def requires_optional_module(module_name, required_version=None, if_missing='raise'):
+    # TODO: document
+
     def decorator(fn):
         if get_optional_module(module_name, required_version) is not None:
             return fn
@@ -87,10 +90,15 @@ def requires_optional_module(module_name, required_version=None):
                 )
             )
 
-            @wraps(fn)
-            def dummy_fn(*args, **kwwargs):
-                raise ImportError(msg)
-            return dummy_fn
+            if if_missing == "raise":
+                @wraps(fn)
+                def dummy_fn(*args, **kwwargs):
+                    raise ImportError(msg)
+
+                return dummy_fn
+
+            elif if_missing == "skip":
+                return unittest.skip(msg)
 
     return decorator
 
@@ -316,6 +324,7 @@ def particle_covariance_mtx(weights,locations):
 
     return cov            
 
+# FIXME: move ellipsoid_volume, mvee, and in_ellipsoid to geometry.py.
 
 def ellipsoid_volume(A=None, invA=None):
     """
