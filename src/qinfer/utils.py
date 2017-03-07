@@ -463,9 +463,10 @@ def sqrtm_psd(A, est_error=True, check_finite=True):
     truncating negative eigenvalues.
     """
     w, v = eigh(A, check_finite=check_finite)
-    sqrt_w = np.sqrt(w)
-    sqrt_w[w <= 0] = 0
-    A_sqrt = (v * sqrt_w).dot(v.conj().T)
+    mask = w <= 0
+    w[mask] = 0
+    np.sqrt(w, out=w)
+    A_sqrt = (v * w).dot(v.conj().T)
 
     if est_error:
         return A_sqrt, np.linalg.norm(np.dot(A_sqrt, A_sqrt) - A, 'fro')
