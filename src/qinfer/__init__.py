@@ -31,6 +31,7 @@ from qinfer.version import version as __version__
 
 from qinfer._exceptions import *
 
+from qinfer.geometry import *
 from qinfer.gpu_models import *
 from qinfer.perf_testing import *
 from qinfer.expdesign import *

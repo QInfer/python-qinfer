@@ -32,6 +32,8 @@ from __future__ import division
 ## IMPORTS ####################################################################
 
 from builtins import range
+from importlib import import_module
+from distutils.version import LooseVersion
 
 import warnings
 
@@ -48,6 +50,40 @@ from qinfer._exceptions import ApproximationWarning
 
 ## FUNCTIONS ##################################################################
 
+def get_optional_module(module_name, required_version=None):
+    """
+    Attempts to load an optional module, silently returning
+    ``None`` if the module is missing or is not of the required
+    version.
+    """
+    try:
+        module = import_module(module_name)
+        if (
+            required_version is not None and
+            module.__version__ < LooseVersion(required_version)
+        ):
+            return None
+    except ImportError, AttributeError:
+        return None
+
+    return module
+
+
+def requires_optional_module(module_name, required_version=None):
+    def decorator(fn):
+        if get_optional_module(module_name, required_version) is not None:
+            return fn
+        else:
+            raise ImportError(
+                "Function {} requires version {} of the optional module "
+                "{}, which was not found.".format(
+                    fn.__name__, required_version, module_name
+                )
+            )
+
+    return decorator
+
+# FIXME: generalize to use above *_optional_module functions.
 def get_qutip_module(required_version='3.2'):
     """
     Attempts to return the qutip module, but 
