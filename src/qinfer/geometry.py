@@ -31,8 +31,7 @@ from __future__ import division
 ## EXPORTS ###################################################################
 
 __all__ = [
-    # TODO:
-    # 'simple_est_rabi'
+    # TODO
 ]
 
 ## IMPORTS ###################################################################
@@ -89,5 +88,9 @@ def convex_distance(test_point, convex_points):
     solution = cvxopt.solvers.qp(P, q, G, h, A, b)
 
     # Return the obtained primal objective, noting that CVXOPT finds
-    # min_x 1/2 x^T P X, so that we must multiply by 2.
-    return 2 * solution['primal objective']
+    # min_x 1/2 x^T P X, so that we must multiply by 2, then take the
+    # square root. Taking the square root, we have to be a little
+    # careful, since finite tolerances can cause the objective to
+    # be negative, even though we constrained it to be at least zero.
+    # Thus, we take the max of the objective and zero.
+    return np.sqrt(2 * max(0, solution['primal objective']))

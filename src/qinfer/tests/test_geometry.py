@@ -36,20 +36,23 @@ from numpy.testing import assert_almost_equal
 from qinfer.tests.base_test import DerandomizedTestCase
 
 from qinfer.geometry import convex_distance
-from qinfer.utils import assert_sigfigs_equal, requires_optional_module
+from qinfer.utils import (
+    assert_sigfigs_equal, requires_optional_module,
+)
+from qinfer.perf_testing import numpy_err_policy
 
 ## TESTS #####################################################################
 
 class TestConvexGeometry(DerandomizedTestCase):
 
     @requires_optional_module("cvxopt", if_missing="skip")
-    def test_convex_distance_known_cases(self):
+    def test_convex_distance_known_cases(self, dimension=3):
         """
         Convex geometry: Checks convex_distance for known cases.
         """
         assert_almost_equal(
-            convex_distance(np.ones((3,)), np.eye(3)),
-            np.linalg.norm(np.ones(3,), ord=1)
+            convex_distance(np.ones((dimension,)), np.eye(dimension)),
+            np.linalg.norm(((dimension - 1) / dimension) * np.ones(dimension,), ord=2)
         )
 
         # TODO: add cases.
@@ -65,8 +68,9 @@ class TestConvexGeometry(DerandomizedTestCase):
 
         z = np.dot(alpha, S)
 
-        assert_almost_equal(
-            convex_distance(z, S),
-            0
-        )
+        with numpy_err_policy(invalid='raise'):
+            assert_almost_equal(
+                convex_distance(z, S),
+                0
+            )
         
