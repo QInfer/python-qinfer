@@ -33,6 +33,7 @@ from __future__ import division
 
 from builtins import range
 from importlib import import_module
+from functools import wraps
 from distutils.version import LooseVersion
 
 import warnings
@@ -63,7 +64,7 @@ def get_optional_module(module_name, required_version=None):
             module.__version__ < LooseVersion(required_version)
         ):
             return None
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         return None
 
     return module
@@ -74,12 +75,22 @@ def requires_optional_module(module_name, required_version=None):
         if get_optional_module(module_name, required_version) is not None:
             return fn
         else:
-            raise ImportError(
+            msg = (
                 "Function {} requires version {} of the optional module "
                 "{}, which was not found.".format(
                     fn.__name__, required_version, module_name
                 )
+                if required_version is not None else
+                "Function {} requires the optional module {}, which was "
+                "not found.".format(
+                    fn.__name__, module_name
+                )
             )
+
+            @wraps(fn)
+            def dummy_fn(*args, **kwwargs):
+                raise ImportError(msg)
+            return dummy_fn
 
     return decorator
 
