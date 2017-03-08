@@ -31,12 +31,14 @@ from __future__ import division
 ## EXPORTS ###################################################################
 
 __all__ = [
-    # TODO
+    'convex_distance',
+    'approximate_convex_hull'
 ]
 
 ## IMPORTS ###################################################################
 
 import numpy as np
+from scipy.spatial.distance import cdist
 
 from qinfer.utils import requires_optional_module
 
@@ -48,6 +50,8 @@ except:
 
 ## FUNCTIONS #################################################################
 
+# FIXME: add outgoing citations.
+
 @requires_optional_module('cvxopt')
 def convex_distance(test_point, convex_points):
     r"""
@@ -56,7 +60,7 @@ def convex_distance(test_point, convex_points):
     a point :math:`\vec{x}` to the convex closure of a set of points
     :math:`S`.
     """
-    # TODO: document this much better.
+    # TODO: document this much better, esp. params/returns.
 
     n_points, dimension = convex_points.shape
 
@@ -85,7 +89,9 @@ def convex_distance(test_point, convex_points):
     b = cvxopt.matrix(1.0)
 
     # Now we solve with cvxopt.
-    solution = cvxopt.solvers.qp(P, q, G, h, A, b)
+    solution = cvxopt.solvers.qp(P, q, G, h, A, b,
+        options={'show_progress': False}
+    )
 
     # Return the obtained primal objective, noting that CVXOPT finds
     # min_x 1/2 x^T P X, so that we must multiply by 2, then take the
@@ -94,3 +100,180 @@ def convex_distance(test_point, convex_points):
     # be negative, even though we constrained it to be at least zero.
     # Thus, we take the max of the objective and zero.
     return np.sqrt(2 * max(0, solution['primal objective']))
+
+def rand_argmin(arr, tol=1e-7):
+    minimum = np.min(arr)
+    return np.random.choice(np.nonzero(arr <= minimum + tol)[0])
+
+def expand_hull_directed_search(partial_hull, candidate_points, interior_thresh=1e-7):
+    r"""
+    Uses the Sartipizadeh and Vincent 2016 algorithm to expand
+    an approximate convex hull by finding a point :math:`\vec{x}`
+    solving
+
+    .. math::
+
+        \vec{x} = \operatorname{arg\,min}_{\vec{x} \in S \setminus E}
+                  \max_{\vec{z} \in S \setminus E}
+                  d(\vec{z}, E \cup \{\vec{x}\})
+
+    where :math:`E` is the set of points comprising the approximate
+    hull so far, and where :math:`S` is the set of points that we
+    wish to approximate the convex hull of. That is, this function
+    finds a point to add to an approximate hull that minimizes
+    the worst-case distance to any point not currently in the hull.
+    """
+    # TODO: document this much better, esp. params/returns.
+
+    # returns:
+    #    index of point to add to the hull
+    #    current error of the approximate hull
+    #    masked matrix of known convex distances
+
+    # Our strategy will be to build up a matrix D_{i, j}
+    # defined as:
+    #
+    #     Dᵢⱼ ≔ d(xᵢ, E ∪ {xⱼ})
+    #
+    # where the set of candidate points S \ E = {xᵢ} is represented
+    # as the array candidate_points.
+    #
+    # NB: our notation is different from VC16, since they reuse
+    # the letter E.
+
+    n_partial, dimension = partial_hull.shape
+    n_candidates, dimension_check = candidate_points.shape
+    assert dimension == dimension_check
+
+    # Start by allocating arrays to represent how far into
+    # each maximization we've considered for the minimization over
+    # candidates.
+    n_distances_considered = np.ones((n_candidates,), dtype=int)
+
+    # We will also need to remember the list of points interior
+    # to each candidate so that they can be removed later.
+    interior_points_found = [[] for idx in range(n_candidates)]
+
+    # We then define how to compute each element.
+    closest_miss = [np.inf]
+    def distance(idx_max, idx_min):
+        if idx_max == idx_min:
+            this_distance = 0
+        else:
+            this_distance = convex_distance(
+                candidate_points[idx_max],
+                np.concatenate([
+                    partial_hull,
+                    candidate_points[idx_min, np.newaxis]
+                ], axis=0)
+            )
+            if this_distance < closest_miss[0]:
+                closest_miss[0] = this_distance
+
+        if this_distance < interior_thresh:
+            interior_points_found[idx_min].append(idx_max)
+        return this_distance
+
+    # Next, we allocate an array for the worst maxima we've seen for
+    # each candidate.
+    worst_distances = np.array([
+        distance(0, idx_min)
+        for idx_min in range(n_candidates)
+    ])
+
+    # Using this, we can find our best candidate so far
+    idx_best_candidate = rand_argmin(worst_distances)
+
+    # ITERATION: Look at each "row" in turn until we get to the bottom. At each step,
+    #            evalaute the next element of the "column" with the best (smallest)
+    #            maximum.
+    while n_distances_considered[idx_best_candidate] < n_candidates:
+
+        next_distance = distance(n_distances_considered[idx_best_candidate], idx_best_candidate)
+        n_distances_considered[idx_best_candidate] += 1
+
+        if next_distance > worst_distances[idx_best_candidate]:
+            worst_distances[idx_best_candidate] = next_distance
+
+        idx_best_candidate = rand_argmin(worst_distances)
+
+    # COMPLETION: Return the best element we've found so far, along with the value
+    #             at that element, and the indices of interior points for the newly
+    #             expanded hull.
+    approximation_error = worst_distances[idx_best_candidate]
+    idxs_interior_points = interior_points_found[idx_best_candidate]
+
+    print(closest_miss)
+
+    return idx_best_candidate, approximation_error, idxs_interior_points
+
+
+def approximate_convex_hull(points, max_n_vertices, desired_approximation_error,
+        interior_thresh=1e-7,
+        seed_method='extreme'
+    ):
+    
+    n_points, dimension = points.shape
+    max_n_vertices = min(n_points - 1, max_n_vertices)
+
+    # FIXME: we should shuffle.
+
+    # Start by picking a point a seed point to grow the hull from.
+    if seed_method == 'extreme':
+        idx_dimension = np.random.randint(dimension)
+        sign = np.random.choice([-1, 1])
+        idx_seed_points = [
+            (sign * points[:, idx_dimension]).argmin()
+        ]
+    elif seed_method == 'centroid':
+        centroid = np.mean(points, axis=0)
+        centroid_distances = cdist(points, centroid[None, :])[:, 0]
+        idx_seed_points = [centroid_distances.argmin(), centroid_distances.argmax()]
+
+
+    # We maintain masks to indicate which points are in the approximate
+    # hull, and which masks are candidates (haven't been eliminated as
+    # interior).
+    hull_mask = np.zeros((n_points,), dtype=bool)
+    hull_mask[idx_seed_points] = True
+
+    candidate_mask = ~hull_mask.copy()
+
+    # Iterate until we hit max_n_vertices or epsilon_desired, expanding
+    # the hull each time and eliminating the interior points.
+    while True:
+        partial_hull = points[hull_mask]
+        candidate_points = points[candidate_mask]
+        idxs_partial_hull = np.nonzero(hull_mask)[0]
+
+        idx_best_candidate, approximation_error, idxs_interior_points = \
+            expand_hull_directed_search(partial_hull, candidate_points, interior_thresh=interior_thresh)
+        
+        # Add the new best candidate to the approximate hull,
+        # and eliminate any candidate points interior to the new point.
+        idxs_candidates = np.nonzero(candidate_mask)[0]
+        hull_mask[idxs_candidates[idx_best_candidate]] = True
+        candidate_mask[idxs_candidates[idxs_interior_points]] = False
+        
+        # Eliminate anything from the hull_mask
+        # that's interior to the new point.
+        n_hull_removed = 0
+        reduced_hull_mask = hull_mask.copy()
+        for idx_previous_hull_point in idxs_partial_hull:
+            reduced_hull_mask[idx_previous_hull_point] = False
+            if convex_distance(points[idx_previous_hull_point], points[reduced_hull_mask]) <= interior_thresh:
+                # Remove this as a hull point.
+                n_hull_removed += 1
+                hull_mask[idx_previous_hull_point] = False
+            else:
+                # The point wasn't interior, so add it back in.
+                reduced_hull_mask[idx_previous_hull_point] = True
+
+        print("Eliminated {} interior points.".format(len(idxs_interior_points) - 1 + n_hull_removed))
+
+        # If we hit either of our stopping criteria, return now.
+        if (
+            approximation_error <= desired_approximation_error or
+            np.sum(hull_mask) >= max_n_vertices
+        ):
+            return np.nonzero(hull_mask)[0], approximation_error
