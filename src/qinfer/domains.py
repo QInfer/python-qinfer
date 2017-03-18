@@ -355,7 +355,12 @@ class RealDomain(Domain):
 
         :rtype: `bool`
         """
-        return np.all(points >= self._min) and np.all(points <= self._max)
+        if np.all(np.isreal(points)):
+            are_greater = np.all(np.greater_equal(points, self._min))
+            are_smaller = np.all(np.less_equal(points, self._max))
+            return  are_greater and are_smaller
+        else:
+            return False
 
 class IntegerDomain(Domain):
     """
@@ -480,11 +485,16 @@ class IntegerDomain(Domain):
 
         :rtype: `bool`
         """
-        are_integer = np.all(np.mod(points,1) == 0)
-        are_greater = np.all(points >= self._min)
-        are_smaller = np.all(points <= self._max)
-        return  are_integer and are_greater and are_smaller
-
+        if np.all(np.isreal(points)):
+            try:
+                are_integer = np.all(np.mod(points, 1) == 0)
+            except TypeError:
+                are_integer = False
+            are_greater = np.all(np.greater_equal(points, self._min))
+            are_smaller = np.all(np.less_equal(points, self._max))
+            return  are_integer and are_greater and are_smaller
+        else:
+            return False
 
 class MultinomialDomain(Domain):
     """
@@ -565,7 +575,7 @@ class MultinomialDomain(Domain):
 
         :type: ``np.ndarray``
         """
-        return np.array([([self.n_meas] + [0] * (self.n_elements-1))], dtype=self.dtype)
+        return np.array([([self.n_meas] + [0] * (self.n_elements-1),)], dtype=self.dtype)
 
     @property
     def values(self):
@@ -626,4 +636,6 @@ class MultinomialDomain(Domain):
         :rtype: `bool`
         """
         array_view = self.to_regular_array(points)
-        return np.all(array_view >= 0) and np.all(np.sum(array_view, axis=-1) == self.n_meas)
+        non_negative = np.all(np.greater_equal(array_view, 0))
+        correct_sum = np.all(np.sum(array_view, axis=-1) == self.n_meas)
+        return non_negative and correct_sum
