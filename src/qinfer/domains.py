@@ -34,9 +34,9 @@ from future.utils import with_metaclass
 from operator import mul
 from scipy.special import binom
 from math import factorial
-from itertools import combinations_with_replacement
+from itertools import combinations_with_replacement, product
 import numpy as np
-from numpy.lib.recfunctions import merge_arrays
+from .utils import join_struct_arrays, separate_struct_array
 
 import abc
 
@@ -152,14 +152,24 @@ class ProductDomain(Domain):
     """
     A domain made from the cartesian product of other domains.
 
-    :param list domains: A list of domains.
+    :param Domain domains: ``Domain`` objects as separate arguments, 
+        or as a singe list of ``Domain``s.
     """
-    def __init__(self, domains):
-        super(ProductDomain, self).__init__()
+    def __init__(self, *domains):
+        
+        if len(domains) == 1:
+            try:
+                self._domains = list(domains[0])
+            except:
+                self._domains = domains
+        else:
+            self._domains = domains
+        
         self._domains = domains
-        self._example_point = merge_arrays(
-            [domain.example_point for domain in self._domains],
-            flatten = True, usemask = False)
+        self._dtypes = [domain.example_point.dtype for domain in self._domains]
+        self._example_point = join_struct_arrays(
+            [np.array(domain.example_point) for domain in self._domains]
+        )
         self._dtype = self._example_point.dtype
 
     @property
@@ -224,12 +234,49 @@ class ProductDomain(Domain):
         :rtype: `np.ndarray`
         """
         if self.is_finite:
-            raise NotImplemented()
+            separate_values = [domain.values for domain in self._domains]
+            return np.concatenate([
+                join_struct_arrays(map(np.array, value)) 
+                for value in product(*separate_values)
+            ])
         else:
             return self.example_point
 
+    ## METHODS ##
+    
+    def _mytype(self, array):
+        # astype does weird stuff with struct names, and possibly 
+        # depends on numpy version; hopefully 
+        # the following is a bit more predictable since it passes through 
+        # uint8
+        return separate_struct_array(array, self.dtype)[0]
+    
+    def to_regular_arrays(self, array):
+        """
+        Expands from an array of type `self.dtype` into a list of
+        arrays with dtypes corresponding to the factor domains.
 
-    ## ABSTRACT METHODS ##
+        :param np.ndarray array: An `np.array` of type `self.dtype`.
+
+        :rtype: ``list``
+        """
+        return separate_struct_array(self._mytype(array), self._dtypes)
+
+    def from_regular_arrays(self, arrays):
+        """
+        Merges a list of arrays (of the same shape) of dtypes 
+        corresponding to the factor domains into a single array 
+        with the dtype of the ``ProductDomain``.
+
+        :param list array: A list of ``np.ndarray``s
+
+        :rtype: `np.ndarray`
+        """
+        return self._mytype(join_struct_arrays([
+            array.astype(dtype)
+            for dtype, array in zip(self._dtypes, arrays)
+        ]))
+        
 
     def in_domain(self, points):
         """
@@ -240,7 +287,11 @@ class ProductDomain(Domain):
 
         :rtype: `bool`
         """
-        raise NotImplemented()
+        return all([
+            domain.in_domain(array)
+            for domain, array in
+                zip(self._domains, separate_struct_array(points, self._dtypes))
+        ])
 
 
 ## CLASSES ###################################################################

@@ -454,6 +454,48 @@ def pretty_time(secs, force_h=False, force_m=False):
 def safe_shape(arr, idx=0, default=1):
     shape = np.shape(arr)
     return shape[idx] if idx < len(shape) else default
+    
+def join_struct_arrays(arrays):
+    """
+    Takes a list of possibly structured arrays, concatenates their
+    dtypes, and returns one big array with that dtype. Does the 
+    inverse of ``separate_struct_array``.
+    
+    :param list arrays: List of ``np.ndarray``s
+    """
+    # taken from http://stackoverflow.com/questions/5355744/numpy-joining-structured-arrays
+    sizes = np.array([a.itemsize for a in arrays])
+    offsets = np.r_[0, sizes.cumsum()]
+    shape = arrays[0].shape
+    joint = np.empty(shape + (offsets[-1],), dtype=np.uint8)
+    for a, size, offset in zip(arrays, sizes, offsets):
+        joint[...,offset:offset+size] = np.atleast_1d(a).view(np.uint8).reshape(shape + (size,))
+    dtype = sum((a.dtype.descr for a in arrays), [])
+    return joint.ravel().view(dtype)
+    
+def separate_struct_array(array, dtypes):
+    """
+    Takes an array with a structured dtype, and separates it out into 
+    a list of arrays with dtypes coming from the input ``dtypes``.
+    Does the inverse of ``join_struct_arrays``.
+    
+    :param np.ndarray array: Structured array.
+    :param dtypes: List of ``np.dtype``, or just a ``np.dtype`` and the number of
+        them is figured out automatically by counting bytes.
+    """
+    try:
+        offsets = np.cumsum([np.dtype(dtype).itemsize for dtype in dtypes])
+    except TypeError:
+        dtype_size = np.dtype(dtypes).itemsize
+        num_fields = int(array.nbytes / (array.size * dtype_size))
+        offsets = np.cumsum([dtype_size] * num_fields)
+        dtypes = [dtypes] * num_fields
+    offsets = np.concatenate([[0], offsets]).astype(int)
+    uint_array = array.view(np.uint8).reshape(array.shape + (-1,))
+    return [
+        uint_array[..., offsets[idx]:offsets[idx+1]].flatten().view(dtype)
+        for idx, dtype in enumerate(dtypes)
+    ]
 
     
 #==============================================================================
