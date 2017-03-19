@@ -233,14 +233,11 @@ class ProductDomain(Domain):
 
         :rtype: `np.ndarray`
         """
-        if self.is_finite:
-            separate_values = [domain.values for domain in self._domains]
-            return np.concatenate([
-                join_struct_arrays(map(np.array, value)) 
-                for value in product(*separate_values)
-            ])
-        else:
-            return self.example_point
+        separate_values = [domain.values for domain in self._domains]
+        return np.concatenate([
+            join_struct_arrays(map(np.array, value)) 
+            for value in product(*separate_values)
+        ])
 
     ## METHODS ##
     
