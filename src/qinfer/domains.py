@@ -152,8 +152,8 @@ class ProductDomain(Domain):
     """
     A domain made from the cartesian product of other domains.
 
-    :param Domain domains: ``Domain`` objects as separate arguments, 
-        or as a singe list of ``Domain``s.
+    :param Domain domains: ``Domain`` instances as separate arguments, 
+        or as a singe list of ``Domain`` instances.
     """
     def __init__(self, *domains):
         
@@ -268,7 +268,7 @@ class ProductDomain(Domain):
         corresponding to the factor domains into a single array 
         with the dtype of the ``ProductDomain``.
 
-        :param list array: A list of ``np.ndarray``s
+        :param list array: A list with each element of type ``np.ndarray``
 
         :rtype: `np.ndarray`
         """

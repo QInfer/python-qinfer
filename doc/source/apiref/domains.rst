@@ -32,6 +32,16 @@ Class Reference
 .. autoclass:: Domain
     :members:
     
+
+:class:`ProductDomain` - Cartesian product of multiple domains
+--------------------------------------------------------------
+
+Class Reference 
+~~~~~~~~~~~~~~~
+.. autoclass:: ProductDomain
+    :members:
+
+    
 :class:`RealDomain` - (A subset of) Real Numbers
 ------------------------------------------------
 
