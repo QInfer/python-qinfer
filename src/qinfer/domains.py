@@ -91,9 +91,9 @@ class Domain(with_metaclass(abc.ABCMeta, object)):
     def n_members(self):
         """
         Returns the number of members in the domain if it 
-        `is_finite`, otherwise, returns `None`.
+        `is_finite`, otherwise, returns `np.inf`.
 
-        :type: ``int``
+        :type: ``int`` or ``np.inf`` 
         """
         pass
 
@@ -153,12 +153,12 @@ class RealDomain(Domain):
     of the real numbers.
 
     :param float min: A number specifying the lowest possible value of the 
-        domain. If left as `None`, negative infinity is assumed. 
+        domain.
     :param float max: A number specifying the largest possible value of the 
-        domain. If left as `None`, positive infinity is assumed.
+        domain. 
     """
 
-    def __init__(self, min=None, max=None):
+    def __init__(self, min=-np.inf, max=np.inf):
         self._min = min
         self._max = max
 
@@ -167,8 +167,7 @@ class RealDomain(Domain):
     @property
     def min(self):
         """
-        Returns the minimum value of the domain. The outcome 
-        ``None`` is interpreted as negative infinity.
+        Returns the minimum value of the domain. 
 
         :rtype: `float`
         """
@@ -176,8 +175,7 @@ class RealDomain(Domain):
     @property
     def max(self):
         """
-        Returns the maximum value of the domain. The outcome 
-        ``None`` is interpreted as positive infinity.
+        Returns the maximum value of the domain. 
 
         :rtype: `float`
         """
@@ -216,9 +214,9 @@ class RealDomain(Domain):
         Returns the number of members in the domain if it 
         `is_finite`, otherwise, returns `None`.
 
-        :type: ``int``
+        :type: ``np.inf``
         """
-        return None
+        return np.inf
 
     @property
     def example_point(self):
@@ -229,9 +227,9 @@ class RealDomain(Domain):
 
         :type: ``np.ndarray``
         """
-        if self.min is not None:
+        if not np.isinf(self.min):
             return np.array([self.min], dtype=self.dtype)
-        if self.max is not None:
+        if not np.isinf(self.max):
             return np.array([self.max], dtype=self.dtype)
         else:
             return np.array([0], dtype=self.dtype)
@@ -264,40 +262,42 @@ class RealDomain(Domain):
 class IntegerDomain(Domain):
     """
     A domain specifying a contiguous (and possibly open ended) subset 
-    of the integers.
+    of the integers. 
+
+    Internally minimum and maximum are represented as 
+    floats in order to handle the case of infinite maximum, and minimums. The
+    integer conversion function will be applied to the min and max values. 
 
     :param int min: A number specifying the lowest possible value of the 
-        domain. If `None`, negative infinity is assumed. 
+        domain.  
     :param int max: A number specifying the largest possible value of the 
-        domain. If left as `None`, positive infinity is assumed.
+        domain.
 
     Note: Yes, it is slightly unpythonic to specify `max` instead of `max`+1.
     """
 
-    def __init__(self, min=0, max=None):
-        self._min = int(min)
-        self._max = int(max)
+    def __init__(self, min=0, max=np.inf):
+        self._min = int(min) if not np.isinf(min) else min
+        self._max = int(max) if not np.isinf(max) else max
 
     ## PROPERTIES ##
 
     @property
     def min(self):
         """
-        Returns the minimum value of the domain. The outcome 
-        ``None`` is interpreted as negative infinity.
+        Returns the minimum value of the domain. 
 
-        :rtype: `float`
+        :rtype: `float` or `np.inf`
         """
-        return self._min
+        return int(self._min) if not np.isinf(self._min) else self._min  
     @property
     def max(self):
         """
-        Returns the maximum value of the domain. The outcome 
-        ``None`` is interpreted as positive infinity.
+        Returns the maximum value of the domain. 
 
-        :rtype: `float`
+        :rtype: `float` or `np.inf`
         """
-        return self._max
+        return int(self._max) if not np.isinf(self._max) else self._max
     
 
     @property
@@ -316,7 +316,7 @@ class IntegerDomain(Domain):
 
         :type: `bool`
         """
-        return self.min is not None and self.max is not None
+        return not np.isinf(self.min) and not np.isinf(self.max)
 
     @property
     def dtype(self):
@@ -331,14 +331,14 @@ class IntegerDomain(Domain):
     def n_members(self):
         """
         Returns the number of members in the domain if it 
-        `is_finite`, otherwise, returns `None`.
+        `is_finite`, otherwise, returns `np.inf`.
 
-        :type: ``int``
+        :type: ``int`` or ``np.inf``
         """
         if self.is_finite:
             return int(self.max - self.min + 1)
         else:
-            return None
+            return np.inf
 
     @property
     def example_point(self):
@@ -349,9 +349,9 @@ class IntegerDomain(Domain):
 
         :type: ``np.ndarray``
         """
-        if self.min is not None:
+        if not np.isinf(self.min):
             return np.array([self._min], dtype=self.dtype)
-        if self.max is not None:
+        if not np.isinf(self.max):
             return np.array([self._max], dtype=self.dtype)
         else:
             return np.array([0], dtype=self.dtype)
@@ -366,10 +366,10 @@ class IntegerDomain(Domain):
 
         :rtype: `np.ndarray`
         """
-        if self.max is None or self.min is None:
-            return self.example_point
-        else:
+        if self.is_finite:
             return np.arange(self.min, self.max + 1, dtype = self.dtype)
+        else:
+            return self.example_point
 
     ## METHODS ##
 
@@ -383,8 +383,8 @@ class IntegerDomain(Domain):
         :rtype: `bool`
         """
         are_integer = np.all(np.mod(points,1) == 0)
-        are_greater = True if self._min is None else np.all(points >= self._min) 
-        are_smaller = True if self._max is None else np.all(points <= self._max)
+        are_greater = np.all(points >= self._min) 
+        are_smaller = np.all(points <= self._max)
         return  are_integer and are_greater and are_smaller
     
 

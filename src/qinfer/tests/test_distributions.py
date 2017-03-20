@@ -67,7 +67,7 @@ class TestNormalDistributions(DerandomizedTestCase):
 
     def test_multivar_normal_moments(self):
         """
-        Distributions: Checks that the multivariate 
+        Distributions: Checks that the multivariate
         normal distribtion has the right moments.
         """
         MU = np.array([0,1])
@@ -78,7 +78,7 @@ class TestNormalDistributions(DerandomizedTestCase):
 
         assert_almost_equal(COV, np.cov(samples[:,0],samples[:,1]), 1)
         assert_almost_equal(MU, np.mean(samples, axis=0), 2)
-    
+
     def test_multivar_normal_n_rvs(self):
         """
         Distributions: Tests for expected number of RVS.
@@ -108,8 +108,8 @@ class TestSlantedNormalDistribution(DerandomizedTestCase):
         samples = dist.sample(150000)
 
         assert_sigfigs_equal(
-            np.mean(np.array(ranges), axis=1), 
-            np.mean(samples, axis=0), 
+            np.mean(np.array(ranges), axis=1),
+            np.mean(samples, axis=0),
         1)
         assert_sigfigs_equal(1/12+4, samples[:,0].var(), 1)
         assert_sigfigs_equal(4/12+4, samples[:,1].var(), 1)
@@ -133,12 +133,12 @@ class TestLogNormalDistribution(DerandomizedTestCase):
         samples = dist.sample(150000)
 
         assert_sigfigs_equal(
-            scipy.stats.lognorm.mean(1,3,2), 
-            samples.mean(), 
+            scipy.stats.lognorm.mean(1,3,2),
+            samples.mean(),
             1)
         assert_sigfigs_equal(
-            np.round(scipy.stats.lognorm.var(1,3,2)), 
-            np.round(samples.var()), 
+            np.round(scipy.stats.lognorm.var(1,3,2)),
+            np.round(samples.var()),
             1)
 
     def test_lognormal_n_rvs(self):
@@ -218,7 +218,7 @@ class TestUniformDistribution(DerandomizedTestCase):
         dist = DiscreteUniformDistribution(5)
         assert(dist.n_rvs == 1)
 
-        
+
 
 class TestMVUniformDistribution(DerandomizedTestCase):
     """
@@ -367,7 +367,7 @@ class TestGammaDistribution(DerandomizedTestCase):
         assert samples.shape == (100000,1)
         assert_almost_equal(samples.mean(), mean, 2)
         assert_almost_equal(samples.var(), var, 2)
-    
+
     def test_gamma_n_rvs(self):
         """
         Distributions: Tests for expected number of RVS.
@@ -417,7 +417,7 @@ class TestSingleSampleMixin(DerandomizedTestCase):
 
     def test_single_sample_mixin(self):
         """
-        Distributions: Tests that subclassing from 
+        Distributions: Tests that subclassing from
         SingleSampleMixin works.
         """
 
@@ -486,7 +486,7 @@ class TestMixtureDistribution(DerandomizedTestCase):
     def test_mixture_moments(self):
         """
         Distributions: Checks that MixtureDistributions
-        has the correct mean value for the normal 
+        has the correct mean value for the normal
         distrubution under both input formats.
         """
         weights = np.array([0.25, 0.25, 0.5])
@@ -500,15 +500,15 @@ class TestMixtureDistribution(DerandomizedTestCase):
 
         # Test both input formats
         mix1 = MixtureDistribution(weights, dist_list)
-        mix2 = MixtureDistribution(weights, NormalDistribution, 
+        mix2 = MixtureDistribution(weights, NormalDistribution,
             dist_args=np.vstack([means,vars]).T)
         # Also test with kwargs
-        mix3 = MixtureDistribution(weights, NormalDistribution, 
+        mix3 = MixtureDistribution(weights, NormalDistribution,
             dist_args=np.vstack([means,vars]).T,
             dist_kw_args={'trunc': np.vstack([means-vars/5,means+vars/5]).T})
         # Also test without the shuffle
         mix4 = MixtureDistribution(weights, dist_list, shuffle=False)
-        
+
         s1 = mix1.sample(150000)
         s2 = mix2.sample(150000)
         s3 = mix3.sample(150000)
@@ -562,6 +562,159 @@ class TestMixtureDistribution(DerandomizedTestCase):
         dist = MixtureDistribution(weights, dist_list)
         assert(dist.n_rvs == 2)
 
+class TestParticleDistribution(DerandomizedTestCase):
+    """
+    Tests ``ParticleDistribution``
+    """
+
+    ## TEST METHODS ##
+
+    def test_init(self):
+        """
+        Distributions: Checks that ParticleDistributions
+        initialized correctly in different circumstances.
+        """
+        dim = 5
+        n_particles = 100
+        # note that these weights are not all positive!
+        particle_weights = np.random.randn(dim)
+        particle_weights = particle_weights
+        particle_locations = np.random.rand(n_particles, dim)
+
+        dist1 = ParticleDistribution(n_mps=dim)
+        dist2 = ParticleDistribution(
+            particle_weights=particle_weights,
+            particle_locations=particle_locations
+        )
+
+        assert(dist1.n_particles == 1)
+        assert(dist1.n_rvs == dim)
+        assert_almost_equal(dist1.sample(3), np.zeros((3, dim)))
+        assert_almost_equal(np.sum(dist1.particle_weights), 1)
+
+        assert(dist2.n_particles == n_particles)
+        assert(dist2.n_rvs == dim)
+        assert(dist2.sample(3).shape == (3,dim))
+        # the following demands that ParticleDistribution
+        # retcifies and normalizes whichever weights it is given
+        assert_almost_equal(np.sum(dist2.particle_weights), 1)
+
+    def test_ness(self):
+        """
+        Distributions: Tests the n_ess property of the
+        ParticleDistribution.
+        """
+
+        dim = 5
+        n_particles = 100
+        particle_weights1 = np.ones(n_particles) / n_particles
+        particle_weights2 = np.zeros(n_particles)
+        particle_weights2[0] = 1
+        particle_weights3 = np.random.rand(dim)
+        particle_weights3 = particle_weights3 / np.sum(particle_weights3)
+        particle_locations = np.random.rand(n_particles, dim)
+
+        dist1 = ParticleDistribution(
+            particle_weights=particle_weights1,
+            particle_locations=particle_locations
+        )
+        dist2 = ParticleDistribution(
+            particle_weights=particle_weights2,
+            particle_locations=particle_locations
+        )
+        dist3 = ParticleDistribution(
+            particle_weights=particle_weights3,
+            particle_locations=particle_locations
+        )
+
+        assert_almost_equal(dist1.n_ess, n_particles)
+        assert_almost_equal(dist2.n_ess, 1)
+        assert(dist3.n_ess < n_particles and dist3.n_ess > 1)
+
+    def test_moments(self):
+        """
+        Distributions: Tests the moment function (est_mean, etc)
+        of ParticleDistribution.
+        """
+
+        dim = 5
+        n_particles = 100000
+        # draw particles from a randomly chosen mutivariate normal
+        mu = np.random.randn(dim)
+        cov = np.random.randn(dim,dim)
+        cov = np.dot(cov,cov.T)
+        particle_locations = np.random.multivariate_normal(mu, cov, n_particles)
+        particle_weights = np.random.rand(n_particles)
+
+        dist = ParticleDistribution(
+            particle_weights=particle_weights,
+            particle_locations=particle_locations
+        )
+
+        assert_sigfigs_equal(mu, dist.est_mean(), 1)
+        assert_almost_equal(dist.est_meanfn(lambda x: x**2),np.diag(cov) + mu**2, 0)
+        assert(np.linalg.norm(dist.est_covariance_mtx() - cov) < 0.5)
+
+    def test_entropy(self):
+        """
+        Distributions: Tests the entropy and related functions of
+        ParticleDistributions.
+        """
+
+        dim = 3
+        n_particles = 100
+        # draw particles from a randomly chosen mutivariate normal
+        mu = np.random.randn(dim)
+        cov = np.random.randn(dim,dim)
+        cov = np.dot(cov,cov.T)
+        particle_locations = np.random.multivariate_normal(mu, cov, n_particles)
+        particle_weights1 = np.ones(n_particles)
+        particle_weights2 = np.random.rand(n_particles)
+
+        dist1 = ParticleDistribution(
+            particle_weights=particle_weights1,
+            particle_locations=particle_locations
+        )
+        dist2 = ParticleDistribution(
+            particle_weights=particle_weights2,
+            particle_locations=particle_locations
+        )
+
+        assert_almost_equal(dist1.est_entropy(), np.log(n_particles))
+        #TODO: test that est_kl_divergence does more than not fail
+        dist1.est_kl_divergence(dist2)
+
+    def test_clustering(self):
+        """
+        Distributions: Tests that clustering works.
+        """
+
+        dim = 3
+        n_particles = 1000
+        # make two multivariate normal clusters
+        mu1 = 50+np.zeros(dim)
+        mu2 = -50+np.zeros(dim)
+        cov = np.random.randn(dim,dim)
+        cov = np.dot(cov,cov.T)
+        particle_locations = np.concatenate([
+            np.random.multivariate_normal(mu1, cov, int(n_particles/2)),
+            np.random.multivariate_normal(mu2, cov, int(n_particles/2))
+        ])
+        particle_weights = np.ones(n_particles)
+
+        dist = ParticleDistribution(
+            particle_weights=particle_weights,
+            particle_locations=particle_locations
+        )
+
+        # TODO: do more than check these don't fail (I didn't have time
+        # to figure out the undocumented code.)
+        dist.est_cluster_moments()
+        dist.est_cluster_covs()
+        dist.est_cluster_metric()
+
+
+
 class TestInterpolatedUnivariateDistribution(DerandomizedTestCase):
     """
     Tests ``InterpolatedUnivariateDistribution``
@@ -573,7 +726,7 @@ class TestInterpolatedUnivariateDistribution(DerandomizedTestCase):
         has the right moments.
         """
 
-        # Interpolate the normal distribution because we 
+        # Interpolate the normal distribution because we
         # know the moments
         dist = InterpolatedUnivariateDistribution(
             scipy.stats.norm.pdf, 1, 1500
@@ -600,7 +753,7 @@ class TestPostselectedDistribution(DerandomizedTestCase):
 
     def test_postselected_validity(self):
         """
-        Distributions: Checks that the postselected 
+        Distributions: Checks that the postselected
         samples are valid.
         """
 
@@ -617,8 +770,8 @@ class TestPostselectedDistribution(DerandomizedTestCase):
 
     def test_postselected_fails(self):
         """
-        Distributions: Checks that the postselected 
-        fails to generate enough points with a 
+        Distributions: Checks that the postselected
+        fails to generate enough points with a
         difficult constraint.
         """
 
@@ -691,4 +844,3 @@ class TestConstrainedSumDistribution(DerandomizedTestCase):
         dist = ConstrainedSumDistribution(unif, 3)
 
         assert(dist.n_rvs == 2)
-
