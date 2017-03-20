@@ -40,7 +40,7 @@ __all__ = [
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from qinfer.utils import requires_optional_module
+from qinfer.utils import requires_optional_module, uniquify
 
 try:
     import cvxopt
@@ -220,11 +220,15 @@ def approximate_convex_hull(points, max_n_vertices, desired_approximation_error,
 
     # Start by picking a point a seed point to grow the hull from.
     if seed_method == 'extreme':
-        idx_dimension = np.random.randint(dimension)
-        sign = np.random.choice([-1, 1])
-        idx_seed_points = [
+        # http://www.sciencedirect.com/science/article/pii/S2405896315009866
+        # idx_dimension = np.random.randint(dimension)
+        # sign = np.random.choice([-1, 1])
+        idx_seed_points = uniqify([
             (sign * points[:, idx_dimension]).argmin()
-        ]
+            for idx_dimension in range(dimension)
+            for sign in [-1, 1]
+        ])
+
     elif seed_method == 'centroid':
         centroid = np.mean(points, axis=0)
         centroid_distances = cdist(points, centroid[None, :])[:, 0]
@@ -239,6 +243,9 @@ def approximate_convex_hull(points, max_n_vertices, desired_approximation_error,
 
     candidate_mask = ~hull_mask.copy()
 
+    # Before we iterate, remove candidates that are interior to the seed hull.
+    # TODO
+
     # Iterate until we hit max_n_vertices or epsilon_desired, expanding
     # the hull each time and eliminating the interior points.
     while True:
@@ -248,7 +255,7 @@ def approximate_convex_hull(points, max_n_vertices, desired_approximation_error,
 
         idx_best_candidate, approximation_error, idxs_interior_points = \
             expand_hull_directed_search(partial_hull, candidate_points, interior_thresh=interior_thresh)
-        
+
         # Add the new best candidate to the approximate hull,
         # and eliminate any candidate points interior to the new point.
         idxs_candidates = np.nonzero(candidate_mask)[0]
@@ -277,3 +284,22 @@ def approximate_convex_hull(points, max_n_vertices, desired_approximation_error,
             np.sum(hull_mask) >= max_n_vertices
         ):
             return np.nonzero(hull_mask)[0], approximation_error
+
+# FIXME: remove this.
+if __name__ == "__main__":
+
+    dims = np.arange(2, 11)
+    times = np.empty_like(dims, dtype=float)
+    n_points = 100
+
+    from qinfer.perf_testing import timing
+
+    for idx_dim, dim in enumerate(dims):
+        print("======= DIM {} =======".format(dim))
+        points = np.random.randn(n_points, dim)
+        points /= np.linalg.norm(points, axis=0)
+        points *= np.random.random((n_points,))[:, None]
+        with timing() as t:
+            hull_pts, eps = approximate_convex_hull(points, n_points - 1, 0, seed_method='extreme')
+        times[idx_dim] = t.delta_t
+        print(t)
