@@ -64,7 +64,7 @@ class DecimationModel(MockModel):
         assert expparams.shape == (1,) # Only defined for single experiments.
 
         pr0 = np.ones((modelparams.shape[0], expparams.shape[0])) / 2
-        idx_dec_at = np.ceil(expparams['alpha'][0] * modelparams.shape[0])
+        idx_dec_at = np.ceil(expparams['alpha'][0] * modelparams.shape[0]).astype(np.int)
         pr0[idx_dec_at:, :] = 0 
         
         return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)

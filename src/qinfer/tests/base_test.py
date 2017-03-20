@@ -573,11 +573,11 @@ class ConcreteDomainTest(with_metaclass(abc.ABCMeta, object)):
             try:
                 assert(self.domain.in_domain(v))
             except AssertionError as e:
-                print('Current Value: {}'.format(v))
+                e.args += ('Current good value: {}'.format(v),)
                 raise e
         for v in self.bad_values:
             try:
                 assert(not self.domain.in_domain(v))
             except AssertionError as e:
-                print('Current Value: {}'.format(v))
+                e.args += ('Current bad value: {}'.format(v),)
                 raise e
