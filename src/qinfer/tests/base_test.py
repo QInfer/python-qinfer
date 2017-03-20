@@ -5,7 +5,7 @@
 ##
 # © 2014 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
-#     
+#
 # This file is a part of the Qinfer project.
 # Licensed under the AGPL version 3.
 ##
@@ -45,11 +45,11 @@ from contextlib import contextmanager
 
 def test_model(model, prior, expparams, stream=sys.stderr):
     """
-    Tests the given Simulatable instance for errors. Useful for debugging 
+    Tests the given Simulatable instance for errors. Useful for debugging
     new or third party models.
 
     :param model: Instance of Simulatable or a subclass thereof.
-    :param prior: Instance of Distribution, or any other class which 
+    :param prior: Instance of Distribution, or any other class which
         implements a function `sample` that returns valid modelparams.
     :param expparams: `np.ndarray` of experimental parameters to test with.
     :param stream: Stream to dump the results into, default is stderr.
@@ -71,7 +71,7 @@ def test_model(model, prior, expparams, stream=sys.stderr):
             return prior
         def instantiate_expparams(self):
             return expparams
-    
+
     test = unittest.TestSuite((TestGivenModel, ))
     runner = unittest.TextTestRunner(stream=stream)
     runner.run(test)
@@ -90,7 +90,7 @@ def assert_warns(category):
         warnings.simplefilter('always')
 
         yield
-    
+
     assert any([
         issubclass(warning.category, category) for warning in caught_warnings
     ]), "No warning of category {} raised.".format(category)
@@ -106,28 +106,28 @@ class MockModel(FiniteOutcomeModel):
     def __init__(self, n_mps=2):
         self._n_mps = n_mps
         super(MockModel, self).__init__()
-    
+
     @property
     def n_modelparams(self):
         return self._n_mps
-        
+
     @staticmethod
     def are_models_valid(modelparams):
         return np.ones((modelparams.shape[0], ), dtype=bool)
-        
+
     @property
     def is_n_outcomes_constant(self):
         return True
-        
+
     def n_outcomes(self, expparams):
         return 2
 
-        
+
     @property
     def expparams_dtype(self):
         return [('a', float), ('b', int)]
-        
-    
+
+
     def likelihood(self, outcomes, modelparams, expparams):
         super(MockModel, self).likelihood(outcomes, modelparams, expparams)
         pr0 = np.ones((modelparams.shape[0], expparams.shape[0])) / 2
@@ -162,7 +162,7 @@ class MockDirectView(object):
 
     def execute(self, code, silent=True, targets=None, block=None):
         exec(code)
-    
+
     def gather(self, key, dist='b', targets=None, block=None):
         raise NotImplementedError
 
@@ -194,21 +194,21 @@ class DerandomizedTestCase(unittest.TestCase):
     # We do this by using the fact that nosetests and unittest both call
     # the method named "setUp" (note the capitalization!) before each
     # test method.
-    
+
     def setUp(self):
         np.random.seed(0)
 
 class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
     """
-    Mixin of generic tests which can be run to test basic properties 
-    of any subclass of Simulatable. 
+    Mixin of generic tests which can be run to test basic properties
+    of any subclass of Simulatable.
     """
-    
+
     # FORCED PROPERTIES ##
 
-    # We use this abstract instantiate_* paradigm to ensure that the actual 
-    # property cannot change instances throughout the testing. Although 
-    # unlikely, this paranoid approach prevents subclasses from having 
+    # We use this abstract instantiate_* paradigm to ensure that the actual
+    # property cannot change instances throughout the testing. Although
+    # unlikely, this paranoid approach prevents subclasses from having
     # model return something different every time it is called!
 
     @abc.abstractproperty
@@ -303,8 +303,8 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
     @property
     def outcomes(self):
         """
-        Fixed set of outcomes to do tests with. If you have 
-        a weird model with different outcome dtypes, you 
+        Fixed set of outcomes to do tests with. If you have
+        a weird model with different outcome dtypes, you
         may want to set this property manually.
         """
         try:
@@ -317,7 +317,7 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
             if os.shape[0] > self.n_outcomes:
                 os = os[:self.n_outcomes]
             self._outcomes = os
-            
+
             return self._outcomes
 
 
@@ -335,10 +335,10 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
             repeat = repeat + 1
 
         outcomes = self.model.simulate_experiment(self.modelparams, self.expparams, repeat=repeat)
-        
+
         assert(outcomes.shape == (
             repeat,
-            self.n_models, 
+            self.n_models,
             self.n_expparams)
             )
 
@@ -347,10 +347,10 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
             domain = self.model.domain(self.expparams[idx_ep:idx_ep+1])[0]
             assert(domain.in_domain(outcomes[:,:,idx_ep].flatten()))
 
-    
+
     def test_update_timestep(self):
         """
-        Tests that update_timstep does not fail and 
+        Tests that update_timstep does not fail and
         has the right output format.
         """
 
@@ -358,7 +358,7 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
 
         assert(mps.shape == (
             self.n_models,
-            self.model.n_modelparams, 
+            self.model.n_modelparams,
             self.n_expparams)
             )
 
@@ -374,7 +374,7 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
 
     def test_domain(self):
         """
-        Tests that the domain property returns a list of 
+        Tests that the domain property returns a list of
         domains of the correct length
         """
         domains = self.model.domain(self.expparams)
@@ -384,7 +384,7 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
 
 class ConcreteModelTest(ConcreteSimulatableTest):
     """
-    Mixin of generic tests which can be run to test basic properties 
+    Mixin of generic tests which can be run to test basic properties
     of any subclass of Model.
     """
 
@@ -399,7 +399,7 @@ class ConcreteModelTest(ConcreteSimulatableTest):
 
     def test_canonicalize(self):
         """
-        Tests that canonicalize does not fail and that it 
+        Tests that canonicalize does not fail and that it
         returns valid models for the tester's specific modelparams.
         """
 
@@ -417,13 +417,13 @@ class ConcreteModelTest(ConcreteSimulatableTest):
 
         assert(L.shape == (
             self.n_outcomes,
-            self.n_models, 
+            self.n_models,
             self.n_expparams)
             )
 
 class ConcreteDifferentiableModelTest(ConcreteModelTest):
     """
-    Mixin of generic tests which can be run to test basic properties 
+    Mixin of generic tests which can be run to test basic properties
     of any subclass of Model.
     """
 
@@ -436,11 +436,11 @@ class ConcreteDifferentiableModelTest(ConcreteModelTest):
         """
 
         fisher = self.model.fisher_information(self.modelparams, self.expparams)
-        
+
         assert(fisher.shape == (
             self.model.n_modelparams,
-            self.model.n_modelparams, 
-            self.n_models, 
+            self.model.n_modelparams,
+            self.n_models,
             self.n_expparams))
 
     def test_score(self):
@@ -459,9 +459,125 @@ class ConcreteDifferentiableModelTest(ConcreteModelTest):
 
         # Dimensions must be correct
         assert(score.shape == (
-            self.model.n_modelparams, 
-            self.n_outcomes, 
-            self.n_models, 
+            self.model.n_modelparams,
+            self.n_outcomes,
+            self.n_models,
             self.n_expparams)
             )
-        
+
+class ConcreteDomainTest(with_metaclass(abc.ABCMeta, object)):
+    """
+    Mixin of generic tests which can be run to test basic properties
+    of any subclass of Domain.
+    """
+
+    # FORCED PROPERTIES ##
+
+    # We use this abstract instantiate_* paradigm to ensure that the actual
+    # property cannot change instances throughout the testing.
+
+    @abc.abstractproperty
+    def instantiate_domain(self):
+        """
+        Generates and returns an instance of the concrete Domain class being tested.
+        """
+        pass
+    @property
+    def domain(self):
+        """
+        Returns (a fixed) instance of the concrete Model class being tested.
+        """
+        try:
+            return self._domain
+        except AttributeError:
+            self._domain = self.instantiate_domain()
+            return self._domain
+
+    @abc.abstractproperty
+    def instantiate_good_values(self):
+        """
+        Returns a list of values in the domain.
+        """
+        pass
+    @property
+    def good_values(self):
+        """
+        Returns (a fixed) list of values in the domain.
+        """
+        try:
+            return self._good_values
+        except AttributeError:
+            self._good_values = self.instantiate_good_values()
+            return self._good_values
+
+    @abc.abstractproperty
+    def instantiate_bad_values(self):
+        """
+        Returns a list of values not in the domain.
+        """
+        pass
+    @property
+    def bad_values(self):
+        """
+        Returns (a fixed) list of values not in the domain.
+        """
+        try:
+            return self._bad_values
+        except AttributeError:
+            self._bad_values = self.instantiate_bad_values()
+            return self._bad_values
+
+
+    ## TESTS ##
+
+    def test_is_cts_or_is_descrete(self):
+        """
+        Tests that is_continuous is not is_discrete
+        """
+        assert(self.domain.is_continuous or not self.domain.is_continuous)
+        assert(self.domain.is_continuous is not self.domain.is_discrete)
+
+
+    def test_is_finite(self):
+        """
+        Tests that is_finite is bool and consistent
+        """
+
+        assert(self.domain.is_finite or not self.domain.is_finite)
+        if self.domain.is_finite:
+            assert(self.domain.is_discrete)
+
+    def test_example_point(self):
+        """
+        Tests that the example point is in the domain and has the right dtype
+        """
+        assert(self.domain.in_domain(self.domain.example_point))
+        assert_equal(self.domain.example_point, self.domain.example_point.astype(self.domain.dtype))
+
+
+    def test_values(self):
+        """
+        Tests that n_members is consistent
+        """
+        values = self.domain.values
+        if self.domain.n_members < np.inf:
+            assert(values.size == self.domain.n_members)
+        assert(self.domain.in_domain(values))
+
+    def test_in_domain(self):
+        """
+        Tests that good_values are in the domain and bad_values are not.
+        (self.values is tested elsewhere)
+        """
+        for v in self.good_values:
+            try:
+                assert(self.domain.in_domain(v))
+            except AssertionError as e:
+                e.args += ('Current good value: {}'.format(v),)
+                raise e
+        for v in self.bad_values:
+            try:
+                assert(not self.domain.in_domain(v))
+            except AssertionError as e:
+                e.args += ('Current bad value: {}'.format(v),)
+                raise e
