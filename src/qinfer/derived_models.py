@@ -48,6 +48,7 @@ from functools import reduce
 
 import numpy as np
 from scipy.stats import binom
+from itertools import combinations_with_replacement as tri_comb
 
 from qinfer.utils import binomial_pdf, multinomial_pdf, sample_multinomial
 from qinfer.abstract_model import Model, DifferentiableModel
@@ -599,6 +600,149 @@ class RandomWalkModel(DerivedModel):
         steps = steps.transpose((0, 2, 1))
         
         return modelparams[:, :, np.newaxis] + steps
+        
+class GaussianRandomWalkModel(DerivedModel):
+    r"""
+    Model such that after each time step, a random perturbation is 
+    added to each model parameter vector according to a 
+    zero-mean gaussian distribution.
+    
+    The :math:`n\times n` covariance matrix of this distribution is 
+    either fixed and known, or its entries are treated as unknown, 
+    being appended to the model parameters.
+    For diagonal covariance matrices, :math:`n` parameters are added to the model 
+    storing the square roots of the diagonal entries of the covariance matrix.
+    For dense covariance matrices, :math:`n(n+1)/2` parameters are added to 
+    the model, storing the entries of the lower triangular portion of the
+    Cholesky factorization of the covariance matrix.
+    
+    :param Model underlying_model: Model representing the likelihood with no
+        random walk added.
+    :param random_walk_names: A list of model parameter names to add the 
+        random walk to. Default is ``'all'``.
+    :param fixed_covariance: An ``np.ndarray`` specifying the fixed covariance 
+        matrix (or diagonal thereof if ``diagonal`` is ``True``) of the 
+        gaussian distribution. If set to ``None`` (default), this matrix is 
+        presumed unknown and parameters are appended to the model describing 
+        it.
+    :param boolean diagonal: Whether the gaussian distribution covariance matrix
+        is diagonal, or densely populated. Default is 
+        ``True``.
+    :param scale_mult_fcn: A function which takes an array of expparams and
+        outputs a real number for each one, representing the scale of the 
+        given experiment. This is useful if different experiments have 
+        different time lengths and therefore incur different dispersion amounts.
+        Default is ``None``.
+    """
+    def __init__(self, underlying_model, random_walk_names='all', 
+            fixed_covariance=None, diagonal=True, scale_mult_fcn=None):
+        super(RandomWalkModel, self).__init__(underlying_model)
+        
+        self._diagonal = diagonal
+        self._rw_names = random_walk_names
+        
+        if self._rw_names == 'all':
+            self._rw_names = self.underlying_model.modelparam_names
+            
+        self._scale_mult_fun = scale_mult_fun
+        if self._scale_mult_fun is None:
+            self._scale_mult_fun = (lambda expparams: 1)
+        
+        # number of parameters taking a random walk
+        self._n_rw = len(self._rw_names)
+        self._rw_idxs = np.empty(len(self._rw_names), dtype=np.int)
+        for idx, name in enumerate(self._rw_names):
+            # will raise ValueError if name not found
+            self._rw_idxs[idx] = self._rw_names.index(name)
+        
+        if fixed_covariance is None:
+            # In this case we need to lean the covariance parameters too,
+            # therefore, we need to add modelparams
+            self._fixed_covariance = False
+            if self._diagonal:
+                self._srw_names = ["\sigma_{{{}}}".format(name) for name in self._rw_names]
+                self._srw_idxs = self.underlying_model.n_modelparams +
+                    np.arange(self._n_rw).astype(np.int)
+            else:
+                self._srw_idxs = (self.underlying_model.n_modelparams +
+                    np.arange(self._n_rw * (self._n_rw + 1) / 2)).astype(np.int)
+                # the following list of indeces tells us how to populate 
+                # a cholesky matrix with a 1D list of values
+                self._srw_tri_idxs = np.tril_indices(self._n_rw)
+                self._srw_names = []
+                for idx1, name1 in enumerate(self._rw_names):
+                    for name2 in self._rw_names[:idx1+1]
+                        if name1 == name2:
+                            self._srw_names.append("\sigma_{{{}}}".format(name1))
+                        else:
+                            self._srw_names.append("\sigma_{{{},{}}}".format(name2,name1))
+        else:
+            # In this case the covariance matrix is fixed and fully specified
+            self._fixed_covariance = True
+            if self._diagonal:
+                if fixed_variance.ndims != 1:
+                    raise ValueError('Diagonal covariance requested, but fixed_variance has {} dimensions.'.format(fixed_variance.ndims))
+                if fixed_variance.size != self._n_rw:
+                    raise ValueError('fixed_variance dimension, {}, inconsistent with number of parameters, {}'.format(fixed_variance.size, self.n_rw))
+                self._fixed_scale = np.sqrt(fixed_variance)
+            else:
+                if fixed_variance.ndims != 2:
+                    raise ValueError('Dense covariance requested, but fixed_variance has {} dimensions.'.format(fixed_variance.ndims))
+                if fixed_variance.size != self._n_rw **2 or fixed_variance.shape[-2] != fixed_variance.shape[-1]:
+                    raise ValueError('fixed_variance expected to be square with width {}'.format(self._n_rw))
+                self._fixed_chol = np.linalg.cholesky(fixed_variance)
+                self._fixed_distribution = multivariate_normal(
+                    np.zeros(self._n_rw),
+                    self._fixed_cov
+                )
+        
+        if self.underlying_model.n_modelparams != self._step_dist.n_rvs:
+            raise TypeError("Step distribution does not match model dimension.")
+        
+            
+    ## METHODS ##
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        super(RandomWalkModel, self).likelihood(outcomes, modelparams, expparams)
+        return self.underlying_model.likelihood(outcomes, modelparams, expparams)
+        
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        super(RandomWalkModel, self).simulate_experiment(modelparams, expparams, repeat)
+        return self.underlying_model.simulate_experiment(modelparams, expparams, repeat)
+    
+    def _scale(self, modelparams):
+        if not self._diagonal:
+            raise ValueError('_scale only available for diagonal noise')
+        if self._fixed_covariance:
+            return self._fixed_scale
+        else:
+            return modelparams(:, self._srw_idxs)
+            
+    def _chol(self, modelparams):
+        if self._diagonal:
+            raise ValueError('_chol only available for dense noise')
+        if self._fixed_covariance:
+            return self._fixed_chol
+        else:
+            chol = np.zeros((self._n_rw,) * 2)
+            chol[self._srw_tri_idxs] = modelparams(:, self._srw_idxs)
+            return chol
+        
+    def update_timestep(self, modelparams, expparams):
+
+        n_mps = modelparams.shape[0]
+        n_eps = modelparams.shape[0]
+        if self._diagonal:
+            steps = self._scale(modelparams) * np.random.normal(size = (n_mps, n_eps, self._n_rw))
+        else:
+            steps = np.dot(
+                self._chol(modelparams), 
+                np.random.normal(size = (self._n_rw, n_mps * n_eps))
+            )
+            steps = np.reshape(steps.T, (n_mps, n_eps, -1))
+        steps = self._scale_mult_fun(expparams) * steps
+
+        return modelparams[:, self._rw_idxs, np.newaxis] + steps
 
 ## TESTING CODE ###############################################################
 
