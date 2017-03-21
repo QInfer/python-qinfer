@@ -38,7 +38,8 @@ __all__ = [
     'BinomialModel',
     'MultinomialModel',
     'MLEModel',
-    'RandomWalkModel'
+    'RandomWalkModel',
+    'GaussianRandomWalkModel'
 ]
 
 ## IMPORTS ####################################################################
@@ -636,42 +637,36 @@ class GaussianRandomWalkModel(DerivedModel):
     """
     def __init__(self, underlying_model, random_walk_names='all', 
             fixed_covariance=None, diagonal=True, scale_mult_fcn=None):
-        super(RandomWalkModel, self).__init__(underlying_model)
         
         self._diagonal = diagonal
         self._rw_names = random_walk_names
-        
         if self._rw_names == 'all':
-            self._rw_names = self.underlying_model.modelparam_names
+            self._rw_names = underlying_model.modelparam_names
             
-        self._scale_mult_fun = scale_mult_fun
-        if self._scale_mult_fun is None:
-            self._scale_mult_fun = (lambda expparams: 1)
-        
-        # number of parameters taking a random walk
         self._n_rw = len(self._rw_names)
+        
         self._rw_idxs = np.empty(len(self._rw_names), dtype=np.int)
         for idx, name in enumerate(self._rw_names):
             # will raise ValueError if name not found
             self._rw_idxs[idx] = self._rw_names.index(name)
         
+        self._srw_names = []
         if fixed_covariance is None:
             # In this case we need to lean the covariance parameters too,
             # therefore, we need to add modelparams
             self._fixed_covariance = False
             if self._diagonal:
                 self._srw_names = ["\sigma_{{{}}}".format(name) for name in self._rw_names]
-                self._srw_idxs = self.underlying_model.n_modelparams +
-                    np.arange(self._n_rw).astype(np.int)
+                self._srw_idxs = (underlying_model.n_modelparams + \
+                    np.arange(self._n_rw).astype(np.int))
             else:
-                self._srw_idxs = (self.underlying_model.n_modelparams +
+                self._srw_idxs = (underlying_model.n_modelparams +
                     np.arange(self._n_rw * (self._n_rw + 1) / 2)).astype(np.int)
                 # the following list of indeces tells us how to populate 
                 # a cholesky matrix with a 1D list of values
                 self._srw_tri_idxs = np.tril_indices(self._n_rw)
-                self._srw_names = []
                 for idx1, name1 in enumerate(self._rw_names):
-                    for name2 in self._rw_names[:idx1+1]
+                    for name2 in self._rw_names[:idx1+1]:
                         if name1 == name2:
                             self._srw_names.append("\sigma_{{{}}}".format(name1))
                         else:
@@ -695,10 +690,25 @@ class GaussianRandomWalkModel(DerivedModel):
                     np.zeros(self._n_rw),
                     self._fixed_cov
                 )
+                
+        super(GaussianRandomWalkModel, self).__init__(underlying_model)
+            
+        self._scale_mult_fcn = scale_mult_fcn
+        if self._scale_mult_fcn is None:
+            self._scale_mult_fcn = (lambda expparams: 1)
+            
+            
         
-        if self.underlying_model.n_modelparams != self._step_dist.n_rvs:
-            raise TypeError("Step distribution does not match model dimension.")
+                
+    ## PROPERTIES ##
+    
+    @property
+    def modelparam_names(self):
+        return self.underlying_model.modelparam_names + self._srw_names
         
+    @property 
+    def n_modelparams(self):
+        return len(self.modelparam_names)
             
     ## METHODS ##
     
@@ -709,40 +719,35 @@ class GaussianRandomWalkModel(DerivedModel):
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         super(RandomWalkModel, self).simulate_experiment(modelparams, expparams, repeat)
         return self.underlying_model.simulate_experiment(modelparams, expparams, repeat)
-    
-    def _scale(self, modelparams):
-        if not self._diagonal:
-            raise ValueError('_scale only available for diagonal noise')
-        if self._fixed_covariance:
-            return self._fixed_scale
-        else:
-            return modelparams(:, self._srw_idxs)
-            
-    def _chol(self, modelparams):
-        if self._diagonal:
-            raise ValueError('_chol only available for dense noise')
-        if self._fixed_covariance:
-            return self._fixed_chol
-        else:
-            chol = np.zeros((self._n_rw,) * 2)
-            chol[self._srw_tri_idxs] = modelparams(:, self._srw_idxs)
-            return chol
+        
+    def est_update_covariance(self, modelparams):
+        return NotImplemented
         
     def update_timestep(self, modelparams, expparams):
 
         n_mps = modelparams.shape[0]
         n_eps = modelparams.shape[0]
         if self._diagonal:
-            steps = self._scale(modelparams) * np.random.normal(size = (n_mps, n_eps, self._n_rw))
+            scale = self._fixed_scale if self._fixed_covariance else modelparams[:, self._srw_idxs]
+            # the following works when _fixed_scale has shape (n_rw) or (n_mps,n_rw)
+            # in the latter, each particle gets dispersed by its own belief of the scale
+            steps = self._fixed_scale * np.random.normal(size = (n_eps, n_mps, self._n_rw))
+            steps = steps.transpose((1,2,0))
         else:
-            steps = np.dot(
-                self._chol(modelparams), 
-                np.random.normal(size = (self._n_rw, n_mps * n_eps))
-            )
-            steps = np.reshape(steps.T, (n_mps, n_eps, -1))
-        steps = self._scale_mult_fun(expparams) * steps
-
-        return modelparams[:, self._rw_idxs, np.newaxis] + steps
+            if self._fixed_covariance:
+                steps = np.dot(
+                    self._fixed_chol, 
+                    np.random.normal(size = (self._n_rw, n_mps * n_eps))
+                ).reshape(self._n_rw, n_mps, n_eps).transpose((1,0,2))
+            else:
+                chol = np.zeros((n_mps, self._n_rw, self._n_rw))
+                chol[:, self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
+                # each particle gets dispersed by its own belief of the cholesky
+                steps = np.einsum('kij,kjl->kil', chol, np.random.normal(size = (n_mps, self._n_rw, n_eps)))
+        
+        new_mps = modelparams[:,:,np.newaxis]
+        new_mps[:, self._rw_idxs, :] += self._scale_mult_fcn(expparams) * steps
+        return new_mps
 
 ## TESTING CODE ###############################################################
 
