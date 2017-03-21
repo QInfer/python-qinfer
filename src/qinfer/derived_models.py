@@ -713,25 +713,45 @@ class GaussianRandomWalkModel(DerivedModel):
     ## METHODS ##
     
     def likelihood(self, outcomes, modelparams, expparams):
-        super(RandomWalkModel, self).likelihood(outcomes, modelparams, expparams)
-        return self.underlying_model.likelihood(outcomes, modelparams, expparams)
+        super(GaussianRandomWalkModel, self).likelihood(outcomes, modelparams, expparams)
+        return self.underlying_model.likelihood(outcomes, modelparams[...,:self.underlying_model.n_modelparams], expparams)
         
     def simulate_experiment(self, modelparams, expparams, repeat=1):
-        super(RandomWalkModel, self).simulate_experiment(modelparams, expparams, repeat)
-        return self.underlying_model.simulate_experiment(modelparams, expparams, repeat)
+        super(GaussianRandomWalkModel, self).simulate_experiment(modelparams, expparams, repeat)
+        return self.underlying_model.simulate_experiment(modelparams[...,:self.underlying_model.n_modelparams], expparams, repeat)
         
     def est_update_covariance(self, modelparams):
-        return NotImplemented
+        """
+        Returns the covariance of the gaussion noise process for one 
+        unit step. In the case where the covariance is being learned,
+        the expected covariance matrix is returned.
+        
+        :param modelparams: Shape `(n_models, n_modelparams)` shape array
+        of model parameters.
+        """
+        if self._diagonal:
+            scale = (self._fixed_scale if self._fixed_covariance 
+                else np.mean(modelparams[:, self._srw_idxs], axis=0))
+            cov = np.diag(scale ** 2)
+        else:
+            if self._fixed_covariance:
+                chol = self._fixed_chol
+            else:
+                chol = np.zeros((n_mps, self._n_rw, self._n_rw))
+                chol[:, self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
+                chol = np.mean(chol, axis=0)
+            cov = np.dot(chol, chol.T)
+        return cov
         
     def update_timestep(self, modelparams, expparams):
 
         n_mps = modelparams.shape[0]
-        n_eps = modelparams.shape[0]
+        n_eps = expparams.shape[0]
         if self._diagonal:
             scale = self._fixed_scale if self._fixed_covariance else modelparams[:, self._srw_idxs]
             # the following works when _fixed_scale has shape (n_rw) or (n_mps,n_rw)
             # in the latter, each particle gets dispersed by its own belief of the scale
-            steps = self._fixed_scale * np.random.normal(size = (n_eps, n_mps, self._n_rw))
+            steps = scale * np.random.normal(size = (n_eps, n_mps, self._n_rw))
             steps = steps.transpose((1,2,0))
         else:
             if self._fixed_covariance:
