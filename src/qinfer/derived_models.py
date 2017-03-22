@@ -654,7 +654,7 @@ class GaussianRandomWalkModel(DerivedModel):
         if fixed_covariance is None:
             # In this case we need to lean the covariance parameters too,
             # therefore, we need to add modelparams
-            self._fixed_covariance = False
+            self._has_fixed_covariance = False
             if self._diagonal:
                 self._srw_names = ["\sigma_{{{}}}".format(name) for name in self._rw_names]
                 self._srw_idxs = (underlying_model.n_modelparams + \
@@ -673,19 +673,19 @@ class GaussianRandomWalkModel(DerivedModel):
                             self._srw_names.append("\sigma_{{{},{}}}".format(name2,name1))
         else:
             # In this case the covariance matrix is fixed and fully specified
-            self._fixed_covariance = True
+            self._has_fixed_covariance = True
             if self._diagonal:
-                if fixed_variance.ndims != 1:
-                    raise ValueError('Diagonal covariance requested, but fixed_variance has {} dimensions.'.format(fixed_variance.ndims))
-                if fixed_variance.size != self._n_rw:
-                    raise ValueError('fixed_variance dimension, {}, inconsistent with number of parameters, {}'.format(fixed_variance.size, self.n_rw))
-                self._fixed_scale = np.sqrt(fixed_variance)
+                if fixed_covariance.ndim != 1:
+                    raise ValueError('Diagonal covariance requested, but fixed_covariance has {} dimensions.'.format(fixed_covariance.ndim))
+                if fixed_covariance.size != self._n_rw:
+                    raise ValueError('fixed_covariance dimension, {}, inconsistent with number of parameters, {}'.format(fixed_covariance.size, self.n_rw))
+                self._fixed_scale = np.sqrt(fixed_covariance)
             else:
-                if fixed_variance.ndims != 2:
-                    raise ValueError('Dense covariance requested, but fixed_variance has {} dimensions.'.format(fixed_variance.ndims))
-                if fixed_variance.size != self._n_rw **2 or fixed_variance.shape[-2] != fixed_variance.shape[-1]:
-                    raise ValueError('fixed_variance expected to be square with width {}'.format(self._n_rw))
-                self._fixed_chol = np.linalg.cholesky(fixed_variance)
+                if fixed_covariance.ndim != 2:
+                    raise ValueError('Dense covariance requested, but fixed_covariance has {} dimensions.'.format(fixed_covariance.ndim))
+                if fixed_covariance.size != self._n_rw **2 or fixed_covariance.shape[-2] != fixed_covariance.shape[-1]:
+                    raise ValueError('fixed_covariance expected to be square with width {}'.format(self._n_rw))
+                self._fixed_chol = np.linalg.cholesky(fixed_covariance)
                 self._fixed_distribution = multivariate_normal(
                     np.zeros(self._n_rw),
                     self._fixed_cov
@@ -730,15 +730,15 @@ class GaussianRandomWalkModel(DerivedModel):
         of model parameters.
         """
         if self._diagonal:
-            scale = (self._fixed_scale if self._fixed_covariance 
+            scale = (self._fixed_scale if self._has_fixed_covariance 
                 else np.mean(modelparams[:, self._srw_idxs], axis=0))
             cov = np.diag(scale ** 2)
         else:
-            if self._fixed_covariance:
+            if self._has_fixed_covariance:
                 chol = self._fixed_chol
             else:
                 chol = np.zeros((n_mps, self._n_rw, self._n_rw))
-                chol[:, self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
+                chol[(np.s_[:],) + self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
                 chol = np.mean(chol, axis=0)
             cov = np.dot(chol, chol.T)
         return cov
@@ -748,20 +748,20 @@ class GaussianRandomWalkModel(DerivedModel):
         n_mps = modelparams.shape[0]
         n_eps = expparams.shape[0]
         if self._diagonal:
-            scale = self._fixed_scale if self._fixed_covariance else modelparams[:, self._srw_idxs]
+            scale = self._fixed_scale if self._has_fixed_covariance else modelparams[:, self._srw_idxs]
             # the following works when _fixed_scale has shape (n_rw) or (n_mps,n_rw)
             # in the latter, each particle gets dispersed by its own belief of the scale
             steps = scale * np.random.normal(size = (n_eps, n_mps, self._n_rw))
             steps = steps.transpose((1,2,0))
         else:
-            if self._fixed_covariance:
+            if self._has_fixed_covariance:
                 steps = np.dot(
                     self._fixed_chol, 
                     np.random.normal(size = (self._n_rw, n_mps * n_eps))
                 ).reshape(self._n_rw, n_mps, n_eps).transpose((1,0,2))
             else:
                 chol = np.zeros((n_mps, self._n_rw, self._n_rw))
-                chol[:, self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
+                chol[(np.s_[:],) + self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
                 # each particle gets dispersed by its own belief of the cholesky
                 steps = np.einsum('kij,kjl->kil', chol, np.random.normal(size = (n_mps, self._n_rw, n_eps)))
         
