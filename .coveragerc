@@ -1,3 +1,5 @@
 [report]
 omit =
-    qinfer/_lib/*
+    src/qinfer/_lib/*
+    src/qinfer/tomography/legacy.py
+
