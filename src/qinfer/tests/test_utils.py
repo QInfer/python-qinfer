@@ -36,9 +36,11 @@ import unittest
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 
+from scipy.linalg import sqrtm
+
 from qinfer.tests.base_test import DerandomizedTestCase, MockModel, assert_warns
 
-from qinfer.utils import in_ellipsoid, assert_sigfigs_equal
+from qinfer.utils import in_ellipsoid, assert_sigfigs_equal, sqrtm_psd
 
 ## TESTS #####################################################################
 
@@ -80,7 +82,7 @@ class TestNumericTests(DerandomizedTestCase):
             np.array([1728]),
             4
         )
-        
+
 
 class TestEllipsoids(DerandomizedTestCase):
 
@@ -116,4 +118,26 @@ class TestEllipsoids(DerandomizedTestCase):
         assert_equal(
             in_ellipsoid(x, A, c), 
             np.array([1,0,1,0], dtype=bool)
+        )
+
+class TestLinearAlgebra(DerandomizedTestCase):
+    def test_sqrtm_psd(self):
+        # Construct Y = XX^T as a PSD matrix.
+        X = np.random.random((5, 5))
+        Y = np.dot(X, X.T)
+        sqrt_Y = sqrtm_psd(Y, est_error=False)
+
+        np.testing.assert_allclose(
+            np.dot(sqrt_Y, sqrt_Y),
+            Y
+        )
+
+        # Try again, but with a singular matrix.
+        Y_singular = np.zeros((6, 6))
+        Y_singular[:5, :5] = Y
+        sqrt_Y_singular = sqrtm_psd(Y_singular, est_error=False)
+
+        np.testing.assert_allclose(
+            np.dot(sqrt_Y_singular, sqrt_Y_singular),
+            Y_singular
         )

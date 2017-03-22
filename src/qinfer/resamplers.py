@@ -42,7 +42,7 @@ import numpy as np
 import scipy.linalg as la
 import warnings
 
-from .utils import outer_product, particle_meanfn, particle_covariance_mtx
+from .utils import outer_product, particle_meanfn, particle_covariance_mtx, sqrtm_psd
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 from future.utils import with_metaclass
@@ -260,7 +260,7 @@ class LiuWestResampler(Resampler):
                 ResamplerWarning
             )
             cov = self._zero_cov_comp * np.eye(cov.shape[0])
-        S, S_err = la.sqrtm(cov, disp=False)
+        S, S_err = sqrtm_psd(cov)
         if not np.isfinite(S_err):
             raise ResamplerError(
                 "Infinite error in computing the square root of the "
