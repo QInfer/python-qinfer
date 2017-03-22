@@ -198,7 +198,8 @@ class LiuWestResampler(Resampler):
     """
     def __init__(self,
             a=0.98, h=None, maxiter=1000, debug=False, postselect=True,
-            zero_cov_comp=1e-10, default_n_particles=None,
+            zero_cov_comp=1e-10, 
+            default_n_particles=None,
             kernel=np.random.randn
         ):
         self._default_n_particles = default_n_particles
