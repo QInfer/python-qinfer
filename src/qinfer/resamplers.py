@@ -182,6 +182,12 @@ class LiuWestResampler(Resampler):
         has zero norm.
     :param callable kernel: Callable function ``kernel(*shape)`` that returns samples
         from a resampling distribution with mean 0 and variance 1.
+    :param int default_n_particles: The default number of particles to draw during
+        a resampling action. If ``None``, the number of redrawn particles 
+        redrawn will be equal to the number of particles given.
+        The value of ``default_n_particles`` can be overridden by any integer
+        value of ``n_particles`` given to ``__call__``.
+        
         
     .. warning::
     
@@ -192,9 +198,11 @@ class LiuWestResampler(Resampler):
     """
     def __init__(self,
             a=0.98, h=None, maxiter=1000, debug=False, postselect=True,
-            zero_cov_comp=1e-10,
+            zero_cov_comp=1e-10, 
+            default_n_particles=None,
             kernel=np.random.randn
         ):
+        self._default_n_particles = default_n_particles
         self.a = a # Implicitly calls the property setter below to set _h.
         if h is not None:
             self._override_h = True
@@ -244,7 +252,10 @@ class LiuWestResampler(Resampler):
             cov = precomputed_cov
         
         if n_particles is None:
-            n_particles = l.shape[0]
+            if self._default_n_particles is None:
+                n_particles = l.shape[0]
+            else:
+                n_particles = self._default_n_particles
         
         # parameters in the Liu and West algorithm            
         a, h = self._a, self._h
