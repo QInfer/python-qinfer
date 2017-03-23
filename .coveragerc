@@ -1,0 +1,5 @@
+[report]
+omit =
+    src/qinfer/_lib/*
+    src/qinfer/tomography/legacy.py
+
