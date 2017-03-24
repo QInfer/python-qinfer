@@ -634,14 +634,13 @@ class GaussianRandomWalkModel(DerivedModel):
         outputs a real number for each one, representing the scale of the 
         given experiment. This is useful if different experiments have 
         different time lengths and therefore incur different dispersion amounts.\
-        If a string instead of a function, attempts to take the ``exparam`` with 
-        that name. Default is ``None``.
+        If a string is given instead of a function, 
+        thee scale multiplier is the ``exparam`` with that name.
     :param model_transformation: Either ``None`` or a pair of functions 
         ``(transform, inv_transform)`` specifying a transformation of ``modelparams``
         (of the underlying model) before gaussian noise is added, 
         and the inverse operation after
-        the gaussian noise has been added. These functions act on the model 
-        parameters 
+        the gaussian noise has been added.
     """
     def __init__(
             self, underlying_model, random_walk_names='all', 
