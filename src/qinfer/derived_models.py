@@ -636,15 +636,17 @@ class GaussianRandomWalkModel(DerivedModel):
         different time lengths and therefore incur different dispersion amounts.\
         If a string instead of a function, attempts to take the ``exparam`` with 
         that name. Default is ``None``.
-    :param mps_transformation: Either ``None`` or a pair of functions 
+    :param model_transformation: Either ``None`` or a pair of functions 
         ``(transform, inv_transform)`` specifying a transformation of ``modelparams``
-        before gaussian noise is added, and the inverse operation after
-        the gaussian noise has been added.
+        (of the underlying model) before gaussian noise is added, 
+        and the inverse operation after
+        the gaussian noise has been added. These functions act on the model 
+        parameters 
     """
     def __init__(
             self, underlying_model, random_walk_names='all', 
             fixed_covariance=None, diagonal=True, 
-            scale_mult=None, mps_transformation
+            scale_mult=None, model_transformation=None
         ):
         
         self._diagonal = diagonal
@@ -709,10 +711,10 @@ class GaussianRandomWalkModel(DerivedModel):
         else:
             self._scale_mult_fcn = scale_mult
             
-        self._has_transformation = mps_transformation is not None
+        self._has_transformation = model_transformation is not None
         if self._has_transformation:
-            self._transform = mps_transformation[0]
-            self._inv_transform = mps_transformation[1]
+            self._transform = model_transformation[0]
+            self._inv_transform = model_transformation[1]
             
         
                 
@@ -782,12 +784,16 @@ class GaussianRandomWalkModel(DerivedModel):
                 steps = np.einsum('kij,kjl->kil', chol, np.random.normal(size = (n_mps, self._n_rw, n_eps)))
         
         if self._has_transformation:
-            new_mps = self._transform(modelparams[:,:,np.newaxis])
-            new_mps[:, self._rw_idxs, :] += self._inv_transform(self._scale_mult_fcn(expparams) * steps)
+            new_mps = np.repeat(modelparams[np.newaxis,:,:], n_eps, axis=0).reshape((n_eps * n_mps, -1))
+            new_mps[:, self._rw_idxs] = self._inv_transform(
+                self._transform(new_mps[:, self._rw_idxs]) + 
+                self._scale_mult_fcn(expparams) * steps.transpose((2,0,1)).reshape((n_eps * n_mps, -1))
+            )
+            new_mps = new_mps.reshape((n_eps, n_mps, -1)).transpose((1,2,0))
         else:
             new_mps = modelparams[:,:,np.newaxis]
             new_mps[:, self._rw_idxs, :] += self._scale_mult_fcn(expparams) * steps
-        else:
+
         return new_mps
 
 ## TESTING CODE ###############################################################
