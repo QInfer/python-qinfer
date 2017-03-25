@@ -300,7 +300,7 @@ of the die probabilities.
         plt.axvline(true_chol[i,j],color='b')
     plt.show()
 
-    plt.figure(figsize=(10,10))
+    plt.figure(figsize=(12,10))
     color=iter(plt.cm.Vega10(range(5)))
     for idx in range(5):
         c=next(color)
@@ -308,6 +308,5 @@ of the die probabilities.
         plt.plot(ests[:,idx], label='$p_{}$ estimated'.format(idx), color=c)
         plt.fill_between(range(len(ests)), ests[:,idx]-stds[:,idx], ests[:,idx]+stds[:,idx],alpha=0.2, color=c, antialiased=True)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    plt.ylim([0,0.6])
     plt.show()
     
