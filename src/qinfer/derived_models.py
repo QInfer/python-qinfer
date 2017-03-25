@@ -49,7 +49,7 @@ from functools import reduce
 from past.builtins import basestring
 
 import numpy as np
-from scipy.stats import binom
+from scipy.stats import binom, multivariate_normal
 from itertools import combinations_with_replacement as tri_comb
 
 from qinfer.utils import binomial_pdf, multinomial_pdf, sample_multinomial
@@ -620,8 +620,8 @@ class GaussianRandomWalkModel(DerivedModel):
     
     :param Model underlying_model: Model representing the likelihood with no
         random walk added.
-    :param random_walk_names: A list of model parameter names to add the 
-        random walk to. Default is ``'all'``.
+    :param random_walk_idxs: A list of model parameter indeces to add the 
+        random walk to.
     :param fixed_covariance: An ``np.ndarray`` specifying the fixed covariance 
         matrix (or diagonal thereof if ``diagonal`` is ``True``) of the 
         gaussian distribution. If set to ``None`` (default), this matrix is 
@@ -643,22 +643,20 @@ class GaussianRandomWalkModel(DerivedModel):
         the gaussian noise has been added.
     """
     def __init__(
-            self, underlying_model, random_walk_names='all', 
+            self, underlying_model, random_walk_idxs='all', 
             fixed_covariance=None, diagonal=True, 
             scale_mult=None, model_transformation=None
         ):
         
         self._diagonal = diagonal
-        self._rw_names = random_walk_names
-        if self._rw_names == 'all':
-            self._rw_names = underlying_model.modelparam_names
+        self._rw_idxs = np.arange(underlying_model.n_modelparams).astype(np.int) \
+            if random_walk_idxs == 'all' else random_walk_idxs
             
-        self._n_rw = len(self._rw_names)
-        
-        self._rw_idxs = np.empty(len(self._rw_names), dtype=np.int)
-        for idx, name in enumerate(self._rw_names):
-            # will raise ValueError if name not found
-            self._rw_idxs[idx] = self._rw_names.index(name)
+        self._rw_names = [
+                underlying_model.modelparam_names[idx] 
+                for idx in self._rw_idxs
+            ]
+        self._n_rw = len(self._rw_idxs)
         
         self._srw_names = []
         if fixed_covariance is None:
@@ -668,7 +666,7 @@ class GaussianRandomWalkModel(DerivedModel):
             if self._diagonal:
                 self._srw_names = ["\sigma_{{{}}}".format(name) for name in self._rw_names]
                 self._srw_idxs = (underlying_model.n_modelparams + \
-                    np.arange(self._n_rw).astype(np.int))
+                    np.arange(self._n_rw)).astype(np.int)
             else:
                 self._srw_idxs = (underlying_model.n_modelparams +
                     np.arange(self._n_rw * (self._n_rw + 1) / 2)).astype(np.int)
@@ -698,7 +696,7 @@ class GaussianRandomWalkModel(DerivedModel):
                 self._fixed_chol = np.linalg.cholesky(fixed_covariance)
                 self._fixed_distribution = multivariate_normal(
                     np.zeros(self._n_rw),
-                    self._fixed_cov
+                    np.dot(self._fixed_chol, self._fixed_chol.T)
                 )
                 
         super(GaussianRandomWalkModel, self).__init__(underlying_model)
@@ -726,8 +724,22 @@ class GaussianRandomWalkModel(DerivedModel):
     @property 
     def n_modelparams(self):
         return len(self.modelparam_names)
+        
+    @property
+    def is_n_outcomes_constant(self):
+        return False
             
     ## METHODS ##
+    
+    def are_models_valid(self, modelparams):
+        ud_valid = self.underlying_model.are_models_valid(modelparams[...,:self.underlying_model.n_modelparams])
+        if self._has_fixed_covariance:
+            return ud_valid
+        elif self._diagonal:
+            pos_std = np.greater_equal(modelparams[...,self._srw_idxs], 0).all(axis=-1)
+            return np.logical_and(ud_valid, pos_std)
+        else:
+            return ud_valid
     
     def likelihood(self, outcomes, modelparams, expparams):
         super(GaussianRandomWalkModel, self).likelihood(outcomes, modelparams, expparams)
@@ -754,7 +766,7 @@ class GaussianRandomWalkModel(DerivedModel):
             if self._has_fixed_covariance:
                 chol = self._fixed_chol
             else:
-                chol = np.zeros((n_mps, self._n_rw, self._n_rw))
+                chol = np.zeros((modelparams.shape[0], self._n_rw, self._n_rw))
                 chol[(np.s_[:],) + self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
                 chol = np.mean(chol, axis=0)
             cov = np.dot(chol, chol.T)
@@ -782,16 +794,26 @@ class GaussianRandomWalkModel(DerivedModel):
                 # each particle gets dispersed by its own belief of the cholesky
                 steps = np.einsum('kij,kjl->kil', chol, np.random.normal(size = (n_mps, self._n_rw, n_eps)))
         
+        # multiply by the scales of the current experiments
+        steps = self._scale_mult_fcn(expparams) * steps
+        
         if self._has_transformation:
+            # repeat model params for every expparam
             new_mps = np.repeat(modelparams[np.newaxis,:,:], n_eps, axis=0).reshape((n_eps * n_mps, -1))
-            new_mps[:, self._rw_idxs] = self._inv_transform(
-                self._transform(new_mps[:, self._rw_idxs]) + 
-                self._scale_mult_fcn(expparams) * steps.transpose((2,0,1)).reshape((n_eps * n_mps, -1))
-            )
+            # run transformation on underlying slice
+            new_mps[:, :self.underlying_model.n_modelparams] = self._transform(
+                    new_mps[:, :self.underlying_model.n_modelparams]
+                )
+            # add on the random steps to the relevant indeces
+            new_mps[:, self._rw_idxs] += steps.transpose((2,0,1)).reshape((n_eps * n_mps, -1))
+            #  back to regular parameterization
+            new_mps[:, :self.underlying_model.n_modelparams] = self._inv_transform(
+                    new_mps[:, :self.underlying_model.n_modelparams]
+                )
             new_mps = new_mps.reshape((n_eps, n_mps, -1)).transpose((1,2,0))
         else:
-            new_mps = modelparams[:,:,np.newaxis]
-            new_mps[:, self._rw_idxs, :] += self._scale_mult_fcn(expparams) * steps
+            new_mps = np.repeat(modelparams[:,:,np.newaxis], n_eps, axis=2)
+            new_mps[:, self._rw_idxs, :] += steps
 
         return new_mps
 
