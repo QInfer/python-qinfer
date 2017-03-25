@@ -33,6 +33,7 @@ from __future__ import division # Ensures that a/b is always a float.
 import warnings
 import unittest
 
+from scipy.linalg import sqrtm
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 
