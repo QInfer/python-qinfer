@@ -39,7 +39,7 @@ import numpy as np
 import numpy.linalg as la
 
 from scipy.stats import logistic, binom
-from scipy.special import gammaln, gamma
+from scipy.special import gammaln, gamma, expit, logit
 from scipy.linalg import sqrtm
 
 from numpy.testing import assert_almost_equal
@@ -437,7 +437,53 @@ def compactspace(scale, n):
     logit = logistic(scale=scale).ppf
     compact_xs = np.linspace(0, 1, n + 2)[1:-1]
     return logit(compact_xs)
-           
+
+def to_simplex(y):
+    r"""
+    Interprets the last dimension of ``y`` as stick breaking lengths 
+    in inverse-logit space and returns a non-negative array of 
+    the same shape where the last dimension always sums to unity;
+    simplices.
+
+    Inverse to ``from_simplex``.
+
+    :param np.ndarray: Array of inverse-logit space stick breaking 
+        fractions along the last index.
+
+    :rtype: ``np.ndarray``
+    """
+    n = y.shape[-1]
+    # z are the stick breaking fractions in [0,1]
+    z = expit(y - np.log(n - np.arange(1, n+1)))
+    x = np.empty(y.shape)
+    x[..., 0] = z[..., 0]
+    x[..., 1:] = z[..., 1:] * (1 - z[..., :-1]).cumprod(axis=-1)
+    return x
+
+def from_simplex(x):
+    r"""
+    The last dimension of x should be unit simplices and this 
+    function turns them into stick breaking fractions in
+    inverse-logit space.
+
+    Inverse to ``to_simplex``.
+
+    :param np.ndarray: Array of unit simplices along the last index.
+    
+    :rtype: ``np.ndarray``
+    """
+    n = x.shape[-1]
+    # z are the stick breaking fractions in [0,1]
+    # the last one is always 1, so don't worry about it
+    z = np.empty(shape=x.shape)
+    z[..., 0] = x[..., 0]
+    z[..., 1:-1] = x[..., 1:-1] / (1 - x[..., :-2].cumsum(axis=-1))
+
+    # now z are the logit-transformed breaking fractions
+    z[..., :-1] = logit(z[..., :-1]) - logit(1 / (n - np.arange(n-1, dtype=np.float)))
+    # set this to 0 manually to avoid subtracting inf-inf
+    z[..., -1] = 0
+    return z
 
 def pretty_time(secs, force_h=False, force_m=False):
     if secs > 86400:
