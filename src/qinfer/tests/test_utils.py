@@ -5,7 +5,7 @@
 ##
 # © 2014 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
-#
+#     
 # This file is a part of the Qinfer project.
 # Licensed under the AGPL version 3.
 ##
@@ -34,11 +34,11 @@ import warnings
 import unittest
 
 import numpy as np
-from numpy.testing import assert_equal, assert_almost_equal, assert_approx_equal
+from numpy.testing import assert_equal, assert_almost_equal
 
 from qinfer.tests.base_test import DerandomizedTestCase, MockModel, assert_warns
 
-from qinfer.utils import in_ellipsoid, assert_sigfigs_equal, to_simplex, from_simplex
+from qinfer.utils import in_ellipsoid, assert_sigfigs_equal, sqrtm_psd, to_simplex, from_simplex
 
 ## TESTS #####################################################################
 
@@ -47,7 +47,7 @@ class TestNumericTests(DerandomizedTestCase):
     def test_assert_sigfigs_equal(self):
         """
         Tests to make sure assert_sigfigs_equal
-        only passes if the correct number of
+        only passes if the correct number of 
         significant figures match
         """
 
@@ -85,8 +85,8 @@ class TestNumericTests(DerandomizedTestCase):
 class TestEllipsoids(DerandomizedTestCase):
 
     def test_in_ellipsoid(self):
-
-        # the semi-major axes are the square roots of the
+        
+        # the semi-major axes are the square roots of the 
         # singular values, so 2 and 1 in this case.
         A = np.array([[4,0], [0,1]])
         c = np.array([0,1])
@@ -94,7 +94,7 @@ class TestEllipsoids(DerandomizedTestCase):
         # test with multiple inputs. account for numerical error at boundary.
         x = np.array([[10,5],[0,1],[0,2],[0,3],[2,1],[3,1],[0.5,1.5]])
         assert_equal(
-            in_ellipsoid(x, A, c),
+            in_ellipsoid(x, A, c), 
             np.array([0, 1, 1, 0, 1, 0, 1],dtype=bool)
         )
         # test with single input
@@ -114,8 +114,30 @@ class TestEllipsoids(DerandomizedTestCase):
             c - 1.01 * np.sqrt(s[0]) * U[:,0],
         ])
         assert_equal(
-            in_ellipsoid(x, A, c),
+            in_ellipsoid(x, A, c), 
             np.array([1,0,1,0], dtype=bool)
+        )
+
+class TestLinearAlgebra(DerandomizedTestCase):
+    def test_sqrtm_psd(self):
+        # Construct Y = XX^T as a PSD matrix.
+        X = np.random.random((5, 5))
+        Y = np.dot(X, X.T)
+        sqrt_Y = sqrtm_psd(Y, est_error=False)
+
+        np.testing.assert_allclose(
+            np.dot(sqrt_Y, sqrt_Y),
+            Y
+        )
+
+        # Try again, but with a singular matrix.
+        Y_singular = np.zeros((6, 6))
+        Y_singular[:5, :5] = Y
+        sqrt_Y_singular = sqrtm_psd(Y_singular, est_error=False)
+
+        np.testing.assert_allclose(
+            np.dot(sqrt_Y_singular, sqrt_Y_singular),
+            Y_singular
         )
 
 class TestSimplexTransforms(DerandomizedTestCase):

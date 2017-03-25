@@ -145,7 +145,7 @@ class SMCUpdater(Distribution):
             self.resampler = qinfer.resamplers.LiuWestResampler(a=resample_a)
         else:
             if resampler is None:
-                self.resampler = qinfer.resamplers.LiuWestResampler()
+                self.resampler = qinfer.resamplers.LiuWestResampler(default_n_particles=n_particles)
             else:
                 self.resampler = resampler
 
