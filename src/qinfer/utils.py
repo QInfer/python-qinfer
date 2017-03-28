@@ -442,14 +442,40 @@ def compactspace(scale, n):
 
 def to_simplex(y):
     r"""
-    Interprets the last dimension of ``y`` as stick breaking lengths 
-    in inverse-logit space and returns a non-negative array of 
-    the same shape where the last dimension always sums to unity;
-    simplices.
+    Interprets the last index of ``y`` as stick breaking fractions 
+    in logit space and returns a non-negative array of 
+    the same shape where the last dimension always sums to unity.
+    
+    A unit simplex is a list of non-negative numbers :math:`(x_1,...,x_K)`
+    that sum to one, :math:`\sum_{k=1}^K x_k=1`, for example, the 
+    probabilities of an K-sided die.
+    It is sometimes desireable to parameterize this object with variables 
+    that are unconstrained and "decorrelated".
+    To this end, we imagine :math:`\vec{x}` as a partition of the unit 
+    stick :math:`[0,1]` with :math:`K-1` break points between 
+    :math:`K` successive intervals of respective lengths :math:`(x_1,...,x_K)`.
+    Instead of storing the interval lengths, we start from the left-most break 
+    point and iteratively store the breaking fractions, :math:`z_k`, 
+    of the remaining stick.
+    This gives the formula 
+    :math:`z_k=x_k / (1-\sum_{k'=1}^{k-1}x_k)` with the convention 
+    :math:`x_0:=0`, 
+    which has an inverse formula :math:`x_k = z_k(1-z_{k-1})\cdots(1-z_1)`.
+    Note that :math:`z_K=1` since the last stick is not broken; this is the 
+    result of the redundant information imposed by :math:`\sum_{k=1}^K x_k=1`.
+    To unbound the parameters :math:`z_k` into the real line, 
+    we pass through the logit function, 
+    :math:`\operatorname{logit}(p)=\log\frac{p}{1-p}`, 
+    to end up with the parameterization 
+    :math:`y_k=\operatorname{logit}(z_k)+\log(K-k)`, with the convention 
+    :math:`y_K=0`.
+    The shift by :math:`\log(K-k)` is largely asthetic and causes the 
+    uniform simplex :math:`\vec{x}=(1/K,1/K,...,1/K)` to be mapped to 
+    :math:`\vec{x}=(0,0,...,0)`.
 
-    Inverse to ``from_simplex``.
+    Inverse to :func:`from_simplex`.
 
-    :param np.ndarray: Array of inverse-logit space stick breaking 
+    :param np.ndarray: Array of logit space stick breaking 
         fractions along the last index.
 
     :rtype: ``np.ndarray``
@@ -464,11 +490,10 @@ def to_simplex(y):
 
 def from_simplex(x):
     r"""
-    The last dimension of x should be unit simplices and this 
-    function turns them into stick breaking fractions in
-    inverse-logit space.
+    Inteprets the last index of x as unit simplices and returns a
+    real array of the sampe shape in logit space.
 
-    Inverse to ``to_simplex``.
+    Inverse to :func:`to_simplex` ; see that function for more details.
 
     :param np.ndarray: Array of unit simplices along the last index.
     
