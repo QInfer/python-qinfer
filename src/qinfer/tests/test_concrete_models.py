@@ -407,7 +407,7 @@ class TestGaussianRandomWalkModel2(ConcreteModelTest, DerandomizedTestCase):
             m,
             fixed_covariance = cov,
             diagonal = False,
-            random_walk_idxs = [1,2,4],
+            random_walk_idxs = np.s_[:6:2],
             model_transformation = (from_simplex, to_simplex),
             scale_mult = 'n_meas'
         )
@@ -480,3 +480,23 @@ class TestGaussianRandomWalkModel4(ConcreteModelTest, DerandomizedTestCase):
         cov = self.model.est_update_covariance(self.modelparams)
         eigs, v = np.linalg.eig(cov)
         assert(np.greater_equal(eigs, -1e-10).all())
+        
+class TestGaussianRandomWalkModel5(DerandomizedTestCase):
+    """
+    Tests miscillaneous properties of GaussianRandomWalkModel.
+    """
+
+    def test_indexing(self):
+        model = lambda slice: GaussianRandomWalkModel(
+                MultinomialModel(NDieModel(n=6)), 
+                random_walk_idxs = slice
+            )
+
+        assert(model('all').n_modelparams == 12)
+        assert(model(np.s_[:6]).n_modelparams == 12)
+        assert(model(np.s_[:6:2]).n_modelparams == 9)
+        assert(model([2,3,4]).n_modelparams == 9)
+        
+        self.assertRaises(IndexError, model, np.s_[:7])
+        self.assertRaises(IndexError, model, np.s_[6:])
+        self.assertRaises(IndexError, model, [1,2,8])        

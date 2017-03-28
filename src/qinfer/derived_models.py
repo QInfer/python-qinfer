@@ -620,8 +620,10 @@ class GaussianRandomWalkModel(DerivedModel):
     
     :param Model underlying_model: Model representing the likelihood with no
         random walk added.
-    :param random_walk_idxs: A list of model parameter indeces to add the 
-        random walk to.
+    :param random_walk_idxs: A list or ``np.slice`` of 
+        ``underlying_model`` model parameter indeces to add the random walk to.
+        Indeces larger than ``underlying_model.n_modelparams`` should not 
+        be touched.
     :param fixed_covariance: An ``np.ndarray`` specifying the fixed covariance 
         matrix (or diagonal thereof if ``diagonal`` is ``True``) of the 
         gaussian distribution. If set to ``None`` (default), this matrix is 
@@ -649,14 +651,18 @@ class GaussianRandomWalkModel(DerivedModel):
         ):
         
         self._diagonal = diagonal
-        self._rw_idxs = np.arange(underlying_model.n_modelparams).astype(np.int) \
+        self._rw_idxs = np.s_[:underlying_model.n_modelparams] \
             if random_walk_idxs == 'all' else random_walk_idxs
             
+        explicit_idxs = np.arange(underlying_model.n_modelparams)[self._rw_idxs]
+        if explicit_idxs.size == 0:
+            raise IndexError('At least one model parameter must take a random walk.')
+    
         self._rw_names = [
                 underlying_model.modelparam_names[idx] 
-                for idx in self._rw_idxs
+                for idx in explicit_idxs
             ]
-        self._n_rw = len(self._rw_idxs)
+        self._n_rw = len(explicit_idxs)
         
         self._srw_names = []
         if fixed_covariance is None:
@@ -700,6 +706,9 @@ class GaussianRandomWalkModel(DerivedModel):
                 )
                 
         super(GaussianRandomWalkModel, self).__init__(underlying_model)
+        
+        if np.max(np.arange(self.n_modelparams)[self._rw_idxs]) > np.max(explicit_idxs):
+            raise IndexError('random_walk_idxs out of bounds; must index (a subset of ) underlying_model modelparams.')
             
         if scale_mult is None:
             self._scale_mult_fcn = (lambda expparams: 1)
