@@ -14,6 +14,7 @@ addons:
       # QuTiP builds are currently broken under very old versions
       # of GCC, such as are installed by default with Travis CI.
       - gcc-4.8
+      - g++-4.8
       - texlive
       - texlive-latex-extra
       - texlive-fonts-extra
