@@ -29,6 +29,7 @@ from qinfer.version import version as __version__
 ## CITATION METADATA ##########################################################
 
 from ._due import due, Doi, BibTeX
+
 due.cite(
     BibTeX("""
         @article{qinfer,
