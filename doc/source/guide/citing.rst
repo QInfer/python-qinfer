@@ -81,11 +81,44 @@ called by your script. For example, if your project can be run as
 
     $ python -m duecredit script.py
 
-This will create a file called ``.duecredit.p`` containing a representation
+Alternatively, it may be more reliable to use environment variables to turn
+on `duecredit`_ collection, since this approach also works with Jupyter Notebook::
+
+    $ export DUECREDIT_ENABLE=yes # Bash
+    PS> $Env:DUECREDIT_ENABLE = "yes" # PowerShell
+
+In either case, this will create a file called ``.duecredit.p`` containing a representation
 of your bibliography. To print it out in BibTeX form, use the summary functionality
 of `duecredit`_::
 
     $ duecredit summary --format=bibtex
+
+Note that this summary will also include projects such as NumPy and SciKit-Learn
+that are supported by `duecredit`_, as well as any other projects which natively
+host citation metadata through `duecredit`_.  For example::
+
+    $ export DUECREDIT_ENABLE=yes
+    $ ipython
+    In [1]: import qinfer as qi
+    In [2]: exit
+
+    DueCredit Report:
+    - Scientific tools library / numpy (v 1.11.1) [1]
+    - Bayesian inference for quantum information / qinfer (v 1.0) [2]
+    - Machine Learning library / sklearn (v 0.17.1) [3]
+        - Affinity propagation clustering algorithm / sklearn.cluster.affinity_propagation_ (v 0.17.1) [4]
+
+    3 packages cited
+    1 module cited
+    0 functions cited
+
+    References
+    ----------
+
+    [1] Van Der Walt, S., Colbert, S.C. & Varoquaux, G., 2011. The NumPy array: a structure for efficient numerical computation. Computing in Science & Engineering, 13(2), pp.22–30.
+    [2] Granade, C. et al., 2016. QInfer: Statistical Inference Software for Quantum Applications. arXiv:1610.00336 [physics, physics:quant-ph, stat].
+    [3] Pedregosa, F. et al., 2011. Scikit-learn: Machine learning in Python. The Journal of Machine Learning Research, 12, pp.2825–2830.
+    [4] Frey, B.J. & Dueck, D., 2007. Clustering by Passing Messages Between Data Points. Science, 315(5814), pp.972–976.
 
 For more details on how to use `duecredit`_, please see their `documentation on
 GitHub <https://github.com/duecredit/duecredit/blob/master/README.md>`_.
