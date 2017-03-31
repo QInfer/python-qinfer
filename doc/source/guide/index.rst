@@ -24,4 +24,5 @@ User's Guide
     perf_testing
     parallel
     interop
+    citing
     
