@@ -760,7 +760,7 @@ class GaussianRandomWalkModel(DerivedModel):
         
     def est_update_covariance(self, modelparams):
         """
-        Returns the covariance of the gaussion noise process for one 
+        Returns the covariance of the gaussian noise process for one 
         unit step. In the case where the covariance is being learned,
         the expected covariance matrix is returned.
         
@@ -768,17 +768,16 @@ class GaussianRandomWalkModel(DerivedModel):
         of model parameters.
         """
         if self._diagonal:
-            scale = (self._fixed_scale if self._has_fixed_covariance 
-                else np.mean(modelparams[:, self._srw_idxs], axis=0))
-            cov = np.diag(scale ** 2)
+            cov = (self._fixed_scale ** 2 if self._has_fixed_covariance \
+                else np.mean(modelparams[:, self._srw_idxs] ** 2, axis=0))
+            cov = np.diag(cov)
         else:
             if self._has_fixed_covariance:
-                chol = self._fixed_chol
+                cov = np.dot(self._fixed_chol, self._fixed_chol.T)
             else:
                 chol = np.zeros((modelparams.shape[0], self._n_rw, self._n_rw))
                 chol[(np.s_[:],) + self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
-                chol = np.mean(chol, axis=0)
-            cov = np.dot(chol, chol.T)
+                cov = np.mean(np.einsum('ijk,ilk->ijl', chol, chol), axis=0)
         return cov
         
     def update_timestep(self, modelparams, expparams):
