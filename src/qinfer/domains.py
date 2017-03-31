@@ -30,6 +30,7 @@ from __future__ import absolute_import
 
 from builtins import range
 from future.utils import with_metaclass
+from functools import reduce
 
 from operator import mul
 from scipy.special import binom
@@ -235,7 +236,7 @@ class ProductDomain(Domain):
         """
         separate_values = [domain.values for domain in self._domains]
         return np.concatenate([
-            join_struct_arrays(map(np.array, value)) 
+            join_struct_arrays(list(map(np.array, value))) 
             for value in product(*separate_values)
         ])
 
