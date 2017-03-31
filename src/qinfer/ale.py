@@ -74,7 +74,7 @@ class ALEApproximateModel(DerivedModel):
         cause the algorithm to require more samples.
     """
     
-    @due.dcit(
+    @due.dcite(
         Doi("10.1103/PhysRevLett.112.130402"),
         description="Adaptive likelihood estimation",
         tags=["theory"]
