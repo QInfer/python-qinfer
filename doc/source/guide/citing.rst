@@ -120,6 +120,19 @@ host citation metadata through `duecredit`_.  For example::
     [3] Pedregosa, F. et al., 2011. Scikit-learn: Machine learning in Python. The Journal of Machine Learning Research, 12, pp.2825–2830.
     [4] Frey, B.J. & Dueck, D., 2007. Clustering by Passing Messages Between Data Points. Science, 315(5814), pp.972–976.
 
+The bibliography entries defined by QInfer are organized according to different
+*tags*, making it easier to filter through the results of `duecredit`_. In particular,
+QInfer defines the following citation tags:
+
+- ``implementation``: Concerns a software implementation of an algorithm or computation.
+- ``theory``: Concerns the initial proposal of an algorithm and other theory results.
+- ``experimental``: Concerns experimental demonstrations of an algorithm or procedure.
+
+These tags can be controlled using the ``DUECREDIT_REPORT_ALL`` and ``DUECREDIT_REPORT_TAGS``
+environment variables. By default, all tags by ``implementation`` are hidden, such that
+summaries of the collected bibliography describe which software implementations are used
+in the course of a project.
+
 For more details on how to use `duecredit`_, please see their `documentation on
 GitHub <https://github.com/duecredit/duecredit/blob/master/README.md>`_.
 
