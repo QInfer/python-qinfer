@@ -77,7 +77,7 @@ class ALEApproximateModel(DerivedModel):
     @due.dcite(
         Doi("10.1103/PhysRevLett.112.130402"),
         description="Adaptive likelihood estimation",
-        tags=["theory"]
+        tags=["implementation"]
     )
     def __init__(self, simulator,
         error_tol=1e-2, min_samp=10, samp_step=10,
