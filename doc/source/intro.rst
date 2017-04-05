@@ -63,32 +63,7 @@ entry::
       url          = {http://dx.doi.org/10.5281/zenodo.157007}
     }
 
-If you wish to cite **QInfer** functionality that has not yet appeared in a
-released version, it may be helpful
-to cite a given SHA hash as listed on
-`GitHub <https://github.com/QInfer/python-qinfer/commits/master>`_ (the
-hashes of each commit are listed on the right hand side of the page).
-A recommended BibTeX entry for citing a particular commit is::
-
-    @misc{qinfer-1_0b4,
-      author       = {Christopher Granade and
-                      Christopher Ferrie and
-                      Steven Casagrande and
-                      Ian Hincks and
-                      Michal Kononenko and
-                      Thomas Alexander and
-                      Yuval Sanders},
-      title        = {{QInfer}: Library for Statistical Inference in Quantum Information},
-      month        = may,
-      year         = 2016,
-      url =    "https://github.com/QInfer/python-qinfer/commit/bc3736c",
-      note =   {Version \texttt{bc3736c}.}
-    }
-
-    
-In this example, ``bc3736c`` should be replaced by the
-particular commit being cited, and the date should be replaced by the date
-of that commit.
+For more details, please see :ref:`citing_guide`.
 
 Getting Started
 ===============

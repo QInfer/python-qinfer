@@ -46,6 +46,7 @@ from scipy.linalg import sqrtm
 
 from numpy.testing import assert_almost_equal
 
+from qinfer._due import due, Doi
 from qinfer._exceptions import ApproximationWarning
 
 ## FUNCTIONS ##################################################################
@@ -291,6 +292,11 @@ def ellipsoid_volume(A=None, invA=None):
     
     return Vn * la.det(sqrtm(invA))
 
+@due.dcite(
+    Doi("10.1016/j.dam.2007.02.013"),
+    description="Khachiyan algorithm",
+    tags=["implementation"]
+)
 def mvee(points, tol=0.001):
     """
     Returns the minimum-volume enclosing ellipse (MVEE)

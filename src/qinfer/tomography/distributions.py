@@ -35,6 +35,7 @@ from __future__ import division
 
 ## IMPORTS ###################################################################
 
+from qinfer._due import due, Doi
 from qinfer import Distribution, SingleSampleMixin
 from qinfer.tomography.bases import gell_mann_basis, tensor_product_basis
 
@@ -213,6 +214,11 @@ class BCSZChoiDistribution(DensityOperatorDistribution):
     by the BCSZ prior [BCSZ09]_. The sampled states are normalized
     as states (trace 1).
     """
+    @due.dcite(
+        Doi("10.1016/j.physleta.2008.11.043"),
+        description="BCSZ distribution",
+        tags=['implementation']
+    )
     def __init__(self, basis, rank=None, enforce_tp=True):
         if isinstance(basis, int):
             basis = gell_mann_basis(basis)

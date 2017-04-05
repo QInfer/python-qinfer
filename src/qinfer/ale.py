@@ -49,6 +49,7 @@ from qinfer.utils import binom_est_error, binom_est_p
 from qinfer.derived_models import DerivedModel
 from qinfer.abstract_model import Model, Simulatable, FiniteOutcomeModel
 from qinfer._exceptions import ApproximationWarning
+from qinfer._due import due, Doi
 
 ## CLASSES ####################################################################
 
@@ -73,6 +74,11 @@ class ALEApproximateModel(DerivedModel):
         cause the algorithm to require more samples.
     """
     
+    @due.dcite(
+        Doi("10.1103/PhysRevLett.112.130402"),
+        description="Adaptive likelihood estimation",
+        tags=["implementation"]
+    )
     def __init__(self, simulator,
         error_tol=1e-2, min_samp=10, samp_step=10,
         est_hedge=0.509, adapt_hedge=0.509

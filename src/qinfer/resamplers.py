@@ -42,6 +42,7 @@ import numpy as np
 import scipy.linalg as la
 import warnings
 
+from ._due import due, BibTeX
 from .utils import outer_product, particle_meanfn, particle_covariance_mtx, sqrtm_psd
 
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -196,6 +197,23 @@ class LiuWestResampler(Resampler):
         resampler) if and only if :math:`a^2 + h^2 = 1`, as is set by the
         ``h=None`` keyword argument.
     """
+
+    @due.dcite(
+        BibTeX("""
+            @incollection{liu_combined_2001,
+                title = {Combined Parameter and State Estimation in Simulation-Based Filtering},
+                timestamp = {2013-01-28T21:57:35Z},
+                urldate = {2013-01-28},
+                booktitle = {Sequential {Monte Carlo} Methods in Practice},
+                publisher = {{Springer-Verlag, New York}},
+                author = {Liu, Jane and West, Mike},
+                editor = {De Freitas and Gordon, NJ},
+                year = {2001}
+            }
+        """),
+        description="Liu-West resampler",
+        tags=['implementation']
+    )
     def __init__(self,
             a=0.98, h=None, maxiter=1000, debug=False, postselect=True,
             zero_cov_comp=1e-10, 

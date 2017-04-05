@@ -39,6 +39,7 @@ __all__ = [
 from itertools import starmap
 
 import numpy as np
+from qinfer._due import due, Doi
 from qinfer.abstract_model import FiniteOutcomeModel, DifferentiableModel
 
 from operator import mul
@@ -95,6 +96,11 @@ class RandomizedBenchmarkingModel(FiniteOutcomeModel, DifferentiableModel):
     """
     # TODO: add citations to the above docstring.
 
+    @due.dcite(
+        Doi("10.1088/1367-2630/17/1/013042"),
+        description="Accelerated randomized benchmarking",
+        tags=["implementation"]
+    )
     def __init__(self, interleaved=False, order=0):
         self._il = interleaved
         if order != 0:

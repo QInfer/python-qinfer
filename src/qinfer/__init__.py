@@ -26,6 +26,28 @@
 from __future__ import absolute_import
 from qinfer.version import version as __version__
 
+## CITATION METADATA ##########################################################
+
+from ._due import due, Doi, BibTeX
+
+due.cite(
+    BibTeX("""
+        @article{qinfer,
+            title = {{QInfer}: {Statistical} Inference Software for Quantum Applications},
+            eprinttype = {arxiv},
+            eprint = {1610.00336},
+            journal = {arXiv:1610.00336 [physics, physics:quant-ph, stat]},
+            author = {Granade, Christopher and Ferrie, Christopher and Hincks, Ian and Casagrande, Steven and Alexander, Thomas and Gross, Jonathan and Kononenko, Michal and Sanders, Yuval},
+            month = oct,
+            year = {2016}
+        }
+    """),
+    description="Bayesian inference for quantum information",
+    tags=["implementation"],
+    cite_module=True,
+    path="qinfer"
+)
+
 ## IMPORTS ####################################################################
 # These imports control what is made available by importing qinfer itself.
 
