@@ -212,7 +212,7 @@ class LiuWestResampler(Resampler):
             }
         """),
         description="Liu-West resampler",
-        tags=['theory']
+        tags=['implementation']
     )
     def __init__(self,
             a=0.98, h=None, maxiter=1000, debug=False, postselect=True,

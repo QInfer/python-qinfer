@@ -217,7 +217,7 @@ class BCSZChoiDistribution(DensityOperatorDistribution):
     @due.dcite(
         Doi("10.1016/j.physleta.2008.11.043"),
         description="BCSZ distribution",
-        tags=['theory']
+        tags=['implementation']
     )
     def __init__(self, basis, rank=None, enforce_tp=True):
         if isinstance(basis, int):

@@ -99,7 +99,7 @@ class RandomizedBenchmarkingModel(FiniteOutcomeModel, DifferentiableModel):
     @due.dcite(
         Doi("10.1088/1367-2630/17/1/013042"),
         description="Accelerated randomized benchmarking",
-        tags=["theory"]
+        tags=["implementation"]
     )
     def __init__(self, interleaved=False, order=0):
         self._il = interleaved

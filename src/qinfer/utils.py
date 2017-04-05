@@ -295,7 +295,7 @@ def ellipsoid_volume(A=None, invA=None):
 @due.dcite(
     Doi("10.1016/j.dam.2007.02.013"),
     description="Khachiyan algorithm",
-    tags=["theory"]
+    tags=["implementation"]
 )
 def mvee(points, tol=0.001):
     """
