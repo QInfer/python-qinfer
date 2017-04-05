@@ -122,11 +122,12 @@ host citation metadata through `duecredit`_.  For example::
 
 The bibliography entries defined by QInfer are organized according to different
 *tags*, making it easier to filter through the results of `duecredit`_. In particular,
-QInfer defines the following citation tags:
+QInfer uses the following citation tags, as defined in the `duecredit documentation
+<https://github.com/duecredit/duecredit/blob/master/README.md>`_:
 
-- ``implementation``: Concerns a software implementation of an algorithm or computation.
-- ``theory``: Concerns the initial proposal of an algorithm and other theory results.
-- ``experimental``: Concerns experimental demonstrations of an algorithm or procedure.
+- ``implementation``: The tagged function is an implementation of the cited work.
+- ``experiment``: Concerns experimental demonstrations of an algorithm or procedure. This tag
+  is similar to, but distinct from, the ``use`` tag defined by `duecredit`_.
 
 These tags can be controlled using the ``DUECREDIT_REPORT_ALL`` and ``DUECREDIT_REPORT_TAGS``
 environment variables. By default, all tags by ``implementation`` are hidden, such that
