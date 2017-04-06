@@ -82,7 +82,8 @@ called by your script. For example, if your project can be run as
     $ python -m duecredit script.py
 
 Alternatively, it may be more reliable to use environment variables to turn
-on `duecredit`_ collection::
+on `duecredit`_ collection, since this approach also works with 
+Jupyter Notebook::
 
     $ export DUECREDIT_ENABLE=yes # Bash
     PS> $Env:DUECREDIT_ENABLE = "yes" # PowerShell
@@ -97,7 +98,7 @@ Whenever it is detected that this variable is true, any uses of **Qinfer** in a
 given folder (even multiple distinct runs) will maintain 
 a file in the same folder called ``.duecredit.p`` that contains 
 a representation of your bibliography. This file is updated whenever **Qinfer**
-uses a module, class, or method that is appropriately tagged.
+uses a module, class, or method that is appropriately tagged with a citation.
 
 If you wish to see the citation compilaton of a *single* python session, 
 you can dump the current state with::
