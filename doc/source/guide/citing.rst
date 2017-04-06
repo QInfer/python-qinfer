@@ -93,6 +93,7 @@ import using::
 
     import os
     os.environ['DUECREDIT_ENABLE'] = 'yes'
+    import qinfer as qi
 
 Whenever it is detected that this variable is true, any uses of **Qinfer** in a 
 given folder (even multiple distinct runs) will maintain 
@@ -103,7 +104,7 @@ uses a module, class, or method that is appropriately tagged with a citation.
 If you wish to see the citation compilaton of a *single* python session, 
 you can dump the current state with::
 
-    qinfer.due.dump()
+    qi.due.dump()
 
 On the other hand, to print it out the entire ``.duecredit.p`` collection 
 in BibTeX form, use the summary functionality of `duecredit`_::
