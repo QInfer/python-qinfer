@@ -30,11 +30,14 @@ from __future__ import absolute_import
 
 from builtins import range
 from future.utils import with_metaclass
+from functools import reduce
 
+from operator import mul
 from scipy.special import binom
 from math import factorial
-from itertools import combinations_with_replacement
+from itertools import combinations_with_replacement, product
 import numpy as np
+from .utils import join_struct_arrays, separate_struct_array
 
 import abc
 
@@ -44,6 +47,7 @@ import warnings
 
 __all__ = [
     'Domain',
+    'ProductDomain',
     'RealDomain',
     'IntegerDomain',
     'MultinomialDomain'
@@ -144,6 +148,149 @@ class Domain(with_metaclass(abc.ABCMeta, object)):
         :rtype: `bool`
         """
         pass
+
+class ProductDomain(Domain):
+    """
+    A domain made from the cartesian product of other domains.
+
+    :param Domain domains: ``Domain`` instances as separate arguments, 
+        or as a singe list of ``Domain`` instances.
+    """
+    def __init__(self, *domains):
+        
+        if len(domains) == 1:
+            try:
+                self._domains = list(domains[0])
+            except:
+                self._domains = domains
+        else:
+            self._domains = domains
+        
+        self._domains = domains
+        self._dtypes = [domain.example_point.dtype for domain in self._domains]
+        self._example_point = join_struct_arrays(
+            [np.array(domain.example_point) for domain in self._domains]
+        )
+        self._dtype = self._example_point.dtype
+
+    @property
+    def is_continuous(self):
+        """
+        Whether or not the domain has an uncountable number of values.
+
+        :type: `bool`
+        """
+        return any([domain.is_continuous for domain in self._domains])
+
+    @property
+    def is_finite(self):
+        """
+        Whether or not the domain contains a finite number of points.
+
+        :type: `bool`
+        """
+        return all([domain.is_finite for domain in self._domains])
+
+    @property
+    def dtype(self):
+        """
+        The numpy dtype of a single element of the domain.
+
+        :type: `np.dtype`
+        """
+        return self._dtype
+
+    @property
+    def n_members(self):
+        """
+        Returns the number of members in the domain if it
+        `is_finite`, otherwise, returns `np.inf`.
+
+        :type: ``int`` or ``np.inf``
+        """
+        if self.is_finite:
+            return reduce(mul, [domain.n_members for domain in self._domains], 1)
+        else:
+            return np.inf
+
+    @property
+    def example_point(self):
+        """
+        Returns any single point guaranteed to be in the domain, but
+        no other guarantees; useful for testing purposes.
+        This is given as a size 1 ``np.array`` of type `dtype`.
+
+        :type: ``np.ndarray``
+        """
+        return self._example_point
+
+    @property
+    def values(self):
+        """
+        Returns an `np.array` of type `dtype` containing
+        some values from the domain.
+        For domains where `is_finite` is ``True``, all elements
+        of the domain will be yielded exactly once.
+
+        :rtype: `np.ndarray`
+        """
+        separate_values = [domain.values for domain in self._domains]
+        return np.concatenate([
+            join_struct_arrays(list(map(np.array, value))) 
+            for value in product(*separate_values)
+        ])
+
+    ## METHODS ##
+    
+    def _mytype(self, array):
+        # astype does weird stuff with struct names, and possibly 
+        # depends on numpy version; hopefully 
+        # the following is a bit more predictable since it passes through 
+        # uint8
+        return separate_struct_array(array, self.dtype)[0]
+    
+    def to_regular_arrays(self, array):
+        """
+        Expands from an array of type `self.dtype` into a list of
+        arrays with dtypes corresponding to the factor domains.
+
+        :param np.ndarray array: An `np.array` of type `self.dtype`.
+
+        :rtype: ``list``
+        """
+        return separate_struct_array(self._mytype(array), self._dtypes)
+
+    def from_regular_arrays(self, arrays):
+        """
+        Merges a list of arrays (of the same shape) of dtypes 
+        corresponding to the factor domains into a single array 
+        with the dtype of the ``ProductDomain``.
+
+        :param list array: A list with each element of type ``np.ndarray``
+
+        :rtype: `np.ndarray`
+        """
+        return self._mytype(join_struct_arrays([
+            array.astype(dtype)
+            for dtype, array in zip(self._dtypes, arrays)
+        ]))
+        
+
+    def in_domain(self, points):
+        """
+        Returns ``True`` if all of the given points are in the domain,
+        ``False`` otherwise.
+
+        :param np.ndarray points: An `np.ndarray` of type `self.dtype`.
+
+        :rtype: `bool`
+        """
+        return all([
+            domain.in_domain(array)
+            for domain, array in
+                zip(self._domains, separate_struct_array(points, self._dtypes))
+        ])
+
 
 ## CLASSES ###################################################################
 

@@ -40,7 +40,8 @@ from qinfer.tests.base_test import (
 )
 import abc
 from qinfer import (
-    Domain, RealDomain, IntegerDomain, MultinomialDomain
+    Domain, ProductDomain,
+    RealDomain, IntegerDomain, MultinomialDomain
 )
 
 import unittest
@@ -175,3 +176,97 @@ class TestMultinomialDomain(ConcreteDomainTest, DerandomizedTestCase):
         assert_equal(self.domain.from_regular_array(arr2), arr1)
         assert_equal(self.domain.to_regular_array(self.domain.from_regular_array(arr2)), arr2)
         assert_equal(self.domain.from_regular_array(self.domain.to_regular_array(arr1)), arr1)
+        
+        
+class TestIntegerIntegerProductDomain(ConcreteDomainTest, DerandomizedTestCase):
+    """
+    Tests ProductDomain([IntegerDomain, IntegerDomain])
+    """
+    
+    def instantiate_domain(self):
+        return ProductDomain(
+            IntegerDomain(min=0,max=5), 
+            IntegerDomain(min=-2, max=2)
+        )
+    def instantiate_good_values(self):
+        return [
+            np.array([(0,0)], dtype=[('','<i8'),('','<i8')]),
+            np.array([(5,2),(0,-2)], dtype=[('','<i8'),('','<i8')])
+        ]
+    def instantiate_bad_values(self):
+        return [
+            np.array([(0.5,0)], dtype=[('','f8'),('','<i8')]),
+            np.array([(6,2),(0,-2)], dtype=[('','<i8'),('','<i8')])
+        ]
+
+    def test_array_conversion(self):
+        arr1 = np.array([(5,2),(0,-1)], dtype=[('','<i8'),('','<i8')])
+        arr2 = [np.array([5,0]), np.array([2,-1])]
+
+        assert_equal(self.domain.to_regular_arrays(arr1), arr2)
+        assert_equal(self.domain.from_regular_arrays(arr2), arr1)
+        assert_equal(self.domain.to_regular_arrays(self.domain.from_regular_arrays(arr2)), arr2)
+        assert_equal(self.domain.from_regular_arrays(self.domain.to_regular_arrays(arr1)), arr1)
+
+    #override
+    def test_is_finite(self):
+        assert(self.domain.is_finite)
+        assert(self.domain.is_discrete)
+
+class TestIntegerIntegerProductDomain2(ConcreteDomainTest, DerandomizedTestCase):
+    """
+    Tests ProductDomain([IntegerDomain, IntegerDomain])
+    """
+    
+    def instantiate_domain(self):
+        return ProductDomain(
+            IntegerDomain(min=0,max=5), 
+            IntegerDomain(min=-2, max=np.inf),
+            IntegerDomain(min=-np.inf, max=np.inf)
+        )
+    def instantiate_good_values(self):
+        return [
+            np.array([(0,0,0)], dtype=[('','<i8'),('','<i8'),('','<i8')]),
+            np.array([(5,2,0),(0,-2,10)], dtype=[('','<i8'),('','<i8'),('','<i8')])
+        ]
+    def instantiate_bad_values(self):
+        return [
+            np.array([(0.5,0,10)], dtype=[('','f8'),('','<i8'),('','<i8')]),
+            np.array([(6,2,10),(0,-2,10)], dtype=[('','<i8'),('','<i8'),('','<i8')])
+        ]
+        
+    #override
+    def test_is_finite(self):
+        assert(not self.domain.is_finite)
+        assert(self.domain.is_discrete)
+    
+class TestIntegerMultinomialProductDomain(ConcreteDomainTest, DerandomizedTestCase):
+    """
+    Tests ProductDomain([IntegerDomain, IntegerDomain])
+    """
+    
+    def instantiate_domain(self):
+        return ProductDomain(
+            IntegerDomain(min=0,max=5), 
+            MultinomialDomain(5, n_elements=3)
+        )
+    def instantiate_good_values(self):
+        return [
+            np.array([(0,[1,2,2])], dtype=[('','<i8'),('','<i8', 3)]),
+            np.array([(5,[5,0,0]),(0,[1,0,4])], dtype=[('','<i8'),('','<i8', 3)])
+        ]
+    def instantiate_bad_values(self):
+        return [
+            np.array([(-10,[1,2,2])], dtype=[('','<i8'),('k','<i8', 3)]),
+            np.array([(5,[-1,6,0]),(0,[1,0,4])], dtype=[('','<i8'),('k','<i8', 3)])
+        ]
+
+    def test_array_conversion(self):
+        arr1 = np.array([(5,[1,2,2]),(0,[5,0,0])], dtype=[('','<i8'),('k','<i8', 3)])
+        arr2 = [np.array([5,0]), np.array([([1,2,2],), ([5,0,0],)], dtype=[('k','<i8',3)])]
+
+        assert_equal(self.domain.to_regular_arrays(arr1), arr2)
+        assert_equal(self.domain.from_regular_arrays(arr2), arr1)
+        assert_equal(self.domain.to_regular_arrays(self.domain.from_regular_arrays(arr2)), arr2)
+        assert_equal(self.domain.from_regular_arrays(self.domain.to_regular_arrays(arr1)), arr1)
+    
