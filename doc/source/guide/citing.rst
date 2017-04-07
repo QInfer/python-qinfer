@@ -82,14 +82,32 @@ called by your script. For example, if your project can be run as
     $ python -m duecredit script.py
 
 Alternatively, it may be more reliable to use environment variables to turn
-on `duecredit`_ collection, since this approach also works with Jupyter Notebook::
+on `duecredit`_ collection, since this approach also works with 
+Jupyter Notebook::
 
     $ export DUECREDIT_ENABLE=yes # Bash
     PS> $Env:DUECREDIT_ENABLE = "yes" # PowerShell
+    
+Or, from within an Jupyter Notebook, environment variables can be set before
+import using::
 
-In either case, this will create a file called ``.duecredit.p`` containing a representation
-of your bibliography. To print it out in BibTeX form, use the summary functionality
-of `duecredit`_::
+    import os
+    os.environ['DUECREDIT_ENABLE'] = 'yes'
+    import qinfer as qi
+
+Whenever it is detected that this variable is true, any uses of **Qinfer** in a 
+given folder (even multiple distinct runs) will maintain 
+a file in the same folder called ``.duecredit.p`` that contains 
+a representation of your bibliography. This file is updated whenever **Qinfer**
+uses a module, class, or method that is appropriately tagged with a citation.
+
+If you wish to see the citation compilaton of a *single* python session, 
+you can dump the current state with::
+
+    qi.due.dump()
+
+On the other hand, to print it out the entire ``.duecredit.p`` collection 
+in BibTeX form, use the summary functionality of `duecredit`_::
 
     $ duecredit summary --format=bibtex
 
