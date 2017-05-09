@@ -54,8 +54,6 @@ class TestTest(DerandomizedTestCase):
     def test_assert_warns_nowarn(self):
         with assert_warns(RuntimeWarning):
             pass
-            
-class TestTestModel(DerandomizedTestCase):
     
     def test_test_model_runs(self):
         model = MockModel()
