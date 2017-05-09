@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##
-# test_smc.py: Checks that utilities for unit testing
+# test_test.py: Checks that utilities for unit testing
 #     actually run the tests we expect.
 ##
 # © 2014 Chris Ferrie (csferrie@gmail.com) and
@@ -37,7 +37,10 @@ import unittest
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 
-from qinfer.tests.base_test import DerandomizedTestCase, MockModel, assert_warns
+from qinfer import UniformDistribution
+from qinfer.tests.base_test import (
+    DerandomizedTestCase, MockModel, assert_warns, test_model
+)
 
 ## TESTS #####################################################################
 
@@ -51,3 +54,12 @@ class TestTest(DerandomizedTestCase):
     def test_assert_warns_nowarn(self):
         with assert_warns(RuntimeWarning):
             pass
+            
+class TestTestModel(DerandomizedTestCase):
+    
+    def test_test_model_runs(self):
+        model = MockModel()
+        prior = UniformDistribution(np.array([[10,12],[2,3]]))
+        eps = np.arange(10,20).astype(model.expparams_dtype)
+        test_model(model, prior, eps)
+        
