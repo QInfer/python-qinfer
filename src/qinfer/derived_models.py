@@ -38,16 +38,19 @@ __all__ = [
     'BinomialModel',
     'MultinomialModel',
     'MLEModel',
-    'RandomWalkModel'
+    'RandomWalkModel',
+    'GaussianRandomWalkModel'
 ]
 
 ## IMPORTS ####################################################################
 
 from builtins import range
 from functools import reduce
+from past.builtins import basestring
 
 import numpy as np
-from scipy.stats import binom
+from scipy.stats import binom, multivariate_normal
+from itertools import combinations_with_replacement as tri_comb
 
 from qinfer.utils import binomial_pdf, multinomial_pdf, sample_multinomial
 from qinfer.abstract_model import Model, DifferentiableModel
@@ -599,6 +602,228 @@ class RandomWalkModel(DerivedModel):
         steps = steps.transpose((0, 2, 1))
         
         return modelparams[:, :, np.newaxis] + steps
+        
+class GaussianRandomWalkModel(DerivedModel):
+    r"""
+    Model such that after each time step, a random perturbation is 
+    added to each model parameter vector according to a 
+    zero-mean gaussian distribution.
+    
+    The :math:`n\times n` covariance matrix of this distribution is 
+    either fixed and known, or its entries are treated as unknown, 
+    being appended to the model parameters.
+    For diagonal covariance matrices, :math:`n` parameters are added to the model 
+    storing the square roots of the diagonal entries of the covariance matrix.
+    For dense covariance matrices, :math:`n(n+1)/2` parameters are added to 
+    the model, storing the entries of the lower triangular portion of the
+    Cholesky factorization of the covariance matrix.
+    
+    :param Model underlying_model: Model representing the likelihood with no
+        random walk added.
+    :param random_walk_idxs: A list or ``np.slice`` of 
+        ``underlying_model`` model parameter indeces to add the random walk to.
+        Indeces larger than ``underlying_model.n_modelparams`` should not 
+        be touched.
+    :param fixed_covariance: An ``np.ndarray`` specifying the fixed covariance 
+        matrix (or diagonal thereof if ``diagonal`` is ``True``) of the 
+        gaussian distribution. If set to ``None`` (default), this matrix is 
+        presumed unknown and parameters are appended to the model describing 
+        it.
+    :param boolean diagonal: Whether the gaussian distribution covariance matrix
+        is diagonal, or densely populated. Default is 
+        ``True``.
+    :param scale_mult: A function which takes an array of expparams and
+        outputs a real number for each one, representing the scale of the 
+        given experiment. This is useful if different experiments have 
+        different time lengths and therefore incur different dispersion amounts.\
+        If a string is given instead of a function, 
+        thee scale multiplier is the ``exparam`` with that name.
+    :param model_transformation: Either ``None`` or a pair of functions 
+        ``(transform, inv_transform)`` specifying a transformation of ``modelparams``
+        (of the underlying model) before gaussian noise is added, 
+        and the inverse operation after
+        the gaussian noise has been added.
+    """
+    def __init__(
+            self, underlying_model, random_walk_idxs='all', 
+            fixed_covariance=None, diagonal=True, 
+            scale_mult=None, model_transformation=None
+        ):
+        
+        self._diagonal = diagonal
+        self._rw_idxs = np.s_[:underlying_model.n_modelparams] \
+            if random_walk_idxs == 'all' else random_walk_idxs
+            
+        explicit_idxs = np.arange(underlying_model.n_modelparams)[self._rw_idxs]
+        if explicit_idxs.size == 0:
+            raise IndexError('At least one model parameter must take a random walk.')
+    
+        self._rw_names = [
+                underlying_model.modelparam_names[idx] 
+                for idx in explicit_idxs
+            ]
+        self._n_rw = len(explicit_idxs)
+        
+        self._srw_names = []
+        if fixed_covariance is None:
+            # In this case we need to lean the covariance parameters too,
+            # therefore, we need to add modelparams
+            self._has_fixed_covariance = False
+            if self._diagonal:
+                self._srw_names = ["\sigma_{{{}}}".format(name) for name in self._rw_names]
+                self._srw_idxs = (underlying_model.n_modelparams + \
+                    np.arange(self._n_rw)).astype(np.int)
+            else:
+                self._srw_idxs = (underlying_model.n_modelparams +
+                    np.arange(self._n_rw * (self._n_rw + 1) / 2)).astype(np.int)
+                # the following list of indeces tells us how to populate 
+                # a cholesky matrix with a 1D list of values
+                self._srw_tri_idxs = np.tril_indices(self._n_rw)
+                for idx1, name1 in enumerate(self._rw_names):
+                    for name2 in self._rw_names[:idx1+1]:
+                        if name1 == name2:
+                            self._srw_names.append("\sigma_{{{}}}".format(name1))
+                        else:
+                            self._srw_names.append("\sigma_{{{},{}}}".format(name2,name1))
+        else:
+            # In this case the covariance matrix is fixed and fully specified
+            self._has_fixed_covariance = True
+            if self._diagonal:
+                if fixed_covariance.ndim != 1:
+                    raise ValueError('Diagonal covariance requested, but fixed_covariance has {} dimensions.'.format(fixed_covariance.ndim))
+                if fixed_covariance.size != self._n_rw:
+                    raise ValueError('fixed_covariance dimension, {}, inconsistent with number of parameters, {}'.format(fixed_covariance.size, self.n_rw))
+                self._fixed_scale = np.sqrt(fixed_covariance)
+            else:
+                if fixed_covariance.ndim != 2:
+                    raise ValueError('Dense covariance requested, but fixed_covariance has {} dimensions.'.format(fixed_covariance.ndim))
+                if fixed_covariance.size != self._n_rw **2 or fixed_covariance.shape[-2] != fixed_covariance.shape[-1]:
+                    raise ValueError('fixed_covariance expected to be square with width {}'.format(self._n_rw))
+                self._fixed_chol = np.linalg.cholesky(fixed_covariance)
+                self._fixed_distribution = multivariate_normal(
+                    np.zeros(self._n_rw),
+                    np.dot(self._fixed_chol, self._fixed_chol.T)
+                )
+                
+        super(GaussianRandomWalkModel, self).__init__(underlying_model)
+        
+        if np.max(np.arange(self.n_modelparams)[self._rw_idxs]) > np.max(explicit_idxs):
+            raise IndexError('random_walk_idxs out of bounds; must index (a subset of ) underlying_model modelparams.')
+            
+        if scale_mult is None:
+            self._scale_mult_fcn = (lambda expparams: 1)
+        elif isinstance(scale_mult, basestring):
+            self._scale_mult_fcn = lambda x: x[scale_mult]
+        else:
+            self._scale_mult_fcn = scale_mult
+            
+        self._has_transformation = model_transformation is not None
+        if self._has_transformation:
+            self._transform = model_transformation[0]
+            self._inv_transform = model_transformation[1]
+            
+        
+                
+    ## PROPERTIES ##
+    
+    @property
+    def modelparam_names(self):
+        return self.underlying_model.modelparam_names + self._srw_names
+        
+    @property 
+    def n_modelparams(self):
+        return len(self.modelparam_names)
+        
+    @property
+    def is_n_outcomes_constant(self):
+        return False
+            
+    ## METHODS ##
+    
+    def are_models_valid(self, modelparams):
+        ud_valid = self.underlying_model.are_models_valid(modelparams[...,:self.underlying_model.n_modelparams])
+        if self._has_fixed_covariance:
+            return ud_valid
+        elif self._diagonal:
+            pos_std = np.greater_equal(modelparams[...,self._srw_idxs], 0).all(axis=-1)
+            return np.logical_and(ud_valid, pos_std)
+        else:
+            return ud_valid
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        super(GaussianRandomWalkModel, self).likelihood(outcomes, modelparams, expparams)
+        return self.underlying_model.likelihood(outcomes, modelparams[...,:self.underlying_model.n_modelparams], expparams)
+        
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        super(GaussianRandomWalkModel, self).simulate_experiment(modelparams, expparams, repeat)
+        return self.underlying_model.simulate_experiment(modelparams[...,:self.underlying_model.n_modelparams], expparams, repeat)
+        
+    def est_update_covariance(self, modelparams):
+        """
+        Returns the covariance of the gaussian noise process for one 
+        unit step. In the case where the covariance is being learned,
+        the expected covariance matrix is returned.
+        
+        :param modelparams: Shape `(n_models, n_modelparams)` shape array
+        of model parameters.
+        """
+        if self._diagonal:
+            cov = (self._fixed_scale ** 2 if self._has_fixed_covariance \
+                else np.mean(modelparams[:, self._srw_idxs] ** 2, axis=0))
+            cov = np.diag(cov)
+        else:
+            if self._has_fixed_covariance:
+                cov = np.dot(self._fixed_chol, self._fixed_chol.T)
+            else:
+                chol = np.zeros((modelparams.shape[0], self._n_rw, self._n_rw))
+                chol[(np.s_[:],) + self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
+                cov = np.mean(np.einsum('ijk,ilk->ijl', chol, chol), axis=0)
+        return cov
+        
+    def update_timestep(self, modelparams, expparams):
+
+        n_mps = modelparams.shape[0]
+        n_eps = expparams.shape[0]
+        if self._diagonal:
+            scale = self._fixed_scale if self._has_fixed_covariance else modelparams[:, self._srw_idxs]
+            # the following works when _fixed_scale has shape (n_rw) or (n_mps,n_rw)
+            # in the latter, each particle gets dispersed by its own belief of the scale
+            steps = scale * np.random.normal(size = (n_eps, n_mps, self._n_rw))
+            steps = steps.transpose((1,2,0))
+        else:
+            if self._has_fixed_covariance:
+                steps = np.dot(
+                    self._fixed_chol, 
+                    np.random.normal(size = (self._n_rw, n_mps * n_eps))
+                ).reshape(self._n_rw, n_mps, n_eps).transpose((1,0,2))
+            else:
+                chol = np.zeros((n_mps, self._n_rw, self._n_rw))
+                chol[(np.s_[:],) + self._srw_tri_idxs] = modelparams[:, self._srw_idxs]
+                # each particle gets dispersed by its own belief of the cholesky
+                steps = np.einsum('kij,kjl->kil', chol, np.random.normal(size = (n_mps, self._n_rw, n_eps)))
+        
+        # multiply by the scales of the current experiments
+        steps = self._scale_mult_fcn(expparams) * steps
+        
+        if self._has_transformation:
+            # repeat model params for every expparam
+            new_mps = np.repeat(modelparams[np.newaxis,:,:], n_eps, axis=0).reshape((n_eps * n_mps, -1))
+            # run transformation on underlying slice
+            new_mps[:, :self.underlying_model.n_modelparams] = self._transform(
+                    new_mps[:, :self.underlying_model.n_modelparams]
+                )
+            # add on the random steps to the relevant indeces
+            new_mps[:, self._rw_idxs] += steps.transpose((2,0,1)).reshape((n_eps * n_mps, -1))
+            #  back to regular parameterization
+            new_mps[:, :self.underlying_model.n_modelparams] = self._inv_transform(
+                    new_mps[:, :self.underlying_model.n_modelparams]
+                )
+            new_mps = new_mps.reshape((n_eps, n_mps, -1)).transpose((1,2,0))
+        else:
+            new_mps = np.repeat(modelparams[:,:,np.newaxis], n_eps, axis=2)
+            new_mps[:, self._rw_idxs, :] += steps
+
+        return new_mps
 
 ## TESTING CODE ###############################################################
 

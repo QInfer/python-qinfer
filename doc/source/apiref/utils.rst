@@ -33,3 +33,6 @@ Function Reference
 
 .. autofunction:: format_uncertainty
 
+.. autofunction:: to_simplex
+
+.. autofunction:: from_simplex

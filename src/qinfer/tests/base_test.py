@@ -357,10 +357,13 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
         mps = self.model.update_timestep(self.modelparams, self.expparams)
 
         assert(mps.shape == (
-            self.n_models,
-            self.model.n_modelparams,
-            self.n_expparams)
-            )
+                self.n_models,
+                self.model.n_modelparams,
+                self.n_expparams
+            ))
+        mps = mps.transpose((2,0,1)).reshape(self.n_models * self.n_expparams, -1)
+        
+        assert(np.all(self.model.are_models_valid(mps)))
 
     def test_domain_with_none(self):
         """
