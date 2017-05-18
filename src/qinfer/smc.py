@@ -59,8 +59,8 @@ from qinfer.distributions import ParticleDistribution
 import qinfer.resamplers
 import qinfer.clustering
 import qinfer.metrics
-from qinfer.utils import outer_product, mvee, uniquify, particle_meanfn, \
-        particle_covariance_mtx, format_uncertainty, in_ellipsoid
+from qinfer.utils import outer_product, mvee, uniquify, format_uncertainty, \
+    in_ellipsoid
 from qinfer._exceptions import ApproximationWarning, ResamplerWarning
 
 try:
