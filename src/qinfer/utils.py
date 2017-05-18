@@ -215,6 +215,8 @@ def particle_meanfn(weights, locations, fn=None):
         take the mean of. If `None`, the identity function
         is assumed.
     """
+    warnings.warn('particle_meanfn is depreceated, please use distributions.ParticleDistribution',
+                  DeprecationWarning)
     fn_vals = fn(locations) if fn is not None else locations
     return np.sum(weights * fn_vals.transpose([1, 0]),
         axis=1)
@@ -233,7 +235,9 @@ def particle_covariance_mtx(weights,locations):
         ``(n_modelparams, n_modelparams)``.
     :returns: An array containing the estimated covariance matrix.
     """
-    # TODO: add shapes to docstring.        
+    # TODO: add shapes to docstring.
+    warnings.warn('particle_covariance_mtx is depreceated, please use distributions.ParticleDistribution',
+                  DeprecationWarning)
         
     # Find the mean model vector, shape (n_modelparams, ).
     mu = particle_meanfn(weights, locations)
