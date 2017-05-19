@@ -39,4 +39,16 @@ built on top of QInfer.
 
 .. autoclass:: NDieModel
     :members:
+    
+Custom Models
+-------------
 
+Writing custom models is standard practice for QInfer users. 
+See :ref:`CustomModels`.
+
+.. currentmodule:: qinfer.tests.base_test
+
+:meth:`test_model` - Method to run suite of tests on a model instance
+---------------------------------------------------------------------
+
+.. autofunction:: test_model

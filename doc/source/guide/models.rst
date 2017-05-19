@@ -319,6 +319,8 @@ True
 >>> L.shape == (1, 100, 9)
 True
 
+.. _CustomModels:
+
 Implementing Custom Simulators and Models
 -----------------------------------------
 
@@ -414,6 +416,33 @@ True
 >>> D.shape == (2, 10000, 81)
 True
 
+Finally, we mention a useful tool for doing a set of
+tests on the custom model, which make sure its pieces are working as 
+expected. These tests look at things like data types and index dimensions of 
+various functions. They also plug the outputs of some methods into the inputs 
+of other methods, and so forth. Although they can't check the statistical 
+soundness of your model, if they all pass, you can be pretty confident 
+you won't run into weird indexing bugs in the future.
+
+We just need to pass :func:`~qinfer.tests.test_model` an instance of the 
+custom model, a prior that samples valid model parameters, and an array of valid 
+``expparams``.
+
+>>> from qinfer.tests import test_model
+>>> from qinfer import UniformDistribution
+>>> prior = UniformDistribution([[0,1],[0,1]])
+>>> test_model(mcm, prior, expparams)
+
+.. code-block:: None
+    :emphasize-lines: 1,2,3,4,5
+    
+    .......
+    ----------------------------------------------------------------------
+    Ran 7 tests in 0.013s
+
+    OK
+
+
 .. note::
 
     Creating ``expparams`` as an empty array and filling it by field name is a
@@ -456,4 +485,3 @@ which is discussed in more detail in :ref:`perf_testing_guide`. Roughly,
 this model causes the likeihood functions calculated by its underlying model
 to be subject to random noise, so that the robustness of an inference algorithm
 against such noise can be tested.
-
