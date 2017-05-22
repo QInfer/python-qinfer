@@ -72,7 +72,8 @@ class Resampler(with_metaclass(ABCMeta, object)):
 
         :param Model model: Model from which the particles are drawn,
             used to define the valid region for resampling.
-        :param ParticleDistribution paricle_dist: The old particle distriution
+        :param ParticleDistribution paricle_dist: The particle distribution to
+            be resampled.
         :param int n_particles: Number of new particles to draw, or
             `None` to draw the same number as the original distribution.
         :param np.ndarray precomputed_mean: Mean of the original
@@ -319,6 +320,7 @@ class LiuWestResampler(Resampler):
             n_iters += 1
 
             # Set mu_i to a x_j + (1 - a) mu.
+            # TODO This is a particle mean :(
             mus[...] = a * l[js,:] + (1 - a) * mean
 
             # Draw x_i from N(mu_i, S).
