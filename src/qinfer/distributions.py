@@ -325,20 +325,16 @@ class ParticleDistribution(Distribution):
     @staticmethod
     def particle_mean(weights, locations):
         r"""
-        Returns the mean of a function :math:`f` over model
-        parameters.
+        Returns the arithmetic mean of the `locations` weighted by `weights`
 
-        :param numpy.ndarray weights: Weights of each particle.
-        :param numpy.ndarray locations: Locations of each
-            particle.
-        :param callable fn: Function of model parameters to
-            take the mean of. If `None`, the identity function
-            is assumed.
+        :param numpy.ndarray weights: Weights of each particle in array of
+            shape ``(n_particles,)``.
+        :param numpy.ndarray locations: Locations of each particle in array
+            of shape ``(n_particles, n_modelparams)``
+        :rtype: :class:`numpy.ndarray`, shape ``(n_modelparams,)``.
+        :returns: An array containing the mean
         """
-        # We need the particle index to be the rightmost index, so that
-        # the two arrays align on the particle index as opposed to the
-        # modelparam index.
-        return np.sum(weights * locations.transpose([1, 0]), axis=1)
+        return np.dot(weights, locations)
 
     @classmethod
     def particle_covariance_mtx(cls, weights, locations):
@@ -346,16 +342,14 @@ class ParticleDistribution(Distribution):
         Returns an estimate of the covariance of a distribution
         represented by a given set of SMC particle.
 
-        :param weights: An array containing the weights of each
-            particle.
-        :param location: An array containing the locations of
-            each particle.
+        :param weights: An array of shape ``(n_particles,)`` containing
+            the weights of each particle.
+        :param location: An array of shape ``(n_particles, n_modelparams)``
+            containing the locations of each particle.
         :rtype: :class:`numpy.ndarray`, shape
             ``(n_modelparams, n_modelparams)``.
         :returns: An array containing the estimated covariance matrix.
         """
-        # TODO: add shapes to docstring.
-
         # Find the mean model vector, shape (n_modelparams, ).
         mu = cls.particle_mean(weights, locations)
 
