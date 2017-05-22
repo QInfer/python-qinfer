@@ -299,29 +299,24 @@ class LiuWestResampler(Resampler):
 
         idxs_to_resample = np.arange(n_particles, dtype=int)
 
-        # Preallocate js and mus so that we don't have rapid allocation and
-        # deallocation.
-        js = np.empty(idxs_to_resample.shape, dtype=int)
-        mus = np.empty(new_locs.shape, dtype=l.dtype)
-
         # Loop as long as there are any particles left to resample.
         n_iters = 0
 
         # Draw j with probability self.particle_weights[j].
         # We do this by drawing random variates uniformly on the interval
         # [0, 1], then see where they belong in the CDF.
-        js[:] = cumsum_weights.searchsorted(
+        js = cumsum_weights.searchsorted(
             np.random.random((idxs_to_resample.size,)),
             side='right'
         )
 
+        # Set mu_i to a x_j + (1 - a) mu.
+        # FIXME This should use particle_dist.particle_mean
+        mus = a * l[js,:] + (1 - a) * mean
+
         while idxs_to_resample.size and n_iters < self._maxiter:
             # Keep track of how many iterations we used.
             n_iters += 1
-
-            # Set mu_i to a x_j + (1 - a) mu.
-            # TODO This is a particle mean :(
-            mus[...] = a * l[js,:] + (1 - a) * mean
 
             # Draw x_i from N(mu_i, S).
             new_locs[idxs_to_resample, :] = mus + np.dot(S, self._kernel(n_rvs, mus.shape[0])).T
