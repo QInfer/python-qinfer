@@ -81,7 +81,7 @@ class Resampler(with_metaclass(ABCMeta, object)):
         :param np.ndarray precomputed_cov: Covariance of the original
             distribution, or `None` if this should be computed by the resampler.
 
-        :return ParticleDistribution: of each new particle.
+        :return ParticleDistribution: Resampled particle distribution
         """
 
 class ClusteringResampler(object):
