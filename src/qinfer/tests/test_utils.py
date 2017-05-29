@@ -33,14 +33,13 @@ from __future__ import division # Ensures that a/b is always a float.
 import warnings
 import unittest
 
+from scipy.linalg import sqrtm
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 
-from scipy.linalg import sqrtm
-
 from qinfer.tests.base_test import DerandomizedTestCase, MockModel, assert_warns
 
-from qinfer.utils import in_ellipsoid, assert_sigfigs_equal, sqrtm_psd
+from qinfer.utils import in_ellipsoid, assert_sigfigs_equal, sqrtm_psd, to_simplex, from_simplex
 
 ## TESTS #####################################################################
 
@@ -141,3 +140,60 @@ class TestLinearAlgebra(DerandomizedTestCase):
             np.dot(sqrt_Y_singular, sqrt_Y_singular),
             Y_singular
         )
+
+class TestSimplexTransforms(DerandomizedTestCase):
+    """
+    Tests to_simplex and from_simplex.
+    """
+
+    def test_to_simplex(self):
+
+        y = np.random.random(size=(20,10,15))
+        y[..., -1] = 0
+        x = to_simplex(y)
+
+        assert(x.shape == y.shape)
+        assert(np.all(np.isfinite(x)))
+        assert_almost_equal(np.sum(x, axis=-1), 1)
+
+        y = np.random.random(size=(15,))
+        y[..., -1] = 0
+        x = to_simplex(y)
+
+        assert(x.shape == y.shape)
+        assert(np.all(np.isfinite(x)))
+        assert_almost_equal(np.sum(x, axis=-1), 1)
+
+    def test_from_simplex(self):
+
+        x = np.abs(np.random.random(size=(20,10,15)))
+        x = x / np.sum(x, axis=-1)[...,np.newaxis]
+        y = from_simplex(x)
+
+        assert(x.shape == y.shape)
+        assert(np.all(np.isfinite(y)))
+        assert(np.all(np.isreal(y)))
+        assert_almost_equal(y[..., -1], 0)
+
+        x = np.abs(np.random.random(size=(15,)))
+        x = x / np.sum(x, axis=-1)[...,np.newaxis]
+        y = from_simplex(x)
+
+        assert(x.shape == y.shape)
+        assert(np.all(np.isfinite(y)))
+        assert(np.all(np.isreal(y)))
+        assert_almost_equal(y[..., -1], 0)
+
+    def test_inverses(self):
+
+        y = np.random.random(size=(20,10,15))
+        y[..., -1] = 0
+        x = to_simplex(y)
+
+        assert_almost_equal(from_simplex(x), y)
+
+        x = np.abs(np.random.random(size=(20,10,15)))
+        x = x / np.sum(x, axis=-1)[...,np.newaxis]
+        y = from_simplex(x)
+
+        assert_almost_equal(to_simplex(y), x)

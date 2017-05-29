@@ -174,3 +174,139 @@ with a custom :meth:`~Simulatable.update_timestep` implementation.
     plt.ylabel(r'$\omega$')
 
     plt.show()
+    
+Learning Walk Parameters
+------------------------
+
+In the above examples, the diffusion distribution was treated as exactly 
+known by the model. We can also parameterize this distribution, adding its 
+parameters to model to be learned as well. :class:`GaussianRandomWalkModel` 
+is a built in model similar to :class:`RandomWalkModel`. It is more 
+restrictive in the sense that it is limited to gaussian time-step updates,
+but more general in that it has the ability to automatically append a 
+parameterization of the gaussian time-step distribution, either diagonal or 
+dense, to the underlying model.
+
+For example suppose that we have a coin whose bias is taking a random walk 
+in time with an unknown diffusion constant. 
+To avoid exiting the allowable space of biases, :math:`[0,1]`, 
+we transform to inverse-logit space before taking a gaussian step, and 
+transform back to the probability interval after each step.
+
+.. plot::
+
+    import numpy as np
+    from scipy.special import expit, logit
+    from qinfer import (
+       CoinModel, BinomialModel, GaussianRandomWalkModel, 
+       UniformDistribution, SMCUpdater
+    )
+    
+    # Put a random walk on top of a binomial coin model
+    model = GaussianRandomWalkModel(
+       BinomialModel(CoinModel()),
+       model_transformation=(logit, expit)
+    )
+
+    # Generate some data with a true diffusion 0.05
+    true_sigma_p = 0.05
+    Nbin = 10
+    p = expit(logit(0.5) + np.cumsum(true_sigma_p * np.random.normal(size=300)))
+    data = np.random.binomial(Nbin, 1-p)
+
+    # Analyse the data
+    prior = UniformDistribution([[0.2,0.8],[0,0.1]])
+    u = SMCUpdater(model, 10000, prior)
+    ests, stds = np.empty((data.size+1, 2)), np.empty((data.size+1, 2))
+    ts = np.arange(ests.shape[0])
+    ests[0,:] = u.est_mean()
+    for idx in range(data.size):
+        expparam = np.array([Nbin]).astype(model.expparams_dtype)
+        u.update(np.array([data[idx]]), expparam)
+        ests[idx+1,:] = u.est_mean()
+        stds[idx+1,:] = np.sqrt(np.diag(u.est_covariance_mtx()))
+
+    plt.figure(figsize=(10,10))
+    plt.subplot(2,1,1)
+    u.plot_posterior_marginal(1)
+    plt.title('Diffusion parameter posterior')
+
+    plt.subplot(2,1,2)
+    plt.plot(ts, ests[:,0], label='estimated')
+    plt.fill_between(ts, ests[:,0]-stds[:,0], ests[:,0]+stds[:,0],
+    alpha=0.2, antialiased=True)
+    plt.plot(ts[1:], p, '--', label='actual')
+    plt.legend()
+    plt.title('Coin bias vs. time')
+    plt.show()
+    
+As a second example, consider a 5-sided die for which the 3rd, 4th and 5th 
+sides are taking a correlated gaussian random walk, and the other two sides
+are constant. We can attempt to learn the six parameters of the cholesky 
+factorization of the random walk covariance matrix as we track the drift 
+of the die probabilities.
+    
+.. plot::
+
+    import numpy as np
+    from qinfer.utils import to_simplex, from_simplex, sample_multinomial
+    from qinfer import (
+       NDieModel, MultinomialModel, GaussianRandomWalkModel, 
+       UniformDistribution, ConstrainedSumDistribution, SMCUpdater, ProductDistribution
+    )
+
+    # Put a random walk on top of a multinomial die model
+    randomwalk_idxs = [2,3,4] # only these sides of the die are taking a walk
+    model = GaussianRandomWalkModel(
+        MultinomialModel(NDieModel(5)),
+        model_transformation=(from_simplex, to_simplex),
+        diagonal=False,
+        random_walk_idxs = randomwalk_idxs
+    )
+
+    # Generate some data with some true covariance matrix
+    true_cov = 0.1 * np.random.random(size=(3,3))
+    true_cov = np.dot(true_cov, true_cov.T)
+    Nmult = 40
+    ps = from_simplex(np.array([[0.1,0.2,0.2,0.4,.1]] * 200))
+    ps[:, randomwalk_idxs] += np.random.multivariate_normal(np.zeros(3), true_cov, size=200).cumsum(axis=0)
+    ps = to_simplex(ps)
+    expparam = np.array([(0,Nmult)],dtype=model.expparams_dtype)
+    data = sample_multinomial(Nmult, ps.T).T
+
+    # Analyse the data
+    prior = ProductDistribution(
+        ConstrainedSumDistribution(UniformDistribution([[0,1]] * 5)),
+        UniformDistribution([[0,0.2]] * 6)
+    )
+    u = SMCUpdater(model, 10000, prior)
+    ests, stds = np.empty((data.shape[0]+1, model.n_modelparams)), np.empty((data.shape[0]+1, model.n_modelparams))
+    ts = np.arange(ests.shape[0])
+    ests[0,:] = u.est_mean()
+    for idx in range(data.shape[0]):
+        expparam = np.array([(0,Nmult)],dtype=model.expparams_dtype)
+        outcome = np.array([(data[idx],)], dtype=model.domain(expparam)[0].dtype)
+        u.update(outcome, expparam)
+        ests[idx+1,:] = u.est_mean()
+        stds[idx+1,:] = np.sqrt(np.diag(u.est_covariance_mtx()))
+        
+    true_chol = np.linalg.cholesky(true_cov)
+    k = 1
+    plt.figure(figsize=(10,10))
+    for idx, coord in enumerate(zip(*model._srw_tri_idxs)):
+        i, j = coord
+        plt.subplot(3,3,i*3 + j + 1)
+        u.plot_posterior_marginal(5 + idx)
+        plt.axvline(true_chol[i,j],color='b')
+    plt.show()
+
+    plt.figure(figsize=(12,10))
+    color=iter(plt.cm.Vega10(range(5)))
+    for idx in range(5):
+        c=next(color)
+        plt.plot(ps[:, idx], '--', label='$p_{}$ actual'.format(idx), color=c)
+        plt.plot(ests[:,idx], label='$p_{}$ estimated'.format(idx), color=c)
+        plt.fill_between(range(len(ests)), ests[:,idx]-stds[:,idx], ests[:,idx]+stds[:,idx],alpha=0.2, color=c, antialiased=True)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.show()
+    

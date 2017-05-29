@@ -37,7 +37,7 @@ import abc
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 import unittest
-from qinfer import Domain, FiniteOutcomeModel
+from qinfer import Domain, Model, Simulatable, FiniteOutcomeModel, DifferentiableModel
 
 from contextlib import contextmanager
 
@@ -56,11 +56,11 @@ def test_model(model, prior, expparams, stream=sys.stderr):
     """
 
     if isinstance(model, DifferentiableModel):
-        test_class = TestConcreteDifferentiableModel
+        test_class = ConcreteDifferentiableModelTest
     elif isinstance(model, Model):
-        test_class = TestConcreteModel
+        test_class = ConcreteModelTest
     elif isinstance(model, Simulatable):
-        test_class = TestConcreteSimulatable
+        test_class = ConcreteSimulatableTest
     else:
         raise ValueError("Given model has unrecognized type.")
 
@@ -72,9 +72,9 @@ def test_model(model, prior, expparams, stream=sys.stderr):
         def instantiate_expparams(self):
             return expparams
 
-    test = unittest.TestSuite((TestGivenModel, ))
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestGivenModel)
     runner = unittest.TextTestRunner(stream=stream)
-    runner.run(test)
+    runner.run(suite)
 
 @contextmanager
 def assert_warns(category):
@@ -357,10 +357,13 @@ class ConcreteSimulatableTest(with_metaclass(abc.ABCMeta, object)):
         mps = self.model.update_timestep(self.modelparams, self.expparams)
 
         assert(mps.shape == (
-            self.n_models,
-            self.model.n_modelparams,
-            self.n_expparams)
-            )
+                self.n_models,
+                self.model.n_modelparams,
+                self.n_expparams
+            ))
+        mps = mps.transpose((2,0,1)).reshape(self.n_models * self.n_expparams, -1)
+        
+        assert(np.all(self.model.are_models_valid(mps)))
 
     def test_domain_with_none(self):
         """

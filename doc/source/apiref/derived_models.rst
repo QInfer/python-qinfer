@@ -41,3 +41,15 @@ additional functionality or changing the behaviors of underlying models.
 
 .. autoclass:: MLEModel
     :members:
+    
+:class:`RandomWalkModel` - Model for adding fixed random walk to parameters
+---------------------------------------------------------------------------
+
+.. autoclass:: RandomWalkModel
+    :members:
+    
+:class:`GaussianRandomWalkModel` - Model for adding gaussian random walk to parameters
+--------------------------------------------------------------------------------------
+
+.. autoclass:: GaussianRandomWalkModel
+    :members:
