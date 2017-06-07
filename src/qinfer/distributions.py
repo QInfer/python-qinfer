@@ -45,6 +45,7 @@ import abc
 from qinfer import utils as u
 from qinfer.metrics import rescaled_distance_mtx
 from qinfer.clustering import particle_clusters
+from qinfer._exceptions import ApproximationWarning
 
 import warnings
 
@@ -321,6 +322,70 @@ class ParticleDistribution(Distribution):
         ), len(cumsum_weights) - 1)]
 
     ## MOMENT FUNCTIONS ##
+    @staticmethod
+    def particle_mean(weights, locations):
+        r"""
+        Returns the arithmetic mean of the `locations` weighted by `weights`
+
+        :param numpy.ndarray weights: Weights of each particle in array of
+            shape ``(n_particles,)``.
+        :param numpy.ndarray locations: Locations of each particle in array
+            of shape ``(n_particles, n_modelparams)``
+        :rtype: :class:`numpy.ndarray`, shape ``(n_modelparams,)``.
+        :returns: An array containing the mean
+        """
+        return np.dot(weights, locations)
+
+    @classmethod
+    def particle_covariance_mtx(cls, weights, locations):
+        """
+        Returns an estimate of the covariance of a distribution
+        represented by a given set of SMC particle.
+
+        :param weights: An array of shape ``(n_particles,)`` containing
+            the weights of each particle.
+        :param location: An array of shape ``(n_particles, n_modelparams)``
+            containing the locations of each particle.
+        :rtype: :class:`numpy.ndarray`, shape
+            ``(n_modelparams, n_modelparams)``.
+        :returns: An array containing the estimated covariance matrix.
+        """
+        # Find the mean model vector, shape (n_modelparams, ).
+        mu = cls.particle_mean(weights, locations)
+
+        # Transpose the particle locations to have shape
+        # (n_modelparams, n_particles).
+        xs = locations.transpose([1, 0])
+        # Give a shorter name to the particle weights, shape (n_particles, ).
+        ws = weights
+
+        cov = (
+            # This sum is a reduction over the particle index, chosen to be
+            # axis=2. Thus, the sum represents an expectation value over the
+            # outer product $x . x^T$.
+            #
+            # All three factors have the particle index as the rightmost
+            # index, axis=2. Using the Einstein summation convention (ESC),
+            # we can reduce over the particle index easily while leaving
+            # the model parameter index to vary between the two factors
+            # of xs.
+            #
+            # This corresponds to evaluating A_{m,n} = w_{i} x_{m,i} x_{n,i}
+            # using the ESC, where A_{m,n} is the temporary array created.
+            np.einsum('i,mi,ni', ws, xs, xs)
+            # We finish by subracting from the above expectation value
+            # the outer product $mu . mu^T$.
+            - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
+        )
+
+        # The SMC approximation is not guaranteed to produce a
+        # positive-semidefinite covariance matrix. If a negative eigenvalue
+        # is produced, we should warn the caller of this.
+        assert np.all(np.isfinite(cov))
+        if not np.all(la.eig(cov)[0] >= 0):
+            warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.', ApproximationWarning)
+
+        return cov
 
     def est_mean(self):
         """
@@ -329,13 +394,8 @@ class ParticleDistribution(Distribution):
         :rtype: :class:`numpy.ndarray`, shape ``(n_mps,)``.
         :returns: An array containing the an estimate of the mean model vector.
         """
-        return np.sum(
-            # We need the particle index to be the rightmost index, so that
-            # the two arrays align on the particle index as opposed to the
-            # modelparam index.
-            self.particle_weights * self.particle_locations.transpose([1, 0]),
-            axis=1
-        )
+        return self.particle_mean(self.particle_weights,
+                                  self.particle_locations)
 
     def est_meanfn(self, fn):
         """
@@ -372,9 +432,8 @@ class ParticleDistribution(Distribution):
         :returns: An array containing the estimated covariance matrix.
         """
 
-        cov = u.particle_covariance_mtx(
-            self.particle_weights,
-            self.particle_locations)
+        cov = self.particle_covariance_mtx(self.particle_weights,
+                                           self.particle_locations)
 
         if corr:
             dstd = np.sqrt(np.diag(cov))
@@ -448,8 +507,8 @@ class ParticleDistribution(Distribution):
             yield (
                 cluster_label,
                 sum(w), # The zeroth moment is very useful here!
-                u.particle_meanfn(w, l, lambda x: x),
-                u.particle_covariance_mtx(w, l)
+                self.particle_mean(w, l),
+                self.particle_covariance_mtx(w, l)
             )
 
     def est_cluster_covs(self, cluster_opts=None):
@@ -467,7 +526,7 @@ class ParticleDistribution(Distribution):
         ws = cluster_moments['weight'][:, np.newaxis, np.newaxis]
 
         within_cluster_var = np.sum(ws * cluster_moments['cov'], axis=0)
-        between_cluster_var = u.particle_covariance_mtx(
+        between_cluster_var = self.particle_covariance_mtx(
             # Treat the cluster means as a new very small particle cloud.
             cluster_moments['weight'], cluster_moments['mean']
         )

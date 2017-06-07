@@ -5,7 +5,7 @@
 ##
 # © 2013 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
-#     
+#
 # This file is a part of the Qinfer project.
 # Licensed under the AGPL version 3.
 ##
@@ -46,7 +46,7 @@ import warnings
 import numpy as np
 import scipy.linalg as la
 
-from qinfer.utils import outer_product, particle_meanfn, particle_covariance_mtx
+from qinfer.utils import outer_product
 from qinfer._exceptions import ResamplerWarning
 import qinfer.metrics as metrics
 
@@ -85,20 +85,20 @@ def particle_clusters(
     of all particles in that cluster. That is, particle ``i`` is in the cluster
     if ``cluster_particles[i] == True``.
     """
-    
-    
+
+
     if weighted == True and particle_weights is None:
         raise ValueError("Weights must be specified for weighted clustering.")
-        
-    # Allocate new arrays to hold the weights and locations.        
+
+    # Allocate new arrays to hold the weights and locations.
     new_weights = np.empty(particle_weights.shape)
     new_locs    = np.empty(particle_locations.shape)
-    
+
     # Calculate and possibly reweight the metric.
     if weighted:
         M = sklearn.metrics.pairwise.pairwise_distances(particle_locations, metric=metric)
         M = metrics.weighted_pairwise_distances(M, particle_weights, w_pow=w_pow)
-    
+
         # Create and run a SciKit-Learn DBSCAN clusterer.
         clusterer = sklearn.cluster.DBSCAN(
             min_samples=min_particles,
@@ -113,33 +113,33 @@ def particle_clusters(
             metric=metric
         )
         cluster_labels = clusterer.fit_predict(particle_locations)
-    
+
     # Find out how many clusters were identified.
     # Cluster counting logic from:
     # [http://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html].
     is_noise = -1 in cluster_labels
     n_clusters = len(set(cluster_labels)) - (1 if is_noise else 0)
-    
+
     # If more than 10% of the particles were labeled as NOISE,
     # warn.
     n_noise = np.sum(cluster_labels == -1)
     if n_noise / particle_weights.shape[0] >= 0.1:
         warnings.warn("More than 10% of the particles were classified as NOISE. Consider increasing the neighborhood size ``eps``.", ResamplerWarning)
-    
+
     # Print debugging info.
     if not quiet:
         print("[Clustering] DBSCAN identified {} cluster{}. "\
               "{} particles identified as NOISE.".format(
                   n_clusters, "s" if n_clusters > 1 else "", n_noise
               ))
-        
+
     # Loop over clusters, calling the secondary resampler for each.
     # The loop should include -1 if noise was found.
     for idx_cluster in range(-1 if is_noise else 0, n_clusters):
         # Grab a boolean array identifying the particles in a  particular
         # cluster.
         this_cluster = cluster_labels == idx_cluster
-        
+
         yield idx_cluster, this_cluster
-    
+
 

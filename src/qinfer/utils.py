@@ -5,7 +5,7 @@
 ##
 # © 2012 Chris Ferrie (csferrie@gmail.com) and
 #        Christopher E. Granade (cgranade@gmail.com)
-#     
+#
 # This file is a part of the Qinfer project.
 # Licensed under the AGPL version 3.
 ##
@@ -53,12 +53,12 @@ from qinfer._exceptions import ApproximationWarning
 
 def get_qutip_module(required_version='3.2'):
     """
-    Attempts to return the qutip module, but 
-    silently returns ``None`` if it can't be 
-    imported, or doesn't have version at 
+    Attempts to return the qutip module, but
+    silently returns ``None`` if it can't be
+    imported, or doesn't have version at
     least ``required_version``.
 
-    :param str required_version: Valid input to 
+    :param str required_version: Valid input to
         ``distutils.version.LooseVersion``.
     :return: The qutip module or ``None``.
     :rtype: ``module`` or ``NoneType``
@@ -76,11 +76,11 @@ def get_qutip_module(required_version='3.2'):
 
 def check_qutip_version(required_version='3.2'):
     """
-    Returns ``true`` iff the imported qutip 
-    version exists and has ``LooseVersion`` 
+    Returns ``true`` iff the imported qutip
+    version exists and has ``LooseVersion``
     of at least ``required_version``.
 
-    :param str required_version: Valid input to 
+    :param str required_version: Valid input to
         ``distutils.version.LooseVersion``.
     :rtype: ``bool``
     """
@@ -88,7 +88,7 @@ def check_qutip_version(required_version='3.2'):
         qt = get_qutip_module(required_version)
         return qt is not None
     except:
-        # In any other case (including something other 
+        # In any other case (including something other
         # than ImportError) we say it's not good enough
         return False
 
@@ -106,19 +106,19 @@ def multinomial_pdf(n,p):
     :math:`\operatorname{Multinomial}(N, n, p)=
         \frac{N!}{n_1!\cdots n_k!}p_1^{n_1}\cdots p_k^{n_k}`
 
-    :param np.ndarray n : Array of outcome integers 
-        of shape ``(sides, ...)`` where sides is the number of 
-        sides on the dice and summing over this index indicates 
+    :param np.ndarray n : Array of outcome integers
+        of shape ``(sides, ...)`` where sides is the number of
+        sides on the dice and summing over this index indicates
         the number of rolls for the given experiment.
-    :param np.ndarray p : Array of (assumed) probabilities 
-        of shape ``(sides, ...)`` or ``(sides-1,...)`` 
+    :param np.ndarray p : Array of (assumed) probabilities
+        of shape ``(sides, ...)`` or ``(sides-1,...)``
         with the rest of the dimensions the same as ``n``.
-        If ``sides-1``, the last probability is chosen so that the 
-        probabilities of all sides sums to 1. If ``sides`` 
-        is the last index, these probabilities are assumed 
+        If ``sides-1``, the last probability is chosen so that the
+        probabilities of all sides sums to 1. If ``sides``
+        is the last index, these probabilities are assumed
         to sum to 1.
 
-    Note that the numbers of experiments don't need to be given because 
+    Note that the numbers of experiments don't need to be given because
     they are implicit in the sum over the 0 index of ``n``.
     """
 
@@ -126,7 +126,7 @@ def multinomial_pdf(n,p):
     log_N_fac = gammaln(np.sum(n, axis=0) + 1)[np.newaxis,...]
     log_n_fac_sum = np.sum(gammaln(n + 1), axis=0)
 
-    # since working in log space, we need special 
+    # since working in log space, we need special
     # consideration at p=0. deal with p=0, n>0 later.
     def nlogp(n,p):
         result = np.zeros(p.shape)
@@ -136,7 +136,7 @@ def multinomial_pdf(n,p):
 
     if p.shape[0] == n.shape[0] - 1:
         ep = np.empty(n.shape)
-        ep[:p.shape[0],...] = p 
+        ep[:p.shape[0],...] = p
         ep[-1,...] = 1-np.sum(p,axis=0)
     else:
         ep = p
@@ -144,7 +144,7 @@ def multinomial_pdf(n,p):
 
     probs = np.exp(log_N_fac - log_n_fac_sum + log_p_sum)
 
-    # if n_k>0 but p_k=0, the whole probability must be 0 
+    # if n_k>0 but p_k=0, the whole probability must be 0
     mask = np.sum(np.logical_and(n!=0, ep==0), axis=0) == 0
     probs = mask * probs
 
@@ -152,21 +152,21 @@ def multinomial_pdf(n,p):
 
 def sample_multinomial(N, p, size=None):
     r"""
-    Draws fixed number of samples N from different 
+    Draws fixed number of samples N from different
     multinomial distributions (with the same number dice sides).
 
     :param int N: How many samples to draw from each distribution.
     :param np.ndarray p: Probabilities specifying each distribution.
         Sum along axis 0 should be 1.
-    :param size: Output shape. ``int`` or tuple of 
-        ``int``s. If the given shape is, 
-        e.g., ``(m, n, k)``, then m * n * k samples are drawn 
-        for each distribution. 
-        Default is None, in which case a single value 
+    :param size: Output shape. ``int`` or tuple of
+        ``int``s. If the given shape is,
+        e.g., ``(m, n, k)``, then m * n * k samples are drawn
+        for each distribution.
+        Default is None, in which case a single value
         is returned for each distribution.
 
     :rtype: np.ndarray
-    :return: Array of shape ``(p.shape, size)`` or p.shape if 
+    :return: Array of shape ``(p.shape, size)`` or p.shape if
         size is ``None``.
     """
     # ensure s is array
@@ -177,7 +177,7 @@ def sample_multinomial(N, p, size=None):
         return np.random.multinomial(N, ps, np.prod(s)).flatten()
 
     # should have shape (prod(size)*ps.shape[0], ps.shape[1:])
-    samples = np.apply_along_axis(take_samples, 0, p) 
+    samples = np.apply_along_axis(take_samples, 0, p)
     # should have shape (size, p.shape)
     samples = samples.reshape(np.concatenate([s, p.shape]))
     # should have shape (p.shape, size)
@@ -196,13 +196,13 @@ def outer_product(vec):
     r"""
     Returns the outer product of a vector :math:`v`
     with itself, :math:`v v^\T`.
-    """        
+    """
     return (
         np.dot(vec[:, np.newaxis], vec[np.newaxis, :])
         if len(vec.shape) == 1 else
         np.dot(vec, vec.T)
         )
-        
+
 def particle_meanfn(weights, locations, fn=None):
     r"""
     Returns the mean of a function :math:`f` over model
@@ -215,16 +215,18 @@ def particle_meanfn(weights, locations, fn=None):
         take the mean of. If `None`, the identity function
         is assumed.
     """
+    warnings.warn('particle_meanfn is deprecated, please use distributions.ParticleDistribution',
+                  DeprecationWarning)
     fn_vals = fn(locations) if fn is not None else locations
     return np.sum(weights * fn_vals.transpose([1, 0]),
         axis=1)
 
-    
+
 def particle_covariance_mtx(weights,locations):
     """
     Returns an estimate of the covariance of a distribution
     represented by a given set of SMC particle.
-        
+
     :param weights: An array containing the weights of each
         particle.
     :param location: An array containing the locations of
@@ -233,11 +235,13 @@ def particle_covariance_mtx(weights,locations):
         ``(n_modelparams, n_modelparams)``.
     :returns: An array containing the estimated covariance matrix.
     """
-    # TODO: add shapes to docstring.        
-        
+    # TODO: add shapes to docstring.
+    warnings.warn('particle_covariance_mtx is deprecated, please use distributions.ParticleDistribution',
+                  DeprecationWarning)
+
     # Find the mean model vector, shape (n_modelparams, ).
     mu = particle_meanfn(weights, locations)
-    
+
     # Transpose the particle locations to have shape
     # (n_modelparams, n_particles).
     xs = locations.transpose([1, 0])
@@ -262,7 +266,7 @@ def particle_covariance_mtx(weights,locations):
         # the outer product $mu . mu^T$.
         - np.dot(mu[..., np.newaxis], mu[np.newaxis, ...])
     )
-    
+
     # The SMC approximation is not guaranteed to produce a
     # positive-semidefinite covariance matrix. If a negative eigenvalue
     # is produced, we should warn the caller of this.
@@ -270,7 +274,7 @@ def particle_covariance_mtx(weights,locations):
     if not np.all(la.eig(cov)[0] >= 0):
         warnings.warn('Numerical error in covariance estimation causing positive semidefinite violation.', ApproximationWarning)
 
-    return cov            
+    return cov
 
 
 def ellipsoid_volume(A=None, invA=None):
@@ -278,18 +282,18 @@ def ellipsoid_volume(A=None, invA=None):
     Returns the volume of an ellipsoid given either its
     matrix or the inverse of its matrix.
     """
-    
+
     if invA is None and A is None:
         raise ValueError("Must pass either inverse(A) or A.")
-        
+
     if invA is None and A is not None:
         invA = la.inv(A)
-    
+
     # Find the unit sphere volume.
     # http://en.wikipedia.org/wiki/Unit_sphere#General_area_and_volume_formulas
     n  = invA.shape[0]
     Vn = (np.pi ** (n/2)) / gamma(1 + (n/2))
-    
+
     return Vn * la.det(sqrtm(invA))
 
 @due.dcite(
@@ -303,18 +307,18 @@ def mvee(points, tol=0.001):
     of a set of points, using the Khachiyan algorithm.
     """
 
-    # This function is a port of the matlab function by 
+    # This function is a port of the matlab function by
     # Nima Moshtagh found here:
     # https://www.mathworks.com/matlabcentral/fileexchange/9542-minimum-volume-enclosing-ellipsoid
     # with accompanying writup here:
     # https://www.researchgate.net/profile/Nima_Moshtagh/publication/254980367_MINIMUM_VOLUME_ENCLOSING_ELLIPSOIDS/links/54aab5260cf25c4c472f487a.pdf
 
     N, d = points.shape
-    
+
     Q = np.zeros([N,d+1])
-    Q[:,0:d] = points[0:N,0:d]  
+    Q[:,0:d] = points[0:N,0:d]
     Q[:,d] = np.ones([1,N])
-    
+
     Q = np.transpose(Q)
     points = np.transpose(points)
     count = 1
@@ -322,31 +326,31 @@ def mvee(points, tol=0.001):
     u = (1/N) * np.ones(shape = (N,))
 
     while err > tol:
-        
+
         X = np.dot(np.dot(Q, np.diag(u)), np.transpose(Q))
-        M = np.diag( np.dot(np.dot(np.transpose(Q), la.inv(X)),Q)) 
+        M = np.diag( np.dot(np.dot(np.transpose(Q), la.inv(X)),Q))
         jdx = np.argmax(M)
         step_size = (M[jdx] - d - 1)/((d+1)*(M[jdx] - 1))
-        new_u = (1 - step_size)*u 
+        new_u = (1 - step_size)*u
         new_u[jdx] = new_u[jdx] + step_size
         count = count + 1
-        err = la.norm(new_u - u)       
+        err = la.norm(new_u - u)
         u = new_u
-    
-    U = np.diag(u)    
+
+    U = np.diag(u)
     c = np.dot(points,u)
-    A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.outer(c,c) )    
+    A = (1/d) * la.inv(np.dot(np.dot(points,U), np.transpose(points)) - np.outer(c,c) )
     return A, np.transpose(c)
 
 def in_ellipsoid(x, A, c):
     """
-    Determines which of the points ``x`` are in the 
+    Determines which of the points ``x`` are in the
     closed ellipsoid with shape matrix ``A`` centered at ``c``.
-    For a single point ``x``, this is computed as 
+    For a single point ``x``, this is computed as
 
         .. math::
-            (c-x)^T\cdot A^{-1}\cdot (c-x) \leq 1 
-        
+            (c-x)^T\cdot A^{-1}\cdot (c-x) \leq 1
+
     :param np.ndarray x: Shape ``(n_points, dim)`` or ``n_points``.
     :param np.ndarray A: Shape ``(dim, dim)``, positive definite
     :param np.ndarray c: Shape ``(dim)``
@@ -370,14 +374,14 @@ def uniquify(seq):
 
 def assert_sigfigs_equal(x, y, sigfigs=3):
     """
-    Tests if all elements in x and y 
-    agree up to a certain number of 
+    Tests if all elements in x and y
+    agree up to a certain number of
     significant figures.
 
     :param np.ndarray x: Array of numbers.
     :param np.ndarray y: Array of numbers you want to
         be equal to ``x``.
-    :param int sigfigs: How many significant 
+    :param int sigfigs: How many significant
         figures you demand that they share.
         Default is 3.
     """
@@ -410,7 +414,7 @@ def format_uncertainty(value, uncertianty, scinotn_break=4):
         # Zero should be printed as a single digit; that is, as wide as str "1".
         mag_val = int(np.log10(np.abs(value))) if value != 0 else 0
         n_digits = max(mag_val - mag_unc, 0)
-            
+
 
         if abs(mag_val) < abs(mag_unc) and abs(mag_unc) > scinotn_break:
             # We're formatting something close to zero, so recale uncertianty
@@ -434,7 +438,7 @@ def format_uncertainty(value, uncertianty, scinotn_break=4):
                 uncertianty / scale,
                 mag_val
            )
-           
+
 def compactspace(scale, n):
     r"""
     Returns points :math:`x` spaced in the open interval
@@ -533,13 +537,13 @@ def pretty_time(secs, force_h=False, force_m=False):
 def safe_shape(arr, idx=0, default=1):
     shape = np.shape(arr)
     return shape[idx] if idx < len(shape) else default
-    
+
 def join_struct_arrays(arrays):
     """
     Takes a list of possibly structured arrays, concatenates their
-    dtypes, and returns one big array with that dtype. Does the 
+    dtypes, and returns one big array with that dtype. Does the
     inverse of ``separate_struct_array``.
-    
+
     :param list arrays: List of ``np.ndarray``s
     """
     # taken from http://stackoverflow.com/questions/5355744/numpy-joining-structured-arrays
@@ -551,13 +555,13 @@ def join_struct_arrays(arrays):
         joint[...,offset:offset+size] = np.atleast_1d(a).view(np.uint8).reshape(shape + (size,))
     dtype = sum((a.dtype.descr for a in arrays), [])
     return joint.ravel().view(dtype)
-    
+
 def separate_struct_array(array, dtypes):
     """
-    Takes an array with a structured dtype, and separates it out into 
+    Takes an array with a structured dtype, and separates it out into
     a list of arrays with dtypes coming from the input ``dtypes``.
     Does the inverse of ``join_struct_arrays``.
-    
+
     :param np.ndarray array: Structured array.
     :param dtypes: List of ``np.dtype``, or just a ``np.dtype`` and the number of
         them is figured out automatically by counting bytes.
@@ -591,7 +595,7 @@ def sqrtm_psd(A, est_error=True, check_finite=True):
         return A_sqrt, np.linalg.norm(np.dot(A_sqrt, A_sqrt) - A, 'fro')
     else:
         return A_sqrt
-    
+
 #==============================================================================
 #Test Code
 if __name__ == "__main__":
@@ -600,48 +604,48 @@ if __name__ == "__main__":
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
     import matplotlib.pyplot as plt
     from scipy.spatial import Delaunay
-    
+
     #some random points
-    points = np.array([[ 0.53135758, -0.25818091, -0.32382715], 
-    [ 0.58368177, -0.3286576,  -0.23854156,], 
-    [ 0.18741533,  0.03066228, -0.94294771], 
+    points = np.array([[ 0.53135758, -0.25818091, -0.32382715],
+    [ 0.58368177, -0.3286576,  -0.23854156,],
+    [ 0.18741533,  0.03066228, -0.94294771],
     [ 0.65685862, -0.09220681, -0.60347573],
     [ 0.63137604, -0.22978685, -0.27479238],
     [ 0.59683195, -0.15111101, -0.40536606],
     [ 0.68646128,  0.0046802,  -0.68407367],
     [ 0.62311759,  0.0101013,  -0.75863324]])
-    
+
     # compute mvee
     A, centroid = mvee(points)
     print(A)
-    
+
     # point it and some other stuff
-    U, D, V = la.svd(A)    
-        
+    U, D, V = la.svd(A)
+
     rx, ry, rz = [1/np.sqrt(d) for d in D]
-    u, v = np.mgrid[0:2*np.pi:20j,-np.pi/2:np.pi/2:10j]    
-    
+    u, v = np.mgrid[0:2*np.pi:20j,-np.pi/2:np.pi/2:10j]
+
     x=rx*np.cos(u)*np.cos(v)
     y=ry*np.sin(u)*np.cos(v)
     z=rz*np.sin(v)
-            
+
     for idx in range(x.shape[0]):
         for idy in range(y.shape[1]):
             x[idx,idy],y[idx,idy],z[idx,idy] = np.dot(np.transpose(V),np.array([x[idx,idy],y[idx,idy],z[idx,idy]])) + centroid
-            
-    
+
+
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(points[:,0],points[:,1],points[:,2])    
+    ax.scatter(points[:,0],points[:,1],points[:,2])
     ax.plot_surface(x, y, z, cstride = 1, rstride = 1, alpha = 0.1)
     plt.show()
- 
+
 def binom_est_p(n, N, hedge=float(0)):
     r"""
     Given a number of successes :math:`n` and a number of trials :math:`N`,
     estimates the binomial distribution parameter :math:`p` using the
     hedged maximum likelihood estimator of [FB12]_.
-    
+
     :param n: Number of successes.
     :type n: `numpy.ndarray` or `int`
     :param int N: Number of trials.
@@ -651,10 +655,10 @@ def binom_est_p(n, N, hedge=float(0)):
         value of :math:`n`.
     """
     return (n + hedge) / (N + 2 * hedge)
-    
+
 def binom_est_error(p, N, hedge = float(0)):
     r"""
     """
-    
+
     # asymptotic np.sqrt(p * (1 - p) / N)
     return np.sqrt(p*(1-p)/(N+2*hedge+1))
