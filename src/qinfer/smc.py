@@ -602,36 +602,53 @@ class SMCUpdater(ParticleDistribution):
 
     def expected_information_gain(self, expparams):
         r"""
-        Calculates the expected information gain for a hypothetical experiment.
+        Calculates the expected information gain for each hypothetical experiment.
 
-        :param expparams: The experiment at which to compute expected
+        :param expparams: The experiments at which to compute expected
             information gain.
         :type expparams: :class:`~numpy.ndarray` of dtype given by the current
             model's :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype` property,
-            and of shape ``(1,)``
+            and of shape ``(n,)``
 
-        :return float: The Bayes risk for the current posterior distribution
-            of the hypothetical experiment ``expparams``.
+        :return float: The expected information gain for each 
+            hypothetical experiment in ``expparams``.
         """
-
-        nout = self.model.n_outcomes(expparams)
-        w, N = self.hypothetical_update(np.arange(nout), expparams, return_normalization=True)
-        w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
-        N = N[:, :, 0] # Fix N.shape == (n_outcomes, n_particles).
-
         # This is a special case of the KL divergence estimator (see below),
         # in which the other distribution is guaranteed to share support.
-        #
-        # KLD[idx_outcome] = Sum over particles(self * log(self / other[idx_outcome])
-        # Est. KLD = E[KLD[idx_outcome] | outcomes].
+        
+        # for models whose outcome number changes with experiment, we 
+        # take the easy way out and for-loop over experiments
+        n_eps = expparams.size
+        if n_eps > 1 and not self.model.is_n_outcomes_constant:
+            ig = np.empty(n_eps)
+            for idx in range(n_eps):
+                ig[idx] = self.expected_information_gain(expparams[idx, np.newaxis])
+            return ig
 
-        KLD = np.sum(
-            w * np.log(w / self.particle_weights ),
-            axis=1 # Sum over particles.
-        )
+        # but if we make it here, the following should be a single number
+        n_out = self.model.n_outcomes(expparams)
+        
+        # compute the hypothetical weights, likelihoods and normalizations for
+        # every possible outcome and expparam
+        # the likelihood over outcomes should sum to 1, so don't compute for last outcome
+        w_hyp, L, N = self.hypothetical_update(
+                np.arange(n_out-1), 
+                expparams, 
+                return_normalization=True, 
+                return_likelihood=True
+            )
+        w_hyp_last_outcome = (1 - L.sum(axis=0)) * self.particle_weights[np.newaxis, :]
+        w_hyp = np.concatenate([w_hyp, w_hyp_last_outcome[np.newaxis,:,:]], axis=0)
+        N = np.concatenate([N[:,:,0], np.sum(w_hyp[-1,np.newaxis,:,:], axis=2)], axis=0)
+        # w_hyp.shape == (n_out, n_eps, n_particles)
+        # N.shape == (n_out, n_eps)
 
-        tot_norm = np.sum(N, axis=1)
-        return np.dot(tot_norm, KLD)
+        # compute the Kullback-Liebler divergence for every experiment and possible outcome
+        # KLD.shape == (n_out, n_eps)
+        KLD = np.sum(w_hyp * np.log(w_hyp / self.particle_weights), axis=2)
+
+        # return the expected KLD (ie expected info gain) for every experiment
+        return np.sum(N * KLD, axis=0)
 
     ## MISC METHODS ###########################################################
 
