@@ -578,8 +578,9 @@ class SMCUpdater(ParticleDistribution):
                 return_likelihood=True
             )
         w_hyp_last_outcome = (1 - L.sum(axis=0)) * self.particle_weights[np.newaxis, :]
+        N = np.concatenate([N[:,:,0], np.sum(w_hyp_last_outcome[np.newaxis,:,:], axis=2)], axis=0)
+        w_hyp_last_outcome = w_hyp_last_outcome / N[-1,:]
         w_hyp = np.concatenate([w_hyp, w_hyp_last_outcome[np.newaxis,:,:]], axis=0)
-        N = np.concatenate([N[:,:,0], np.sum(w_hyp[-1,np.newaxis,:,:], axis=2)], axis=0)
         # w_hyp.shape == (n_out, n_eps, n_particles)
         # N.shape == (n_out, n_eps)
 
@@ -638,8 +639,9 @@ class SMCUpdater(ParticleDistribution):
                 return_likelihood=True
             )
         w_hyp_last_outcome = (1 - L.sum(axis=0)) * self.particle_weights[np.newaxis, :]
+        N = np.concatenate([N[:,:,0], np.sum(w_hyp_last_outcome[np.newaxis,:,:], axis=2)], axis=0)
+        w_hyp_last_outcome = w_hyp_last_outcome / N[-1,:]
         w_hyp = np.concatenate([w_hyp, w_hyp_last_outcome[np.newaxis,:,:]], axis=0)
-        N = np.concatenate([N[:,:,0], np.sum(w_hyp[-1,np.newaxis,:,:], axis=2)], axis=0)
         # w_hyp.shape == (n_out, n_eps, n_particles)
         # N.shape == (n_out, n_eps)
 
