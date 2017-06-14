@@ -79,7 +79,7 @@ script:
   - if [[ "${DOCTEST}" == "1" ]]; then
       cd $TRAVIS_BUILD_DIR/doc;
       make doctest;
-      make latexpdf;
+      make latexpdf LATEXOPTS="--interaction=nonstopmode";
     fi
 
 after_success:
