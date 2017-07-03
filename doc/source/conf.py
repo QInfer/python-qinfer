@@ -298,6 +298,11 @@ latex_documents = [
 
 # Additional stuff for the LaTeX preamble.
 latex_preamble = preamble
+# In Sphinx 1.5, this now appears as latex_elements, so we pack the
+# preamble that way, too.
+latex_elements = {
+    'preamble': preamble
+}
 
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
