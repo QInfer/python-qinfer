@@ -556,17 +556,17 @@ class SMCUpdater(ParticleDistribution):
             has shape ``(expparams.size,)``
         """
 
+        # number of outcomes for the first experiment
+        n_out = self.model.n_outcomes(np.atleast_1d(expparams)[0])
+
         # for models whose outcome number changes with experiment, we 
         # take the easy way out and for-loop over experiments
         n_eps = expparams.size
-        if n_eps > 1 and not self.model.is_n_outcomes_constant:
+        if n_eps > 1 and not np.array_equal(self.model.n_outcomes(expparams), n_out):
             risk = np.empty(n_eps)
             for idx in range(n_eps):
                 risk[idx] = self.bayes_risk(expparams[idx, np.newaxis])
             return risk
-
-        # but if we make it here, the following should be a single number
-        n_out = self.model.n_outcomes(expparams)
         
         # compute the hypothetical weights, likelihoods and normalizations for
         # every possible outcome and expparam
@@ -617,17 +617,17 @@ class SMCUpdater(ParticleDistribution):
         # This is a special case of the KL divergence estimator (see below),
         # in which the other distribution is guaranteed to share support.
         
+        # number of outcomes for the first experiment
+        n_out = self.model.n_outcomes(np.atleast_1d(expparams)[0])
+
         # for models whose outcome number changes with experiment, we 
         # take the easy way out and for-loop over experiments
         n_eps = expparams.size
-        if n_eps > 1 and not self.model.is_n_outcomes_constant:
-            ig = np.empty(n_eps)
+        if n_eps > 1 and not np.array_equal(self.model.n_outcomes(expparams), n_out):
+            risk = np.empty(n_eps)
             for idx in range(n_eps):
-                ig[idx] = self.expected_information_gain(expparams[idx, np.newaxis])
-            return ig
-
-        # but if we make it here, the following should be a single number
-        n_out = self.model.n_outcomes(expparams)
+                risk[idx] = self.bayes_risk(expparams[idx, np.newaxis])
+            return risk
         
         # compute the hypothetical weights, likelihoods and normalizations for
         # every possible outcome and expparam
