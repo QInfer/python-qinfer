@@ -347,7 +347,7 @@ class TestDirichletDistribution(DerandomizedTestCase):
 
     def test_dirichlet_moments(self):
         """
-        Distributions: Checks that the beta distribution has the right
+        Distributions: Checks that the dirichlet distribution has the right
         moments, with either of the two input formats
         """
         alpha = [1,2,3,4]
