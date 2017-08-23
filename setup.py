@@ -63,11 +63,11 @@ setup(
         'Bayesian particle filtering for parameter estimation in quantum '
         'information applications.',
     long_description=long_description,
-    license='http://www.gnu.org/licenses/agpl-3.0.en.html',
+    license='https://opensource.org/licenses/BSD-3-Clause',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: GNU Affero General Public License v3',
+        'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
