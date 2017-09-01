@@ -387,6 +387,6 @@ class LiuWestResampler(Resampler):
         # particles represent the information that used to be stored in the
         # weights. This is done by SMCUpdater, and so we simply need to return
         # the new locations here.
-        new_weights = np.ones((w.shape[0],)) / w.shape[0]
+        new_weights = np.ones((n_particles,)) / n_particles
         return ParticleDistribution(particle_locations=new_locs,
                                     particle_weights=new_weights)
