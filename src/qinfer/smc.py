@@ -563,7 +563,7 @@ class SMCUpdater(ParticleDistribution):
         # for models whose outcome number changes with experiment, we 
         # take the easy way out and for-loop over experiments
         n_eps = expparams.size
-        if n_eps > 1 and not np.array_equal(self.model.n_outcomes(expparams), n_out):
+        if n_eps > 1 and not self.model.is_n_outcomes_constant:
             risk = np.empty(n_eps)
             for idx in range(n_eps):
                 risk[idx] = self.bayes_risk(expparams[idx, np.newaxis])
@@ -625,7 +625,7 @@ class SMCUpdater(ParticleDistribution):
         # for models whose outcome number changes with experiment, we 
         # take the easy way out and for-loop over experiments
         n_eps = expparams.size
-        if n_eps > 1 and not np.array_equal(self.model.n_outcomes(expparams), n_out):
+        if n_eps > 1 and not self.model.is_n_outcomes_constant:
             risk = np.empty(n_eps)
             for idx in range(n_eps):
                 risk[idx] = self.expected_information_gain(expparams[idx, np.newaxis])
