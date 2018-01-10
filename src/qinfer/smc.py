@@ -556,8 +556,9 @@ class SMCUpdater(ParticleDistribution):
             has shape ``(expparams.size,)``
         """
 
-        # number of outcomes for the first experiment
-        n_out = self.model.n_outcomes(np.atleast_1d(expparams)[0])
+        # outcomes for the first experiment
+        os = self.model.domain(None).values
+        n_out = os.size
 
         # for models whose outcome number changes with experiment, we 
         # take the easy way out and for-loop over experiments
@@ -572,7 +573,7 @@ class SMCUpdater(ParticleDistribution):
         # every possible outcome and expparam
         # the likelihood over outcomes should sum to 1, so don't compute for last outcome
         w_hyp, L, N = self.hypothetical_update(
-                np.arange(n_out-1), 
+                os[:-1], 
                 expparams, 
                 return_normalization=True, 
                 return_likelihood=True
@@ -618,7 +619,8 @@ class SMCUpdater(ParticleDistribution):
         # in which the other distribution is guaranteed to share support.
         
         # number of outcomes for the first experiment
-        n_out = self.model.n_outcomes(np.atleast_1d(expparams)[0])
+        os = self.model.domain(None).values
+        n_out = os.size
 
         # for models whose outcome number changes with experiment, we 
         # take the easy way out and for-loop over experiments
@@ -626,14 +628,14 @@ class SMCUpdater(ParticleDistribution):
         if n_eps > 1 and not np.array_equal(self.model.n_outcomes(expparams), n_out):
             risk = np.empty(n_eps)
             for idx in range(n_eps):
-                risk[idx] = self.bayes_risk(expparams[idx, np.newaxis])
+                risk[idx] = self.expected_information_gain(expparams[idx, np.newaxis])
             return risk
         
         # compute the hypothetical weights, likelihoods and normalizations for
         # every possible outcome and expparam
         # the likelihood over outcomes should sum to 1, so don't compute for last outcome
         w_hyp, L, N = self.hypothetical_update(
-                np.arange(n_out-1), 
+                os[:-1], 
                 expparams, 
                 return_normalization=True, 
                 return_likelihood=True
