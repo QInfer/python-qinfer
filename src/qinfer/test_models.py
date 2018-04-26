@@ -43,6 +43,7 @@ from __future__ import division # Ensures that a/b is always a float.
 __all__ = [
     'SimpleInversionModel',
     'SimplePrecessionModel',
+    'UnknownT2Model',
     'CoinModel',
     'NoisyCoinModel',
     'NDieModel'
