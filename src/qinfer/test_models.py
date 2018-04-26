@@ -200,6 +200,36 @@ class SimplePrecessionModel(SimpleInversionModel):
 
         return super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L)
            
+class UnknownT2Model(FiniteOutcomeModel):
+    # TODO: docstring
+    @property
+    def n_modelparams(self): return 2
+    
+    @property
+    def modelparam_names(self): return [r'\omega', r'T_2^{-1}']
+    
+    @property
+    def expparams_dtype(self):
+        return [('t', 'float')]
+    
+    def n_outcomes(self, modelparams):
+        return 2
+    
+    def are_models_valid(self, modelparams):
+        return np.all(modelparams >= 0, axis=1)
+    
+    def likelihood(self, outcomes, modelparams, expparams):
+        ω, T2_inv = modelparams.T[:, :, None]
+        t = expparams['t']
+        
+        η = np.exp(-t * T2_inv)
+        
+        pr0 = np.empty((ω.shape[0], t.shape[0]))
+        
+        pr0[:, :] = η * np.cos(ω * t / 2) ** 2 + (1 - η) / 2
+        
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
+
 class CoinModel(FiniteOutcomeModel, DifferentiableModel):
     r"""
     Arguably the simplest possible model; the unknown model parameter 
