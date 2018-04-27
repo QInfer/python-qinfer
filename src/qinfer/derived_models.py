@@ -405,7 +405,7 @@ class GaussianHyperparameterizedModel(DerivedModel):
 
     @property
     def modelparam_names(self):
-        return self.underlying_model + [
+        return self.underlying_model.modelparam_names + [
             r'\mu_0', r'\mu_1',
             r'\sigma_0^2', r'\sigma_1^2'
         ]
@@ -442,13 +442,22 @@ class GaussianHyperparameterizedModel(DerivedModel):
         """
         return True
 
+    def are_models_valid(self, modelparams):
+        orig_mps = modelparams[:, :-4]
+        sigma2 = modelparams[:, -2:]
+        
+        return np.all([
+            self.underlying_model.are_models_valid(orig_mps),
+            np.all(sigma2 > 0, axis=-1)
+        ], axis=0)
+
     def underlying_likelihood(self, binary_outcomes, modelparams, expparams):
         """
         Given outcomes hypothesized for the underlying model, returns the likelihood
         which which those outcomes occur.
         """
         original_mps = modelparams[..., :-4]
-        return self.underlying_likelihood(binary_outcomes, original_mps, expparams)
+        return self.underlying_model.likelihood(binary_outcomes, original_mps, expparams)
 
     def likelihood(self, outcomes, modelparams, expparams):
         # By calling the superclass implementation, we can consolidate
@@ -468,6 +477,8 @@ class GaussianHyperparameterizedModel(DerivedModel):
         sigma = np.sqrt(
             (modelparams[:, -2:].T)[:, None, :, None]
         )
+
+        assert np.all(sigma > 0)
 
         # Now we can rescale the outcomes to be random variates z drawn from N(0, 1).
         scaled_outcomes = (outcomes - mu) / sigma
@@ -513,11 +524,6 @@ class GaussianHyperparameterizedModel(DerivedModel):
         )
 
         return outcomes[0,0,0] if outcomes.size == 1 else outcomes
-        
-    def update_timestep(self, modelparams, expparams):
-        return self.underlying_model.update_timestep(modelparams,
-            expparams['x'] if self._expparams_scalar else expparams
-        )
 
 class MultinomialModel(DerivedModel):
     """
