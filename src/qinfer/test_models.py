@@ -200,19 +200,19 @@ class SimplePrecessionModel(SimpleInversionModel):
         new_eps['t'] = expparams
 
         return super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L)
-           
+
 class UnknownT2Model(FiniteOutcomeModel):
     # TODO: docstring
     @property
     def n_modelparams(self): return 2
-    
+
     @property
     def modelparam_names(self): return [r'\omega', r'T_2^{-1}']
-    
+
     @property
     def expparams_dtype(self):
         return [('t', 'float')]
-    
+
     def n_outcomes(self, modelparams):
         return 2
     
