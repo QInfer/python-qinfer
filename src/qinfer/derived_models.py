@@ -463,11 +463,6 @@ class GaussianHyperparameterizedModel(DerivedModel):
         # By calling the superclass implementation, we can consolidate
         # call counting there.
         super(GaussianHyperparameterizedModel, self).likelihood(outcomes, modelparams, expparams)
-        pr0 = self.underlying_likelihood(
-            np.array([0], dtype='uint'),
-            modelparams,
-            expparams
-        )
 
         # We want these to broadcast to the shape
         #     (idx_underlying_outcome, idx_outcome, idx_modelparam, idx_experiment).
@@ -494,7 +489,7 @@ class GaussianHyperparameterizedModel(DerivedModel):
             np.array([0, 1], dtype='uint'),
             modelparams, expparams
         )[:, None, :, :]
-        
+
         # Now we marginalize and return.
         L = (underlying_L * conditional_L).sum(axis=0)
         assert not np.any(np.isnan(L))
@@ -519,8 +514,8 @@ class GaussianHyperparameterizedModel(DerivedModel):
             (modelparams[:, -2:].T)[:, None, :, None]
         )
         outcomes = (
-            np.where(underlying_outcomes, mu[0], mu[1]) +
-            np.where(underlying_outcomes, sigma[0], sigma[1]) * zs
+            np.where(underlying_outcomes, mu[1], mu[0]) +
+            np.where(underlying_outcomes, sigma[1], sigma[0]) * zs
         )
 
         return outcomes[0,0,0] if outcomes.size == 1 else outcomes
