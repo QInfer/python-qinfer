@@ -28,22 +28,28 @@ built on top of QInfer.
 .. autoclass:: SimplePrecessionModel
     :members:
 
+:class:`UnknownT2Model` - Model of a single qubit undergoing Larmor precession with finite decoherence
+------------------------------------------------------------------------------------------------------
+
+.. autoclass:: UnknownT2Model
+    :members:
+
 :class:`NoisyCoinModel` - Classical coin flip model corrupted by a noisy process
 --------------------------------------------------------------------------------
 
 .. autoclass:: NoisyCoinModel
     :members:
-    
-:class:`NDieModel` 
+
+:class:`NDieModel`
 ------------------
 
 .. autoclass:: NDieModel
     :members:
-    
+
 Custom Models
 -------------
 
-Writing custom models is standard practice for QInfer users. 
+Writing custom models is standard practice for QInfer users.
 See :ref:`CustomModels`.
 
 .. currentmodule:: qinfer.tests.base_test
