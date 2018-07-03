@@ -202,7 +202,17 @@ class SimplePrecessionModel(SimpleInversionModel):
         return super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L)
 
 class UnknownT2Model(FiniteOutcomeModel):
-    # TODO: docstring
+    """
+    Describes the free evolution of a single qubit prepared in the
+    :math:`\left|+\right\rangle` state under a Hamiltonian
+    :math:`H = \omega \sigma_z / 2` with an unknown :math:`T_2` process,
+    as explored in [GFWC12]_.
+
+    :modelparam omega: The precession frequency :math:`\omega`.
+    :modelparam T2_inv: The decoherence strength :math:`T_2^{-1}`.
+    :scalar-expparam float: The evolution time :math:`t`.
+    """
+    # TODO: add duecredit.cite.
     @property
     def n_modelparams(self): return 2
 
@@ -215,20 +225,19 @@ class UnknownT2Model(FiniteOutcomeModel):
 
     def n_outcomes(self, modelparams):
         return 2
-    
+
     def are_models_valid(self, modelparams):
         return np.all(modelparams >= 0, axis=1)
-    
+
     def likelihood(self, outcomes, modelparams, expparams):
-        ω, T2_inv = modelparams.T[:, :, None]
+        w, T2_inv = modelparams.T[:, :, None]
         t = expparams['t']
-        
-        η = np.exp(-t * T2_inv)
-        
-        pr0 = np.empty((ω.shape[0], t.shape[0]))
-        
-        pr0[:, :] = η * np.cos(ω * t / 2) ** 2 + (1 - η) / 2
-        
+
+        visibility = np.exp(-t * T2_inv)
+
+        pr0 = np.empty((w.shape[0], t.shape[0]))
+        pr0[:, :] = visibility * np.cos(w * t / 2) ** 2 + (1 - visibility) / 2
+
         return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 
 class CoinModel(FiniteOutcomeModel, DifferentiableModel):
