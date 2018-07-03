@@ -246,9 +246,9 @@ class BinomialModel(DerivedModel):
         else:
             self._expparams_scalar = False
             self._expparams_dtype = underlying_model.expparams_dtype + [('n_meas', 'uint')]
-    
+
     ## PROPERTIES ##
-        
+
     @property
     def decorated_model(self):
         # Provided for backcompat only.
@@ -384,20 +384,23 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
 class GaussianHyperparameterizedModel(DerivedModel):
     """
     Model representing a two-outcome model viewed through samples
-    from one of two distinct Gaussian distributions.
-    
+    from one of two distinct Gaussian distributions. This model adds four new
+    model parameters to its underlying model, respectively representing the
+    mean outcome conditioned on an underlying 0, the mean outcome conditioned
+    on an underlying 1, and the variance of outcomes conditioned in each case.
+
     :param qinfer.abstract_model.Model underlying_model: An instance of a two-
         outcome model to be viewed through Gaussian distributions.
     """
-    
+
     def __init__(self, underlying_model):
         super(GaussianHyperparameterizedModel, self).__init__(underlying_model)
-        
+
         if not (underlying_model.is_n_outcomes_constant and underlying_model.n_outcomes(None) == 2):
             raise ValueError("Decorated model must be a two-outcome model.")
-    
+
     ## PROPERTIES ##
-        
+
     @property
     def decorated_model(self):
         # Provided for backcompat only.
@@ -417,29 +420,9 @@ class GaussianHyperparameterizedModel(DerivedModel):
     ## METHODS ##
     
     def domain(self, expparams):
-        """
-        Returns a list of ``Domain``s, one for each input expparam.
-
-        :param numpy.ndarray expparams:  Array of experimental parameters. This
-            array must be of dtype agreeing with the ``expparams_dtype``
-            property, or, in the case where ``n_outcomes_constant`` is ``True``,
-            ``None`` should be a valid input.
-
-        :rtype: list of ``Domain``
-        """
         return [RealDomain()] * len(expparams)
     
     def are_expparam_dtypes_consistent(self, expparams):
-        """
-        Returns `True` iff all of the given expparams 
-        correspond to outcome domains with the same dtype.
-        For efficiency, concrete subclasses should override this method 
-        if the result is always `True`.
-
-        :param np.ndarray expparams: Array of expparamms 
-             of type `expparams_dtype`
-        :rtype: `bool`
-        """
         return True
 
     def are_models_valid(self, modelparams):
@@ -494,10 +477,10 @@ class GaussianHyperparameterizedModel(DerivedModel):
         L = (underlying_L * conditional_L).sum(axis=0)
         assert not np.any(np.isnan(L))
         return L
-            
+
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         super(GaussianHyperparameterizedModel, self).simulate_experiment(modelparams, expparams)
-        
+
         # Start by generating a bunch of (0, 1) normalized random variates
         # that we'll randomly rescale to the right location and shape.
         zs = np.random.randn(modelparams.shape[0], expparams.shape[0])
@@ -507,7 +490,7 @@ class GaussianHyperparameterizedModel(DerivedModel):
         underlying_outcomes = self.underlying_model.simulate_experiment(
             modelparams[:, :-4], expparams
         )
-        
+
         # We can now rescale zs to obtain the actual outcomes.
         mu = (modelparams[:, -4:-2].T)[:, None, :, None]
         sigma = np.sqrt(
