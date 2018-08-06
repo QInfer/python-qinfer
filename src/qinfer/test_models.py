@@ -188,8 +188,13 @@ class SimplePrecessionModel(SimpleInversionModel):
         new_eps['w_'] = 0
         new_eps['t'] = expparams
 
-        return super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L)
-           
+        q = super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L=False)
+
+        if return_L:
+            return q, self.likelihood(outcomes, modelparams, expparams)
+        else:
+            return q
+
 class CoinModel(FiniteOutcomeModel, DifferentiableModel):
     r"""
     Arguably the simplest possible model; the unknown model parameter 
