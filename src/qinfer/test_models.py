@@ -138,28 +138,28 @@ class SimpleInversionModel(FiniteOutcomeModel, DifferentiableModel):
         # will cause an error.
         pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
         pr0[:, :] = np.cos(t * dw / 2) ** 2
-        
+
         # Now we concatenate over outcomes.
         return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 
     def score(self, outcomes, modelparams, expparams, return_L=False):
         if len(modelparams.shape) == 1:
             modelparams = modelparams[:, np.newaxis]
-            
+
         t = expparams['t']
         dw = modelparams - expparams['w_']
 
         outcomes = outcomes.reshape((outcomes.shape[0], 1, 1))
 
-        arg = dw * t / 2        
+        arg = dw * t / 2
         q = (
             np.power( t / np.tan(arg), outcomes) *
             np.power(-t * np.tan(arg), 1 - outcomes)
         )[np.newaxis, ...]
 
         assert q.ndim == 4
-        
-        
+
+
         if return_L:
             return q, self.likelihood(outcomes, modelparams, expparams)
         else:
