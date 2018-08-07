@@ -66,18 +66,17 @@ preamble = r"""
     \let\footnotesize\small
     \let\footnoterule\relax
     \rule{\textwidth}{1pt}%
-      \begingroup
-      % These \defs are required to deal with multi-line authors; it
-      % changes \\ to ', ' (comma-space), making it pass muster for
-      % generating document info in the PDF file.
-      \def\\{, }
-      \def\and{and }
-      \pdfinfo{
-        /Author (\@author)
-        /Title (\@title)
-      }
-      \endgroup
-    \fi
+    \begingroup
+    % These \defs are required to deal with multi-line authors; it
+    % changes \\ to ', ' (comma-space), making it pass muster for
+    % generating document info in the PDF file.
+    \def\\{, }
+    \def\and{and }
+    \pdfinfo{
+    /Author (\@author)
+    /Title (\@title)
+    }
+    \endgroup
     \begin{flushright}%
       \sphinxlogo%
       {\rm\Huge\py@HeaderFamily \@title \par}%
