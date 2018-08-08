@@ -55,7 +55,7 @@ from qinfer.tests.base_test import (
 )
 import abc
 from qinfer import (
-    SimplePrecessionModel, SimpleInversionModel,
+    SimplePrecessionModel, SimpleInversionModel, UnknownT2Model,
     CoinModel, NoisyCoinModel, NDieModel,
     RandomizedBenchmarkingModel,
     PoisonedModel, BinomialModel, MultinomialModel,
@@ -94,6 +94,18 @@ class TestSimplePrecessionModel(ConcreteDifferentiableModelTest, DerandomizedTes
         return UniformDistribution(np.array([[10,12]]))
     def instantiate_expparams(self):
         return np.arange(10,20).astype(self.model.expparams_dtype)
+
+class TestUnknownT2Model(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests UnknownT2Model.
+    """
+
+    def instantiate_model(self):
+        return UnknownT2Model()
+    def instantiate_prior(self):
+        return UniformDistribution(np.array([[1,8],[1,5]]))
+    def instantiate_expparams(self):
+        return np.linspace(0,5,10, dtype=[('t','float')])
 
 class TestSimpleInversionModel(ConcreteDifferentiableModelTest, DerandomizedTestCase):
     """
