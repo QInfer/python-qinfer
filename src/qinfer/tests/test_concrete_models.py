@@ -65,7 +65,8 @@ from qinfer import (
     BetaDistribution, UniformDistribution,
     PostselectedDistribution,
     ConstrainedSumDistribution,
-    DirectViewParallelizedModel
+    DirectViewParallelizedModel,
+    GaussianHyperparameterizedModel
 )
 from qinfer.ale import ALEApproximateModel
 from qinfer.tomography import TomographyModel, DiffusiveTomographyModel, pauli_basis, GinibreDistribution
@@ -510,3 +511,23 @@ class TestGaussianRandomWalkModel5(DerandomizedTestCase):
         self.assertRaises(IndexError, model, np.s_[:7])
         self.assertRaises(IndexError, model, np.s_[6:])
         self.assertRaises(IndexError, model, [1,2,8])        
+
+class TestGaussianHyperparameterizedModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests GaussianHyperparameterizedModel with CoinModel as the underlying model
+    (underlying model has no expparams).
+    """
+
+    def instantiate_model(self):
+        return GaussianHyperparameterizedModel(CoinModel())
+
+    def instantiate_prior(self):
+        return ProductDistribution(
+               NormalDistribution(0, 0.05 ** 2),
+               NormalDistribution(0, 0.05 ** 2),
+               BetaDistribution(mean=0.5, var=0.1),
+               BetaDistribution(mean=0.5, var=0.1)
+        )
+
+    def instantiate_expparams(self):
+        return np.arange(100, 120).astype(self.model.expparams_dtype)
