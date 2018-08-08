@@ -189,7 +189,10 @@ class SimplePrecessionModel(SimpleInversionModel):
         # Pass the expparams to the superclass as a record array.
         new_eps = np.empty(expparams.shape, dtype=super(SimplePrecessionModel, self).expparams_dtype)
         new_eps['w_'] = 0
-        new_eps['t'] = expparams
+        try:
+            new_eps['t'] = expparams
+        except ValueError:
+            new_eps['t'] = expparams['t']
 
         return super(SimplePrecessionModel, self).likelihood(outcomes, modelparams, new_eps)
 
@@ -197,7 +200,10 @@ class SimplePrecessionModel(SimpleInversionModel):
         # Pass the expparams to the superclass as a record array.
         new_eps = np.empty(expparams.shape, dtype=super(SimplePrecessionModel, self).expparams_dtype)
         new_eps['w_'] = 0
-        new_eps['t'] = expparams
+        try:
+            new_eps['t'] = expparams
+        except ValueError:
+            new_eps['t'] = expparams['t']
 
         q = super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L=False)
 
