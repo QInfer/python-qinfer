@@ -228,7 +228,6 @@ class UnknownT2Model(FiniteOutcomeModel):
         description='Robust online Hamiltonian learning',
         tags=['implementation']
     )
-    def __init__(self): pass
 
     @property
     def n_modelparams(self): return 2
