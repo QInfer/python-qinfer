@@ -199,7 +199,12 @@ class SimplePrecessionModel(SimpleInversionModel):
         new_eps['w_'] = 0
         new_eps['t'] = expparams
 
-        return super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L)
+        q = super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L=False)
+
+        if return_L:
+            return q, self.likelihood(outcomes, modelparams, expparams)
+        else:
+            return q
 
 class UnknownT2Model(FiniteOutcomeModel):
     """
@@ -245,6 +250,7 @@ class UnknownT2Model(FiniteOutcomeModel):
         pr0[:, :] = visibility * np.cos(w * t / 2) ** 2 + (1 - visibility) / 2
 
         return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
+
 
 class CoinModel(FiniteOutcomeModel, DifferentiableModel):
     r"""

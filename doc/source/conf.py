@@ -66,19 +66,17 @@ preamble = r"""
     \let\footnotesize\small
     \let\footnoterule\relax
     \rule{\textwidth}{1pt}%
-    \ifsphinxpdfoutput
-      \begingroup
-      % These \defs are required to deal with multi-line authors; it
-      % changes \\ to ', ' (comma-space), making it pass muster for
-      % generating document info in the PDF file.
-      \def\\{, }
-      \def\and{and }
-      \pdfinfo{
-        /Author (\@author)
-        /Title (\@title)
-      }
-      \endgroup
-    \fi
+    \begingroup
+    % These \defs are required to deal with multi-line authors; it
+    % changes \\ to ', ' (comma-space), making it pass muster for
+    % generating document info in the PDF file.
+    \def\\{, }
+    \def\and{and }
+    \pdfinfo{
+    /Author (\@author)
+    /Title (\@title)
+    }
+    \endgroup
     \begin{flushright}%
       \sphinxlogo%
       {\rm\Huge\py@HeaderFamily \@title \par}%
@@ -298,6 +296,11 @@ latex_documents = [
 
 # Additional stuff for the LaTeX preamble.
 latex_preamble = preamble
+# In Sphinx 1.5, this now appears as latex_elements, so we pack the
+# preamble that way, too.
+latex_elements = {
+    'preamble': preamble
+}
 
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
