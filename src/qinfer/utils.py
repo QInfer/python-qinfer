@@ -606,6 +606,20 @@ def sqrtm_psd(A, est_error=True, check_finite=True):
     else:
         return A_sqrt
 
+def decorate_init(init_decorator):
+    """
+    Given a class definition and a decorator that acts on methods,
+    applies that decorator to the class' __init__ method.
+    Useful for decorating __init__ while still allowing __init__ to be
+    inherited.
+    """
+
+    def class_decorator(cls):
+        cls.__init__ = init_decorator(cls.__init__)
+        return cls
+
+    return class_decorator
+
 #==============================================================================
 #Test Code
 if __name__ == "__main__":

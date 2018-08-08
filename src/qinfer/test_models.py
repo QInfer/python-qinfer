@@ -55,7 +55,7 @@ from builtins import range
 
 import numpy as np
 
-from .utils import binomial_pdf
+from .utils import binomial_pdf, decorate_init
 from .abstract_model import FiniteOutcomeModel, DifferentiableModel
 from ._due import due, Doi
 
@@ -212,6 +212,13 @@ class SimplePrecessionModel(SimpleInversionModel):
         else:
             return q
 
+@decorate_init(
+    due.dcite(
+        Doi('10.1088/1367-2630/14/10/103013'),
+        description='Robust online Hamiltonian learning',
+        tags=['implementation']
+    )
+)
 class UnknownT2Model(FiniteOutcomeModel):
     """
     Describes the free evolution of a single qubit prepared in the
@@ -223,11 +230,6 @@ class UnknownT2Model(FiniteOutcomeModel):
     :modelparam T2_inv: The decoherence strength :math:`T_2^{-1}`.
     :scalar-expparam float: The evolution time :math:`t`.
     """
-    @due.dcite(
-        Doi('10.1088/1367-2630/14/10/103013'),
-        description='Robust online Hamiltonian learning',
-        tags=['implementation']
-    )
 
     @property
     def n_modelparams(self): return 2
