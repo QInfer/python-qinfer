@@ -56,9 +56,9 @@ from builtins import range
 import numpy as np
 
 from .utils import binomial_pdf
-
 from .abstract_model import FiniteOutcomeModel, DifferentiableModel
-    
+from ._due import due, Doi
+
 ## CLASSES ####################################################################
 
 class SimpleInversionModel(FiniteOutcomeModel, DifferentiableModel):
@@ -212,7 +212,13 @@ class UnknownT2Model(FiniteOutcomeModel):
     :modelparam T2_inv: The decoherence strength :math:`T_2^{-1}`.
     :scalar-expparam float: The evolution time :math:`t`.
     """
-    # TODO: add duecredit.cite.
+    @due.dcite(
+        Doi('10.1088/1367-2630/14/10/103013'),
+        description='Robust online Hamiltonian learning',
+        tags['implementation']
+    )
+    def __init__(self): pass
+
     @property
     def n_modelparams(self): return 2
 
