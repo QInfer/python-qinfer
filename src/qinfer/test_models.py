@@ -215,7 +215,7 @@ class UnknownT2Model(FiniteOutcomeModel):
     @due.dcite(
         Doi('10.1088/1367-2630/14/10/103013'),
         description='Robust online Hamiltonian learning',
-        tags['implementation']
+        tags=['implementation']
     )
     def __init__(self): pass
 
