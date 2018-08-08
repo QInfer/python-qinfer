@@ -67,7 +67,7 @@ from qinfer.utils import binomial_pdf, multinomial_pdf, sample_multinomial
 from qinfer.abstract_model import Model, DifferentiableModel
 from qinfer._lib import enum # <- TODO: replace with flufl.enum!
 from qinfer.utils import binom_est_error
-from qinfer.domains import IntegerDomain, MultinomialDomain
+from qinfer.domains import IntegerDomain, MultinomialDomain, RealDomain
 
 ## FUNCTIONS ###################################################################
 
@@ -399,6 +399,11 @@ class GaussianHyperparameterizedModel(DerivedModel):
         if not (underlying_model.is_n_outcomes_constant and underlying_model.n_outcomes(None) == 2):
             raise ValueError("Decorated model must be a two-outcome model.")
 
+        n_orig_mps = underlying_model.n_modelparams
+        self._orig_mps_slice = np.s_[:n_orig_mps]
+        self._mu_slice = np.s_[n_orig_mps:n_orig_mps + 2]
+        self._sigma2_slice = np.s_[n_orig_mps + 2:n_orig_mps + 4]
+
     ## PROPERTIES ##
 
     @property
@@ -412,23 +417,23 @@ class GaussianHyperparameterizedModel(DerivedModel):
             r'\mu_0', r'\mu_1',
             r'\sigma_0^2', r'\sigma_1^2'
         ]
-    
+
     @property
     def n_modelparams(self):
         return len(self.modelparam_names)
-    
+
     ## METHODS ##
-    
+
     def domain(self, expparams):
-        return [RealDomain()] * len(expparams)
-    
+        return [RealDomain()] * len(expparams) if expparams is not None else RealDomain()
+
     def are_expparam_dtypes_consistent(self, expparams):
         return True
 
     def are_models_valid(self, modelparams):
-        orig_mps = modelparams[:, :-4]
-        sigma2 = modelparams[:, -2:]
-        
+        orig_mps = modelparams[:, self._orig_mps_slice]
+        sigma2 = modelparams[:, self._sigma2_slice]
+
         return np.all([
             self.underlying_model.are_models_valid(orig_mps),
             np.all(sigma2 > 0, axis=-1)
@@ -439,7 +444,7 @@ class GaussianHyperparameterizedModel(DerivedModel):
         Given outcomes hypothesized for the underlying model, returns the likelihood
         which which those outcomes occur.
         """
-        original_mps = modelparams[..., :-4]
+        original_mps = modelparams[..., self._orig_mps_slice]
         return self.underlying_model.likelihood(binary_outcomes, original_mps, expparams)
 
     def likelihood(self, outcomes, modelparams, expparams):
@@ -451,9 +456,9 @@ class GaussianHyperparameterizedModel(DerivedModel):
         #     (idx_underlying_outcome, idx_outcome, idx_modelparam, idx_experiment).
         # Thus, we need shape
         #     (idx_underlying_outcome,           1, idx_modelparam,              1).
-        mu = (modelparams[:, -4:-2].T)[:, None, :, None]
+        mu = (modelparams[:, self._mu_slice].T)[:, np.newaxis, :, np.newaxis]
         sigma = np.sqrt(
-            (modelparams[:, -2:].T)[:, None, :, None]
+            (modelparams[:, self._sigma2_slice].T)[:, np.newaxis, :, np.newaxis]
         )
 
         assert np.all(sigma > 0)
@@ -474,9 +479,7 @@ class GaussianHyperparameterizedModel(DerivedModel):
         )[:, None, :, :]
 
         # Now we marginalize and return.
-        L = (underlying_L * conditional_L).sum(axis=0)
-        assert not np.any(np.isnan(L))
-        return L
+        return (underlying_L * conditional_L).sum(axis=0)
 
     def simulate_experiment(self, modelparams, expparams, repeat=1):
         super(GaussianHyperparameterizedModel, self).simulate_experiment(modelparams, expparams)
@@ -492,9 +495,9 @@ class GaussianHyperparameterizedModel(DerivedModel):
         )
 
         # We can now rescale zs to obtain the actual outcomes.
-        mu = (modelparams[:, -4:-2].T)[:, None, :, None]
+        mu = (modelparams[:, self._mu_slice].T)[:, None, :, None]
         sigma = np.sqrt(
-            (modelparams[:, -2:].T)[:, None, :, None]
+            (modelparams[:, self._sigma2_slice].T)[:, None, :, None]
         )
         outcomes = (
             np.where(underlying_outcomes, mu[1], mu[0]) +
