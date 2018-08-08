@@ -523,6 +523,7 @@ class TestGaussianHyperparameterizedModel(ConcreteModelTest, DerandomizedTestCas
 
     def instantiate_prior(self):
         return ProductDistribution(
+               BetaDistribution(mean=0.5, var=0.1),
                NormalDistribution(0, 0.05 ** 2),
                NormalDistribution(0, 0.05 ** 2),
                BetaDistribution(mean=0.5, var=0.1),
