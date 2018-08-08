@@ -464,7 +464,7 @@ class GaussianHyperparameterizedModel(DerivedModel):
         assert np.all(sigma > 0)
 
         # Now we can rescale the outcomes to be random variates z drawn from N(0, 1).
-        scaled_outcomes = (outcomes - mu) / sigma
+        scaled_outcomes = (outcomes[np.newaxis,:,np.newaxis,np.newaxis] - mu) / sigma
 
         # We can then compute the conditional likelihood Pr(z | underlying_outcome, model).
         conditional_L = norm(0, 1).pdf(scaled_outcomes)
@@ -491,7 +491,7 @@ class GaussianHyperparameterizedModel(DerivedModel):
         # Next, we sample a bunch of underlying outcomes to figure out
         # how to rescale everything.
         underlying_outcomes = self.underlying_model.simulate_experiment(
-            modelparams[:, :-4], expparams
+            modelparams[:, :-4], expparams, repeat=repeat
         )
 
         # We can now rescale zs to obtain the actual outcomes.
