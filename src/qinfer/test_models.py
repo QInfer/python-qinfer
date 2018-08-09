@@ -43,6 +43,7 @@ from __future__ import division # Ensures that a/b is always a float.
 __all__ = [
     'SimpleInversionModel',
     'SimplePrecessionModel',
+    'UnknownT2Model',
     'CoinModel',
     'NoisyCoinModel',
     'NDieModel'
@@ -54,10 +55,10 @@ from builtins import range
 
 import numpy as np
 
-from .utils import binomial_pdf
-
+from .utils import binomial_pdf, decorate_init
 from .abstract_model import FiniteOutcomeModel, DifferentiableModel
-    
+from ._due import due, Doi
+
 ## CLASSES ####################################################################
 
 class SimpleInversionModel(FiniteOutcomeModel, DifferentiableModel):
@@ -137,28 +138,28 @@ class SimpleInversionModel(FiniteOutcomeModel, DifferentiableModel):
         # will cause an error.
         pr0 = np.zeros((modelparams.shape[0], expparams.shape[0]))
         pr0[:, :] = np.cos(t * dw / 2) ** 2
-        
+
         # Now we concatenate over outcomes.
         return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
 
     def score(self, outcomes, modelparams, expparams, return_L=False):
         if len(modelparams.shape) == 1:
             modelparams = modelparams[:, np.newaxis]
-            
+
         t = expparams['t']
         dw = modelparams - expparams['w_']
 
         outcomes = outcomes.reshape((outcomes.shape[0], 1, 1))
 
-        arg = dw * t / 2        
+        arg = dw * t / 2
         q = (
             np.power( t / np.tan(arg), outcomes) *
             np.power(-t * np.tan(arg), 1 - outcomes)
         )[np.newaxis, ...]
 
         assert q.ndim == 4
-        
-        
+
+
         if return_L:
             return q, self.likelihood(outcomes, modelparams, expparams)
         else:
@@ -188,7 +189,10 @@ class SimplePrecessionModel(SimpleInversionModel):
         # Pass the expparams to the superclass as a record array.
         new_eps = np.empty(expparams.shape, dtype=super(SimplePrecessionModel, self).expparams_dtype)
         new_eps['w_'] = 0
-        new_eps['t'] = expparams
+        try:
+            new_eps['t'] = expparams
+        except ValueError:
+            new_eps['t'] = expparams['t']
 
         return super(SimplePrecessionModel, self).likelihood(outcomes, modelparams, new_eps)
 
@@ -196,7 +200,10 @@ class SimplePrecessionModel(SimpleInversionModel):
         # Pass the expparams to the superclass as a record array.
         new_eps = np.empty(expparams.shape, dtype=super(SimplePrecessionModel, self).expparams_dtype)
         new_eps['w_'] = 0
-        new_eps['t'] = expparams
+        try:
+            new_eps['t'] = expparams
+        except ValueError:
+            new_eps['t'] = expparams['t']
 
         q = super(SimplePrecessionModel, self).score(outcomes, modelparams, new_eps, return_L=False)
 
@@ -204,6 +211,53 @@ class SimplePrecessionModel(SimpleInversionModel):
             return q, self.likelihood(outcomes, modelparams, expparams)
         else:
             return q
+
+@decorate_init(
+    due.dcite(
+        Doi('10.1088/1367-2630/14/10/103013'),
+        description='Robust online Hamiltonian learning',
+        tags=['implementation']
+    )
+)
+class UnknownT2Model(FiniteOutcomeModel):
+    """
+    Describes the free evolution of a single qubit prepared in the
+    :math:`\left|+\right\rangle` state under a Hamiltonian
+    :math:`H = \omega \sigma_z / 2` with an unknown :math:`T_2` process,
+    as explored in [GFWC12]_.
+
+    :modelparam omega: The precession frequency :math:`\omega`.
+    :modelparam T2_inv: The decoherence strength :math:`T_2^{-1}`.
+    :scalar-expparam float: The evolution time :math:`t`.
+    """
+
+    @property
+    def n_modelparams(self): return 2
+
+    @property
+    def modelparam_names(self): return [r'\omega', r'T_2^{-1}']
+
+    @property
+    def expparams_dtype(self):
+        return [('t', 'float')]
+
+    def n_outcomes(self, modelparams):
+        return 2
+
+    def are_models_valid(self, modelparams):
+        return np.all(modelparams >= 0, axis=1)
+
+    def likelihood(self, outcomes, modelparams, expparams):
+        w, T2_inv = modelparams.T[:, :, None]
+        t = expparams['t']
+
+        visibility = np.exp(-t * T2_inv)
+
+        pr0 = np.empty((w.shape[0], t.shape[0]))
+        pr0[:, :] = visibility * np.cos(w * t / 2) ** 2 + (1 - visibility) / 2
+
+        return FiniteOutcomeModel.pr0_to_likelihood_array(outcomes, pr0)
+
 
 class CoinModel(FiniteOutcomeModel, DifferentiableModel):
     r"""

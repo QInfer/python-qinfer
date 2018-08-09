@@ -55,7 +55,7 @@ from qinfer.tests.base_test import (
 )
 import abc
 from qinfer import (
-    SimplePrecessionModel, SimpleInversionModel,
+    SimplePrecessionModel, SimpleInversionModel, UnknownT2Model,
     CoinModel, NoisyCoinModel, NDieModel,
     RandomizedBenchmarkingModel,
     PoisonedModel, BinomialModel, MultinomialModel,
@@ -65,7 +65,8 @@ from qinfer import (
     BetaDistribution, UniformDistribution,
     PostselectedDistribution,
     ConstrainedSumDistribution,
-    DirectViewParallelizedModel
+    DirectViewParallelizedModel,
+    GaussianHyperparameterizedModel
 )
 from qinfer.ale import ALEApproximateModel
 from qinfer.tomography import TomographyModel, DiffusiveTomographyModel, pauli_basis, GinibreDistribution
@@ -93,6 +94,18 @@ class TestSimplePrecessionModel(ConcreteDifferentiableModelTest, DerandomizedTes
         return UniformDistribution(np.array([[10,12]]))
     def instantiate_expparams(self):
         return np.arange(10,20).astype(self.model.expparams_dtype)
+
+class TestUnknownT2Model(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests UnknownT2Model.
+    """
+
+    def instantiate_model(self):
+        return UnknownT2Model()
+    def instantiate_prior(self):
+        return UniformDistribution(np.array([[1,8],[1,5]]))
+    def instantiate_expparams(self):
+        return np.linspace(0,5,10, dtype=[('t','float')])
 
 class TestSimpleInversionModel(ConcreteDifferentiableModelTest, DerandomizedTestCase):
     """
@@ -510,3 +523,24 @@ class TestGaussianRandomWalkModel5(DerandomizedTestCase):
         self.assertRaises(IndexError, model, np.s_[:7])
         self.assertRaises(IndexError, model, np.s_[6:])
         self.assertRaises(IndexError, model, [1,2,8])        
+
+class TestGaussianHyperparameterizedModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests GaussianHyperparameterizedModel with CoinModel as the underlying model
+    (underlying model has no expparams).
+    """
+
+    def instantiate_model(self):
+        return GaussianHyperparameterizedModel(CoinModel())
+
+    def instantiate_prior(self):
+        return ProductDistribution(
+               BetaDistribution(mean=0.5, var=0.1),
+               NormalDistribution(0, 0.05 ** 2),
+               NormalDistribution(0, 0.05 ** 2),
+               BetaDistribution(mean=0.5, var=0.1),
+               BetaDistribution(mean=0.5, var=0.1)
+        )
+
+    def instantiate_expparams(self):
+        return np.arange(100, 120).astype(self.model.expparams_dtype)

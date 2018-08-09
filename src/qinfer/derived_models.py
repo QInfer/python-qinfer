@@ -46,6 +46,7 @@ __all__ = [
     'DerivedModel',
     'PoisonedModel',
     'BinomialModel',
+    'GaussianHyperparameterizedModel',
     'MultinomialModel',
     'MLEModel',
     'RandomWalkModel',
@@ -59,14 +60,14 @@ from functools import reduce
 from past.builtins import basestring
 
 import numpy as np
-from scipy.stats import binom, multivariate_normal
+from scipy.stats import binom, multivariate_normal, norm
 from itertools import combinations_with_replacement as tri_comb
 
 from qinfer.utils import binomial_pdf, multinomial_pdf, sample_multinomial
 from qinfer.abstract_model import Model, DifferentiableModel
 from qinfer._lib import enum # <- TODO: replace with flufl.enum!
 from qinfer.utils import binom_est_error
-from qinfer.domains import IntegerDomain, MultinomialDomain
+from qinfer.domains import IntegerDomain, MultinomialDomain, RealDomain
 
 ## FUNCTIONS ###################################################################
 
@@ -245,9 +246,9 @@ class BinomialModel(DerivedModel):
         else:
             self._expparams_scalar = False
             self._expparams_dtype = underlying_model.expparams_dtype + [('n_meas', 'uint')]
-    
+
     ## PROPERTIES ##
-        
+
     @property
     def decorated_model(self):
         # Provided for backcompat only.
@@ -379,6 +380,131 @@ class DifferentiableBinomialModel(BinomialModel, DifferentiableModel):
             modelparams, expparams
         )
         return two_outcome_fi * expparams['n_meas']
+
+class GaussianHyperparameterizedModel(DerivedModel):
+    """
+    Model representing a two-outcome model viewed through samples
+    from one of two distinct Gaussian distributions. This model adds four new
+    model parameters to its underlying model, respectively representing the
+    mean outcome conditioned on an underlying 0, the mean outcome conditioned
+    on an underlying 1, and the variance of outcomes conditioned in each case.
+
+    :param qinfer.abstract_model.Model underlying_model: An instance of a two-
+        outcome model to be viewed through Gaussian distributions.
+    """
+
+    def __init__(self, underlying_model):
+        super(GaussianHyperparameterizedModel, self).__init__(underlying_model)
+
+        if not (underlying_model.is_n_outcomes_constant and underlying_model.n_outcomes(None) == 2):
+            raise ValueError("Decorated model must be a two-outcome model.")
+
+        n_orig_mps = underlying_model.n_modelparams
+        self._orig_mps_slice = np.s_[:n_orig_mps]
+        self._mu_slice = np.s_[n_orig_mps:n_orig_mps + 2]
+        self._sigma2_slice = np.s_[n_orig_mps + 2:n_orig_mps + 4]
+
+    ## PROPERTIES ##
+
+    @property
+    def decorated_model(self):
+        # Provided for backcompat only.
+        return self.underlying_model
+
+    @property
+    def modelparam_names(self):
+        return self.underlying_model.modelparam_names + [
+            r'\mu_0', r'\mu_1',
+            r'\sigma_0^2', r'\sigma_1^2'
+        ]
+
+    @property
+    def n_modelparams(self):
+        return len(self.modelparam_names)
+
+    ## METHODS ##
+
+    def domain(self, expparams):
+        return [RealDomain()] * len(expparams) if expparams is not None else RealDomain()
+
+    def are_expparam_dtypes_consistent(self, expparams):
+        return True
+
+    def are_models_valid(self, modelparams):
+        orig_mps = modelparams[:, self._orig_mps_slice]
+        sigma2 = modelparams[:, self._sigma2_slice]
+
+        return np.all([
+            self.underlying_model.are_models_valid(orig_mps),
+            np.all(sigma2 > 0, axis=-1)
+        ], axis=0)
+
+    def underlying_likelihood(self, binary_outcomes, modelparams, expparams):
+        """
+        Given outcomes hypothesized for the underlying model, returns the likelihood
+        which which those outcomes occur.
+        """
+        original_mps = modelparams[..., self._orig_mps_slice]
+        return self.underlying_model.likelihood(binary_outcomes, original_mps, expparams)
+
+    def likelihood(self, outcomes, modelparams, expparams):
+        # By calling the superclass implementation, we can consolidate
+        # call counting there.
+        super(GaussianHyperparameterizedModel, self).likelihood(outcomes, modelparams, expparams)
+
+        # We want these to broadcast to the shape
+        #     (idx_underlying_outcome, idx_outcome, idx_modelparam, idx_experiment).
+        # Thus, we need shape
+        #     (idx_underlying_outcome,           1, idx_modelparam,              1).
+        mu = (modelparams[:, self._mu_slice].T)[:, np.newaxis, :, np.newaxis]
+        sigma = np.sqrt(
+            (modelparams[:, self._sigma2_slice].T)[:, np.newaxis, :, np.newaxis]
+        )
+
+        assert np.all(sigma > 0)
+
+        # Now we can rescale the outcomes to be random variates z drawn from N(0, 1).
+        scaled_outcomes = (outcomes[np.newaxis,:,np.newaxis,np.newaxis] - mu) / sigma
+
+        # We can then compute the conditional likelihood Pr(z | underlying_outcome, model).
+        conditional_L = norm(0, 1).pdf(scaled_outcomes)
+
+        # To find the marginalized likeihood, we now need the underlying likelihood
+        # Pr(underlying_outcome | model), so that we can sum over the idx_u_o axis.
+        # Note that we need to add a new axis to shift the underlying outcomes left
+        # of the real-valued outcomes z.
+        underlying_L = self.underlying_likelihood(
+            np.array([0, 1], dtype='uint'),
+            modelparams, expparams
+        )[:, None, :, :]
+
+        # Now we marginalize and return.
+        return (underlying_L * conditional_L).sum(axis=0)
+
+    def simulate_experiment(self, modelparams, expparams, repeat=1):
+        super(GaussianHyperparameterizedModel, self).simulate_experiment(modelparams, expparams)
+
+        # Start by generating a bunch of (0, 1) normalized random variates
+        # that we'll randomly rescale to the right location and shape.
+        zs = np.random.randn(modelparams.shape[0], expparams.shape[0])
+
+        # Next, we sample a bunch of underlying outcomes to figure out
+        # how to rescale everything.
+        underlying_outcomes = self.underlying_model.simulate_experiment(
+            modelparams[:, :-4], expparams, repeat=repeat
+        )
+
+        # We can now rescale zs to obtain the actual outcomes.
+        mu = (modelparams[:, self._mu_slice].T)[:, None, :, None]
+        sigma = np.sqrt(
+            (modelparams[:, self._sigma2_slice].T)[:, None, :, None]
+        )
+        outcomes = (
+            np.where(underlying_outcomes, mu[1], mu[0]) +
+            np.where(underlying_outcomes, sigma[1], sigma[0]) * zs
+        )
+
+        return outcomes[0,0,0] if outcomes.size == 1 else outcomes
 
 class MultinomialModel(DerivedModel):
     """
@@ -680,7 +806,7 @@ class GaussianRandomWalkModel(DerivedModel):
             # therefore, we need to add modelparams
             self._has_fixed_covariance = False
             if self._diagonal:
-                self._srw_names = ["\sigma_{{{}}}".format(name) for name in self._rw_names]
+                self._srw_names = [r"\sigma_{{{}}}".format(name) for name in self._rw_names]
                 self._srw_idxs = (underlying_model.n_modelparams + \
                     np.arange(self._n_rw)).astype(np.int)
             else:
@@ -692,9 +818,9 @@ class GaussianRandomWalkModel(DerivedModel):
                 for idx1, name1 in enumerate(self._rw_names):
                     for name2 in self._rw_names[:idx1+1]:
                         if name1 == name2:
-                            self._srw_names.append("\sigma_{{{}}}".format(name1))
+                            self._srw_names.append(r"\sigma_{{{}}}".format(name1))
                         else:
-                            self._srw_names.append("\sigma_{{{},{}}}".format(name2,name1))
+                            self._srw_names.append(r"\sigma_{{{},{}}}".format(name2,name1))
         else:
             # In this case the covariance matrix is fixed and fully specified
             self._has_fixed_covariance = True

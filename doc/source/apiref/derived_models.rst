@@ -4,9 +4,9 @@
     license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ or send a
     letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View,
     California, 94041, USA.
-    
+
 .. _derived_models:
-    
+
 .. currentmodule:: qinfer
 
 Derived Models
@@ -30,6 +30,12 @@ additional functionality or changing the behaviors of underlying models.
 .. autoclass:: BinomialModel
     :members:
 
+:class:`GaussianHyperparameterizedModel` - Model over Gaussian outcomes conditioned on two-outcome experiments
+--------------------------------------------------------------------------------------------------------------
+
+.. autoclass:: GaussianHyperparameterizedModel
+    :members:
+
 :class:`MultinomialModel` - Model over batches of D-outcome experiments
 ----------------------------------------------------------------------
 
@@ -41,13 +47,13 @@ additional functionality or changing the behaviors of underlying models.
 
 .. autoclass:: MLEModel
     :members:
-    
+
 :class:`RandomWalkModel` - Model for adding fixed random walk to parameters
 ---------------------------------------------------------------------------
 
 .. autoclass:: RandomWalkModel
     :members:
-    
+
 :class:`GaussianRandomWalkModel` - Model for adding gaussian random walk to parameters
 --------------------------------------------------------------------------------------
 
