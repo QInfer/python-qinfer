@@ -1,0 +1,17 @@
+numpy
+scipy
+scikit-learn
+ipython
+future>=0.15
+matplotlib
+qutip
+
+# We also add additional tools for plotting.
+mpltools
+
+pytest
+pytest-cov
+pytest-xdist
+
+coveralls
+pylint
