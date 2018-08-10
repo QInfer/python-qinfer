@@ -3,24 +3,34 @@
 ##
 # test_concrete_models.py: Checks that built-in instances of Model work properly.
 ##
-# © 2014 Chris Ferrie (csferrie@gmail.com) and
-#        Christopher E. Granade (cgranade@gmail.com)
-#     
-# This file is a part of the Qinfer project.
-# Licensed under the AGPL version 3.
-##
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# © 2017, Chris Ferrie (csferrie@gmail.com) and
+#         Christopher Granade (cgranade@cgranade.com).
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#     1. Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#
+#     2. Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#
+#     3. Neither the name of the copyright holder nor the names of its
+#        contributors may be used to endorse or promote products derived from
+#        this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 ##
 
 ## FEATURES ###################################################################
@@ -45,7 +55,7 @@ from qinfer.tests.base_test import (
 )
 import abc
 from qinfer import (
-    SimplePrecessionModel, SimpleInversionModel,
+    SimplePrecessionModel, SimpleInversionModel, UnknownT2Model,
     CoinModel, NoisyCoinModel, NDieModel,
     RandomizedBenchmarkingModel,
     PoisonedModel, BinomialModel, MultinomialModel,
@@ -56,6 +66,7 @@ from qinfer import (
     PostselectedDistribution,
     ConstrainedSumDistribution, DirichletDistribution,
     DirectViewParallelizedModel
+    GaussianHyperparameterizedModel
 )
 from qinfer.ale import ALEApproximateModel
 from qinfer.tomography import TomographyModel, DiffusiveTomographyModel, pauli_basis, GinibreDistribution
@@ -83,6 +94,18 @@ class TestSimplePrecessionModel(ConcreteDifferentiableModelTest, DerandomizedTes
         return UniformDistribution(np.array([[10,12]]))
     def instantiate_expparams(self):
         return np.arange(10,20).astype(self.model.expparams_dtype)
+
+class TestUnknownT2Model(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests UnknownT2Model.
+    """
+
+    def instantiate_model(self):
+        return UnknownT2Model()
+    def instantiate_prior(self):
+        return UniformDistribution(np.array([[1,8],[1,5]]))
+    def instantiate_expparams(self):
+        return np.linspace(0,5,10, dtype=[('t','float')])
 
 class TestSimpleInversionModel(ConcreteDifferentiableModelTest, DerandomizedTestCase):
     """
@@ -499,3 +522,24 @@ class TestGaussianRandomWalkModel5(DerandomizedTestCase):
         self.assertRaises(IndexError, model, np.s_[:7])
         self.assertRaises(IndexError, model, np.s_[6:])
         self.assertRaises(IndexError, model, [1,2,8])        
+
+class TestGaussianHyperparameterizedModel(ConcreteModelTest, DerandomizedTestCase):
+    """
+    Tests GaussianHyperparameterizedModel with CoinModel as the underlying model
+    (underlying model has no expparams).
+    """
+
+    def instantiate_model(self):
+        return GaussianHyperparameterizedModel(CoinModel())
+
+    def instantiate_prior(self):
+        return ProductDistribution(
+               BetaDistribution(mean=0.5, var=0.1),
+               NormalDistribution(0, 0.05 ** 2),
+               NormalDistribution(0, 0.05 ** 2),
+               BetaDistribution(mean=0.5, var=0.1),
+               BetaDistribution(mean=0.5, var=0.1)
+        )
+
+    def instantiate_expparams(self):
+        return np.arange(100, 120).astype(self.model.expparams_dtype)
