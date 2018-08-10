@@ -65,7 +65,7 @@ from qinfer import (
     BetaDistribution, UniformDistribution,
     PostselectedDistribution,
     ConstrainedSumDistribution, DirichletDistribution,
-    DirectViewParallelizedModel
+    DirectViewParallelizedModel,
     GaussianHyperparameterizedModel
 )
 from qinfer.ale import ALEApproximateModel
