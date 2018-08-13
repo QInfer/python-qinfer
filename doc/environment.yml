@@ -1,0 +1,20 @@
+name: qinfer
+dependencies:
+  - cython
+  - numpy
+  - scipy
+  - scikit-learn
+  - ipython
+  - future>=0.15
+  - matplotlib
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - coveralls
+  - pylint
+  - pip:
+    # We also add additional tools for plotting.
+    - mpltools
+    # We use the PyPI version of QuTiP here since the conda version
+    # is on the wrong channel for use with RTD.
+    - qutip

@@ -1,0 +1,13 @@
+build:
+  image: latest
+
+python:
+  version: 3.5
+  setup_py_install: true
+
+formats:
+  - epub
+  - pdf
+
+conda:
+  file: ./doc/environment.yml
