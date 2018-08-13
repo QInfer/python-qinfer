@@ -1,7 +1,6 @@
 name: qinfer
-channels:
-  - conda-forge
 dependencies:
+  - cython
   - numpy
   - scipy
   - scikit-learn
@@ -13,7 +12,9 @@ dependencies:
   - pytest-xdist
   - coveralls
   - pylint
-  - qutip
   - pip:
     # We also add additional tools for plotting.
     - mpltools
+    # We use the PyPI version of QuTiP here since the conda version
+    # is on the wrong channel for use with RTD.
+    - qutip
