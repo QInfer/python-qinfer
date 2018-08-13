@@ -64,7 +64,7 @@ from qinfer import (
     NormalDistribution,
     BetaDistribution, UniformDistribution,
     PostselectedDistribution,
-    ConstrainedSumDistribution,
+    ConstrainedSumDistribution, DirichletDistribution,
     DirectViewParallelizedModel,
     GaussianHyperparameterizedModel
 )
@@ -291,8 +291,7 @@ class TestMultinomialModel(ConcreteModelTest, DerandomizedTestCase):
     def instantiate_model(self):
         return MultinomialModel(NDieModel(n=6))
     def instantiate_prior(self):
-        unif = UniformDistribution(np.array([[0,1],[0,1],[0,1],[0,1],[0,1],[0,1]]))
-        return ConstrainedSumDistribution(unif, desired_total=1)
+        return DirichletDistribution([1,2,3,10,1,3])
     def instantiate_expparams(self):
         return np.arange(10).astype(self.model.expparams_dtype)
 

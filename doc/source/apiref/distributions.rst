@@ -56,6 +56,9 @@ Specific Distributions
 
 .. autoclass:: BetaBinomialDistribution
     :members:
+    
+.. autoclass:: DirichletDistribution
+    :members:
 
 .. autoclass:: GammaDistribution
     :members:

@@ -347,6 +347,46 @@ class TestBetaDistributions(DerandomizedTestCase):
         """
         dist = BetaBinomialDistribution(10, alpha=10,beta=42)
         assert(dist.n_rvs == 1)
+        
+class TestDirichletDistribution(DerandomizedTestCase):
+    """
+    Tests ``DirichletDistribution``
+    """
+
+    ## TEST METHODS ##
+
+    def test_dirichlet_moments(self):
+        """
+        Distributions: Checks that the dirichlet distribution has the right
+        moments, with either of the two input formats
+        """
+        alpha = [1,2,3,4]
+        alpha_np = np.array(alpha)
+        alpha_0 = alpha_np.sum()
+        mean = alpha_np / alpha_0
+        var = alpha_np * (alpha_0 - alpha_np) / (alpha_0 **2 * (alpha_0+1))
+        
+        dist = DirichletDistribution(alpha)
+        samples = dist.sample(100000)
+
+        assert samples.shape == (100000, alpha_np.size)
+        assert_almost_equal(samples.mean(axis=0), mean, 2)
+        assert_almost_equal(samples.var(axis=0), var, 2)
+        
+        alpha = np.array([8,7,5,2,2])
+        alpha_np = np.array(alpha)
+        alpha_0 = alpha_np.sum()
+        mean = alpha_np / alpha_0
+        var = alpha_np * (alpha_0 - alpha_np) / (alpha_0 **2 * (alpha_0+1))
+        
+        dist = DirichletDistribution(alpha)
+        samples = dist.sample(100000)
+
+        assert samples.shape == (100000, alpha_np.size)
+        assert_almost_equal(samples.mean(axis=0), mean, 2)
+        assert_almost_equal(samples.var(axis=0), var, 2)
+
+
 
 class TestGammaDistribution(DerandomizedTestCase):
     """

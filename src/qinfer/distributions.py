@@ -76,6 +76,7 @@ __all__ = [
     'SlantedNormalDistribution',
     'LogNormalDistribution',
     'BetaDistribution',
+    'DirichletDistribution',
     'BetaBinomialDistribution',
     'GammaDistribution',
     'GinibreUniform',
@@ -1006,6 +1007,31 @@ class BetaDistribution(Distribution):
 
     def sample(self, n=1):
         return self.dist.rvs(size=n)[:, np.newaxis]
+        
+class DirichletDistribution(Distribution):
+    r"""
+    The dirichlet distribution, whose pdf at :math:`x` is proportional to
+    :math:`\prod_i x_i^{\alpha_i-1}`.
+    
+    :param alpha: The list of concentration parameters.
+    """
+    def __init__(self, alpha):
+        self._alpha = np.array(alpha)
+        if self.alpha.ndim != 1:
+            raise ValueError('The input alpha must be a 1D list of concentration parameters.')
+
+        self._dist = st.dirichlet(alpha=self.alpha)
+        
+    @property
+    def alpha(self):
+        return self._alpha
+
+    @property
+    def n_rvs(self):
+        return self._alpha.size
+
+    def sample(self, n=1):
+        return self._dist.rvs(size=n)
 
 class BetaBinomialDistribution(Distribution):
     r"""
