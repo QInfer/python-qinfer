@@ -566,10 +566,6 @@ class SMCUpdater(ParticleDistribution):
             has shape ``(expparams.size,)``
         """
 
-        # outcomes for the first experiment
-        os = self.model.domain(None).values
-        n_out = os.size
-
         # for models whose outcome number changes with experiment, we 
         # take the easy way out and for-loop over experiments
         n_eps = expparams.size
@@ -579,6 +575,9 @@ class SMCUpdater(ParticleDistribution):
                 risk[idx] = self.bayes_risk(expparams[idx, np.newaxis])
             return risk
         
+        # outcomes for the first experiment
+        os = self.model.domain(expparams[0,np.newaxis])[0].values
+
         # compute the hypothetical weights, likelihoods and normalizations for
         # every possible outcome and expparam
         # the likelihood over outcomes should sum to 1, so don't compute for last outcome
@@ -628,10 +627,6 @@ class SMCUpdater(ParticleDistribution):
         # This is a special case of the KL divergence estimator (see below),
         # in which the other distribution is guaranteed to share support.
         
-        # number of outcomes for the first experiment
-        os = self.model.domain(None).values
-        n_out = os.size
-
         # for models whose outcome number changes with experiment, we 
         # take the easy way out and for-loop over experiments
         n_eps = expparams.size
@@ -641,6 +636,9 @@ class SMCUpdater(ParticleDistribution):
                 risk[idx] = self.expected_information_gain(expparams[idx, np.newaxis])
             return risk
         
+        # number of outcomes for the first experiment
+        os = self.model.domain(expparams[0,np.newaxis])[0].values
+
         # compute the hypothetical weights, likelihoods and normalizations for
         # every possible outcome and expparam
         # the likelihood over outcomes should sum to 1, so don't compute for last outcome
