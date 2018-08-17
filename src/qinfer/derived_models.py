@@ -46,6 +46,7 @@ __all__ = [
     'DerivedModel',
     'PoisonedModel',
     'BinomialModel',
+    'DifferentiableBinomialModel',
     'GaussianHyperparameterizedModel',
     'MultinomialModel',
     'MLEModel',

@@ -552,88 +552,115 @@ class SMCUpdater(ParticleDistribution):
 
     def bayes_risk(self, expparams):
         r"""
-        Calculates the Bayes risk for a hypothetical experiment, assuming the
+        Calculates the Bayes risk for hypothetical experiments, assuming the
         quadratic loss function defined by the current model's scale matrix
         (see :attr:`qinfer.abstract_model.Simulatable.Q`).
 
-        :param expparams: The experiment at which to compute the Bayes risk.
+        :param expparams: The experiments at which to compute the risk.
         :type expparams: :class:`~numpy.ndarray` of dtype given by the current
             model's :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype` property,
             and of shape ``(1,)``
 
-        :return float: The Bayes risk for the current posterior distribution
-            of the hypothetical experiment ``expparams``.
+        :return np.ndarray: The Bayes risk for the current posterior distribution
+            at each hypothetical experiment in ``expparams``, therefore 
+            has shape ``(expparams.size,)``
         """
-        # This subroutine computes the bayes risk for a hypothetical experiment
-        # defined by expparams.
 
-        # Assume expparams is a single experiment
+        # for models whose outcome number changes with experiment, we 
+        # take the easy way out and for-loop over experiments
+        n_eps = expparams.size
+        if n_eps > 1 and not self.model.is_n_outcomes_constant:
+            risk = np.empty(n_eps)
+            for idx in range(n_eps):
+                risk[idx] = self.bayes_risk(expparams[idx, np.newaxis])
+            return risk
+        
+        # outcomes for the first experiment
+        os = self.model.domain(expparams[0,np.newaxis])[0].values
 
-        # expparams =
-        # Q = np array(Nmodelparams), which contains the diagonal part of the
-        #     rescaling matrix.  Non-diagonal could also be considered, but
-        #     for the moment this is not implemented.
-        nout = self.model.n_outcomes(expparams) # This is a vector so this won't work
-        w, N = self.hypothetical_update(np.arange(nout), expparams, return_normalization=True)
-        w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
-        N = N[:, :, 0] # Fix L.shape == (n_outcomes, n_particles).
+        # compute the hypothetical weights, likelihoods and normalizations for
+        # every possible outcome and expparam
+        # the likelihood over outcomes should sum to 1, so don't compute for last outcome
+        w_hyp, L, N = self.hypothetical_update(
+                os[:-1], 
+                expparams, 
+                return_normalization=True, 
+                return_likelihood=True
+            )
+        w_hyp_last_outcome = (1 - L.sum(axis=0)) * self.particle_weights[np.newaxis, :]
+        N = np.concatenate([N[:,:,0], np.sum(w_hyp_last_outcome[np.newaxis,:,:], axis=2)], axis=0)
+        w_hyp_last_outcome = w_hyp_last_outcome / N[-1,:,np.newaxis]
+        w_hyp = np.concatenate([w_hyp, w_hyp_last_outcome[np.newaxis,:,:]], axis=0)
+        # w_hyp.shape == (n_out, n_eps, n_particles)
+        # N.shape == (n_out, n_eps)
 
-        xs = self.particle_locations.transpose([1, 0]) # shape (n_mp, n_particles).
+        # compute the hypothetical means and variances given outcomes and exparams
+        # mu_hyp.shape == (n_out, n_eps, n_models)
+        # var_hyp.shape == (n_out, n_eps)
+        mu_hyp = np.dot(w_hyp, self.particle_locations)
+        var_hyp = np.sum(
+            w_hyp * 
+            np.sum(self.model.Q * (
+                self.particle_locations[np.newaxis,np.newaxis,:,:] - 
+                mu_hyp[:,:,np.newaxis,:]
+            ) ** 2,  axis=3),
+            axis=2
+        )
 
-        # In the following, we will use the subscript convention that
-        # "o" refers to an outcome, "p" to a particle, and
-        # "i" to a model parameter.
-        # Thus, mu[o,i] is the sum over all particles of w[o,p] * x[i,p].
-
-        mu = np.transpose(np.tensordot(w,xs,axes=(1,1)))
-        var = (
-            # This sum is a reduction over the particle index and thus
-            # represents an expectation value over the diagonal of the
-            # outer product $x . x^T$.
-
-            np.transpose(np.tensordot(w,xs**2,axes=(1,1)))
-            # We finish by subracting from the above expectation value
-            # the diagonal of the outer product $mu . mu^T$.
-            - mu**2).T
-
-
-        rescale_var = np.sum(self.model.Q * var, axis=1)
-        # Q has shape (n_mp,), therefore rescale_var has shape (n_outcomes,).
-        tot_norm = np.sum(N, axis=1)
-        return np.dot(tot_norm.T, rescale_var)
+        # the risk of a given expparam can be calculated as the mean posterior
+        # variance weighted over all possible outcomes
+        return np.sum(N * var_hyp, axis=0)
 
     def expected_information_gain(self, expparams):
         r"""
-        Calculates the expected information gain for a hypothetical experiment.
+        Calculates the expected information gain for each hypothetical experiment.
 
-        :param expparams: The experiment at which to compute expected
+        :param expparams: The experiments at which to compute expected
             information gain.
         :type expparams: :class:`~numpy.ndarray` of dtype given by the current
             model's :attr:`~qinfer.abstract_model.Simulatable.expparams_dtype` property,
-            and of shape ``(1,)``
+            and of shape ``(n,)``
 
-        :return float: The Bayes risk for the current posterior distribution
-            of the hypothetical experiment ``expparams``.
+        :return float: The expected information gain for each 
+            hypothetical experiment in ``expparams``.
         """
-
-        nout = self.model.n_outcomes(expparams)
-        w, N = self.hypothetical_update(np.arange(nout), expparams, return_normalization=True)
-        w = w[:, 0, :] # Fix w.shape == (n_outcomes, n_particles).
-        N = N[:, :, 0] # Fix N.shape == (n_outcomes, n_particles).
-
         # This is a special case of the KL divergence estimator (see below),
         # in which the other distribution is guaranteed to share support.
-        #
-        # KLD[idx_outcome] = Sum over particles(self * log(self / other[idx_outcome])
-        # Est. KLD = E[KLD[idx_outcome] | outcomes].
+        
+        # for models whose outcome number changes with experiment, we 
+        # take the easy way out and for-loop over experiments
+        n_eps = expparams.size
+        if n_eps > 1 and not self.model.is_n_outcomes_constant:
+            risk = np.empty(n_eps)
+            for idx in range(n_eps):
+                risk[idx] = self.expected_information_gain(expparams[idx, np.newaxis])
+            return risk
+        
+        # number of outcomes for the first experiment
+        os = self.model.domain(expparams[0,np.newaxis])[0].values
 
-        KLD = np.sum(
-            w * np.log(w / self.particle_weights ),
-            axis=1 # Sum over particles.
-        )
+        # compute the hypothetical weights, likelihoods and normalizations for
+        # every possible outcome and expparam
+        # the likelihood over outcomes should sum to 1, so don't compute for last outcome
+        w_hyp, L, N = self.hypothetical_update(
+                os[:-1], 
+                expparams, 
+                return_normalization=True, 
+                return_likelihood=True
+            )
+        w_hyp_last_outcome = (1 - L.sum(axis=0)) * self.particle_weights[np.newaxis, :]
+        N = np.concatenate([N[:,:,0], np.sum(w_hyp_last_outcome[np.newaxis,:,:], axis=2)], axis=0)
+        w_hyp_last_outcome = w_hyp_last_outcome / N[-1,:,np.newaxis]
+        w_hyp = np.concatenate([w_hyp, w_hyp_last_outcome[np.newaxis,:,:]], axis=0)
+        # w_hyp.shape == (n_out, n_eps, n_particles)
+        # N.shape == (n_out, n_eps)
 
-        tot_norm = np.sum(N, axis=1)
-        return np.dot(tot_norm, KLD)
+        # compute the Kullback-Liebler divergence for every experiment and possible outcome
+        # KLD.shape == (n_out, n_eps)
+        KLD = np.sum(w_hyp * np.log(w_hyp / self.particle_weights), axis=2)
+
+        # return the expected KLD (ie expected info gain) for every experiment
+        return np.sum(N * KLD, axis=0)
 
     ## MISC METHODS ###########################################################
 
@@ -1212,4 +1239,3 @@ class SMCUpdaterBCRB(SMCUpdater):
 
         # We now can update as normal.
         SMCUpdater.update(self, outcome, expparams,check_for_resample=check_for_resample)
-
