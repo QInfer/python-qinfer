@@ -171,7 +171,7 @@ def plot_rebit_prior(prior, rebit_axes=REBIT_AXES,
     :param np.ndarray true_state: State to be plotted as a "true" state for
         comparison.
     """
-    pallette = plt.rcParams['axes.color_cycle']
+    pallette = plt.rcParams['axes.prop_cycle']
 
     plot_rebit_modelparams(prior.sample(n_samples),
         c=pallette[0],
@@ -225,7 +225,7 @@ def plot_rebit_posterior(updater, prior=None, true_state=None, n_std=3, rebit_ax
     :param str region_est_method: Method to use to draw region estimation.
         Must be one of None, ``'cov'`` or ``'hull'``.
     """
-    pallette = plt.rcParams['axes.color_cycle']
+    pallette = plt.rcParams['axes.prop_cycle']
 
     plot_rebit_modelparams(updater.particle_locations,
         c=pallette[0],
